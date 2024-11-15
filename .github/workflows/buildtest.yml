@@ -99,7 +99,7 @@ jobs:
       - name: Test
         run: |
           cd $GITHUB_WORKSPACE/build
-          time ctest -I $TEST_CHUNK -j `nproc` --output-on-failure --output-junit $GITHUB_WORKSPACE/junit_test_summary.xml
+          time ctest --schedule-random -I $TEST_CHUNK -j `nproc` --output-on-failure --output-junit $GITHUB_WORKSPACE/junit_test_summary.xml
         env:
           TEST_CHUNK: ${{ matrix.test-chunk }}
       - name: Upload test summary
