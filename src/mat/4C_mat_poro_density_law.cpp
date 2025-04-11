@@ -59,7 +59,6 @@ Mat::PAR::PoroDensityLaw* Mat::PAR::PoroDensityLaw::create_density_law(int matID
 Mat::PAR::PoroDensityLawExp::PoroDensityLawExp(const Core::Mat::PAR::Parameter::Data& matdata)
     : PoroDensityLaw(matdata), bulkmodulus_(matdata.parameters.get<double>("BULKMODULUS"))
 {
-  return;
 }
 
 /*----------------------------------------------------------------------*

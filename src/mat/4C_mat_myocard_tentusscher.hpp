@@ -47,7 +47,7 @@ class MyocardTenTusscher : public MyocardGeneral
   MyocardTenTusscher();
 
   /// construct empty material object
-  explicit MyocardTenTusscher(const double eps_deriv_myocard, const std::string tissue);
+  explicit MyocardTenTusscher(const double eps_deriv_myocard, const std::string& tissue);
 
   /// compute reaction coefficient
   double rea_coeff(const double phi, const double dt) override;
@@ -74,7 +74,7 @@ class MyocardTenTusscher : public MyocardGeneral
   MyocardTools tools_;
 
   /// perturbation for numerical approximation of the derivative
-  double eps_deriv_;
+  double eps_deriv_{};
 
   /// gating variables Inada
   std::vector<double> s0_;
@@ -83,7 +83,7 @@ class MyocardTenTusscher : public MyocardGeneral
   std::vector<double> a_;
   std::vector<double> c_;
 
-  double voi_;  // current time (for debugging with CellML)
+  double voi_{};  // current time (for debugging with CellML)
 
 };  // Myocard_TenTusscher
 

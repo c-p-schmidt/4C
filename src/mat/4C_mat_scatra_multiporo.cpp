@@ -41,7 +41,7 @@ Mat::ScatraMatMultiPoroFluidType Mat::ScatraMatMultiPoroFluidType::instance_;
 Core::Communication::ParObject* Mat::ScatraMatMultiPoroFluidType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ScatraMatMultiPoroFluid* scatra_mat = new Mat::ScatraMatMultiPoroFluid();
+  auto* scatra_mat = new Mat::ScatraMatMultiPoroFluid();
   scatra_mat->unpack(buffer);
   return scatra_mat;
 }
@@ -87,6 +87,7 @@ void Mat::ScatraMatMultiPoroFluid::unpack(Core::Communication::UnpackBuffer& buf
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -98,6 +99,7 @@ void Mat::ScatraMatMultiPoroFluid::unpack(Core::Communication::UnpackBuffer& buf
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   ScatraMat::unpack(buffer);
@@ -125,7 +127,7 @@ Mat::ScatraMatMultiPoroVolFracType Mat::ScatraMatMultiPoroVolFracType::instance_
 Core::Communication::ParObject* Mat::ScatraMatMultiPoroVolFracType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ScatraMatMultiPoroVolFrac* scatra_mat = new Mat::ScatraMatMultiPoroVolFrac();
+  auto* scatra_mat = new Mat::ScatraMatMultiPoroVolFrac();
   scatra_mat->unpack(buffer);
   return scatra_mat;
 }
@@ -172,6 +174,7 @@ void Mat::ScatraMatMultiPoroVolFrac::unpack(Core::Communication::UnpackBuffer& b
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -183,6 +186,7 @@ void Mat::ScatraMatMultiPoroVolFrac::unpack(Core::Communication::UnpackBuffer& b
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   ScatraMat::unpack(buffer);
@@ -207,7 +211,7 @@ Mat::ScatraMatMultiPoroSolidType Mat::ScatraMatMultiPoroSolidType::instance_;
 Core::Communication::ParObject* Mat::ScatraMatMultiPoroSolidType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ScatraMatMultiPoroSolid* scatra_mat = new Mat::ScatraMatMultiPoroSolid();
+  auto* scatra_mat = new Mat::ScatraMatMultiPoroSolid();
   scatra_mat->unpack(buffer);
   return scatra_mat;
 }
@@ -251,6 +255,7 @@ void Mat::ScatraMatMultiPoroSolid::unpack(Core::Communication::UnpackBuffer& buf
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -262,6 +267,7 @@ void Mat::ScatraMatMultiPoroSolid::unpack(Core::Communication::UnpackBuffer& buf
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   ScatraMat::unpack(buffer);
@@ -294,7 +300,7 @@ Mat::ScatraMatMultiPoroTemperatureType Mat::ScatraMatMultiPoroTemperatureType::i
 Core::Communication::ParObject* Mat::ScatraMatMultiPoroTemperatureType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ScatraMatMultiPoroTemperature* scatra_mat = new Mat::ScatraMatMultiPoroTemperature();
+  auto* scatra_mat = new Mat::ScatraMatMultiPoroTemperature();
   scatra_mat->unpack(buffer);
   return scatra_mat;
 }
@@ -339,6 +345,7 @@ void Mat::ScatraMatMultiPoroTemperature::unpack(Core::Communication::UnpackBuffe
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -350,6 +357,7 @@ void Mat::ScatraMatMultiPoroTemperature::unpack(Core::Communication::UnpackBuffe
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   ScatraMat::unpack(buffer);

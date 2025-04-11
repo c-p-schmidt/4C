@@ -39,7 +39,7 @@ Mat::StructPoroReactionECMType Mat::StructPoroReactionECMType::instance_;
 Core::Communication::ParObject* Mat::StructPoroReactionECMType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::StructPoroReactionECM* struct_poro = new Mat::StructPoroReactionECM();
+  auto* struct_poro = new Mat::StructPoroReactionECM();
   struct_poro->unpack(buffer);
   return struct_poro;
 }
@@ -86,8 +86,8 @@ void Mat::StructPoroReactionECM::setup(
   chempot_.resize(numgp, 0.0);
   chempot_init_.resize(numgp, 0.0);
 
-  for (std::vector<double>::size_type i = 0; i < chempot_init_.size(); i++)
-    chempot_init_[i] = -(1.0 - deltaphi / (1.0 - initphi)) / mat_->density() * dpsidphiref;
+  for (double& i : chempot_init_)
+    i = -(1.0 - deltaphi / (1.0 - initphi)) / mat_->density() * dpsidphiref;
 }
 
 /*----------------------------------------------------------------------*/
@@ -127,6 +127,7 @@ void Mat::StructPoroReactionECM::unpack(Core::Communication::UnpackBuffer& buffe
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -138,6 +139,7 @@ void Mat::StructPoroReactionECM::unpack(Core::Communication::UnpackBuffer& buffe
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   extract_from_pack(buffer, refporosity_old_);
   extract_from_pack(buffer, refporositydot_old_);
@@ -235,8 +237,6 @@ void Mat::StructPoroReactionECM::chem_potential(
 
   pot = 1.0 / density() * psi - 1.0 / mat_->density() * dpsidphiref - chempot_init_[gp];
   chempot_[gp] = pot;
-
-  return;
 }
 
 FOUR_C_NAMESPACE_CLOSE

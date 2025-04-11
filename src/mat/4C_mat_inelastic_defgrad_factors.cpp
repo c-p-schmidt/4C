@@ -1425,9 +1425,9 @@ void Mat::InelasticDefgradPolynomialShape::check_polynomial_bounds(const double 
   // safety check for validity of polynomial
   if ((x < x_min_) or (x > x_max_))
   {
-    std::cout << "WARNING: Polynomial is evaluated outside its range of validity!" << std::endl;
+    std::cout << "WARNING: Polynomial is evaluated outside its range of validity!" << '\n';
     std::cout << "Evaluation at: " << x << " Lower bound is " << x_min_ << " Upper bound is "
-              << x_max_ << std::endl;
+              << x_max_ << '\n';
   }
 }
 
@@ -1616,7 +1616,7 @@ void Mat::InelasticDefgradTimeFunct::pre_evaluate(
     Teuchos::ParameterList& params, const int gp, const int eleGID)
 {
   // evaluate function value for current time step.
-  auto& funct = Global::Problem::instance()->function_by_id<Core::Utils::FunctionOfTime>(
+  const auto& funct = Global::Problem::instance()->function_by_id<Core::Utils::FunctionOfTime>(
       parameter()->funct_num());
   const double time = params.get<double>("total time");
   funct_value_ = funct.evaluate(time);

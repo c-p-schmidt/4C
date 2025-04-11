@@ -38,7 +38,7 @@ Mat::MatListChemoReacType Mat::MatListChemoReacType::instance_;
 Core::Communication::ParObject* Mat::MatListChemoReacType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::MatListChemoReac* MatListChemoReac = new Mat::MatListChemoReac();
+  auto* MatListChemoReac = new Mat::MatListChemoReac();
   MatListChemoReac->unpack(buffer);
   return MatListChemoReac;
 }
@@ -78,19 +78,13 @@ void Mat::MatListChemoReac::setup_mat_map()
   // here's the recursive creation of materials
   Mat::MatListReactions::setup_mat_map();
   Mat::MatListChemotaxis::setup_mat_map();
-
-  return;
 }
 
 
 /*----------------------------------------------------------------------*
  | reset everything                                          thon 06/15 |
  *----------------------------------------------------------------------*/
-void Mat::MatListChemoReac::clear()
-{
-  paramsreachemo_ = nullptr;
-  return;
-}
+void Mat::MatListChemoReac::clear() { paramsreachemo_ = nullptr; }
 
 
 /*----------------------------------------------------------------------*
@@ -132,6 +126,7 @@ void Mat::MatListChemoReac::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   paramsreachemo_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -147,6 +142,7 @@ void Mat::MatListChemoReac::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   Mat::MatListReactions::unpack(buffer);

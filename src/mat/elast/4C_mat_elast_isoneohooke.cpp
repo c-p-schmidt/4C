@@ -21,7 +21,7 @@ Mat::Elastic::IsoNeoHooke::IsoNeoHooke(Mat::Elastic::PAR::IsoNeoHooke* params) :
 
 void Mat::Elastic::IsoNeoHooke::add_shear_mod(bool& haveshearmod, double& shearmod) const
 {
-  haveshearmod = haveshearmod or true;
+  haveshearmod = true;
 
   shearmod += params_->mue_;
 }

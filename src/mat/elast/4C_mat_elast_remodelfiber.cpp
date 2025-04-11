@@ -218,9 +218,11 @@ void Mat::Elastic::RemodelFiber::setup(
           std::make_shared<RemodelEvolution>(params_->k_growth_, sig_pre, params_->t_decay_);
     }
     else
+    {
       FOUR_C_THROW(
           "So far, you can only use Elast_CoupAnisoExpo and Elast_CoupAnisoExpoActive in "
           "Elast_Remodelfiber!");
+    }
   }
 
   // Initialize inelastic deformation gradients in FiberData (default time step size (does not have

@@ -100,11 +100,8 @@ Mat::MicroMaterialGP::MicroMaterialGP(
 
   // check whether we are using modified Newton as a nonlinear solver
   // on the macroscale or not
-  if (Teuchos::getIntegralValue<Inpar::Solid::NonlinSolTech>(sdyn_micro, "NLNSOL") ==
-      Inpar::Solid::soltech_newtonmod)
-    mod_newton_ = true;
-  else
-    mod_newton_ = false;
+  mod_newton_ = Teuchos::getIntegralValue<Inpar::Solid::NonlinSolTech>(sdyn_micro, "NLNSOL") ==
+                Inpar::Solid::soltech_newtonmod;
 
   build_stiff_ = true;
 }

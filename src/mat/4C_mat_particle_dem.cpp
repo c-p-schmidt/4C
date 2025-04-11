@@ -41,7 +41,7 @@ std::shared_ptr<Core::Mat::Material> Mat::PAR::ParticleMaterialDEM::create_mater
 Core::Communication::ParObject* Mat::ParticleMaterialDEMType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ParticleMaterialDEM* particlematdem = new Mat::ParticleMaterialDEM();
+  auto* particlematdem = new Mat::ParticleMaterialDEM();
   particlematdem->unpack(buffer);
   return particlematdem;
 }
@@ -90,6 +90,7 @@ void Mat::ParticleMaterialDEM::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       // note: dynamic_cast needed due diamond inheritance structure
@@ -102,6 +103,7 @@ void Mat::ParticleMaterialDEM::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 FOUR_C_NAMESPACE_CLOSE

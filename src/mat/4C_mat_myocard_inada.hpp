@@ -47,7 +47,7 @@ class MyocardInada : public MyocardGeneral
   MyocardInada();
 
   /// construct empty material object
-  explicit MyocardInada(const double eps0_deriv_myocard, const std::string tissue);
+  explicit MyocardInada(const double eps0_deriv_myocard, const std::string& tissue);
 
   /// compute reaction coefficient
   double rea_coeff(const double phi, const double dt) override;
@@ -74,10 +74,10 @@ class MyocardInada : public MyocardGeneral
   MyocardTools tools_;
 
   /// Global time
-  double voi_;
+  double voi_{};
 
   /// perturbation for numerical approximation of the derivative
-  double eps0_deriv_;
+  double eps0_deriv_{};
 
   /// gating variables Inada
   std::vector<double> s0_;

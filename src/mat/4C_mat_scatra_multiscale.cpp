@@ -22,7 +22,6 @@ Mat::PAR::ScatraMultiScale::ScatraMultiScale(const Core::Mat::PAR::Parameter::Da
       porosity_(matdata.parameters.get<double>("POROSITY")),
       tortuosity_(matdata.parameters.get<double>("TORTUOSITY"))
 {
-  return;
 }
 
 
@@ -40,7 +39,7 @@ Mat::ScatraMultiScaleType Mat::ScatraMultiScaleType::instance_;
 Core::Communication::ParObject* Mat::ScatraMultiScaleType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ScatraMultiScale* ScatraMatMultiScale = new Mat::ScatraMultiScale();
+  auto* ScatraMatMultiScale = new Mat::ScatraMultiScale();
   ScatraMatMultiScale->unpack(buffer);
   return ScatraMatMultiScale;
 }
@@ -48,7 +47,7 @@ Core::Communication::ParObject* Mat::ScatraMultiScaleType::create(
 
 /*--------------------------------------------------------------------*
  *--------------------------------------------------------------------*/
-Mat::ScatraMultiScale::ScatraMultiScale() : params_(nullptr) { return; }
+Mat::ScatraMultiScale::ScatraMultiScale() : params_(nullptr) {}
 
 
 /*--------------------------------------------------------------------*
@@ -56,7 +55,6 @@ Mat::ScatraMultiScale::ScatraMultiScale() : params_(nullptr) { return; }
 Mat::ScatraMultiScale::ScatraMultiScale(Mat::PAR::ScatraMultiScale* params)
     : ScatraMat(params), params_(params)
 {
-  return;
 }
 
 
@@ -74,8 +72,6 @@ void Mat::ScatraMultiScale::pack(Core::Communication::PackBuffer& data) const
 
   // pack base class material
   ScatraMat::pack(data);
-
-  return;
 }
 
 
@@ -90,6 +86,7 @@ void Mat::ScatraMultiScale::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -101,6 +98,7 @@ void Mat::ScatraMultiScale::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not match calling type {}!", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   ScatraMat::unpack(buffer);

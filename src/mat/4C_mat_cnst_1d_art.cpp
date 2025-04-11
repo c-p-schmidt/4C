@@ -36,7 +36,7 @@ Mat::PAR::Cnst1dArt::Cnst1dArt(const Core::Mat::PAR::Parameter::Data& matdata)
       diameter_law_funct_(matdata.parameters.get<int>("VARYING_DIAMETER_FUNCTION")),
       collapse_threshold_(matdata.parameters.get<double>("COLLAPSE_THRESHOLD"))
 {
-  const std::string& typestring_visc = matdata.parameters.get<std::string>("VISCOSITYLAW");
+  const auto& typestring_visc = matdata.parameters.get<std::string>("VISCOSITYLAW");
 
   if (typestring_visc == "CONSTANT")
     viscositylaw_ = viscositylaw_constant;
@@ -46,7 +46,7 @@ Mat::PAR::Cnst1dArt::Cnst1dArt(const Core::Mat::PAR::Parameter::Data& matdata)
     FOUR_C_THROW(
         "wrong type of viscosity law for artery material, only CONSTANT and BLOOD are valid");
 
-  const std::string& typestring_diam = matdata.parameters.get<std::string>("VARYING_DIAMETERLAW");
+  const auto& typestring_diam = matdata.parameters.get<std::string>("VARYING_DIAMETERLAW");
 
   if (typestring_diam == "CONSTANT")
     diameterlaw_ = diameterlaw_constant;
@@ -69,7 +69,7 @@ Mat::Cnst1dArtType Mat::Cnst1dArtType::instance_;
 Core::Communication::ParObject* Mat::Cnst1dArtType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::Cnst1dArt* cnst_art = new Mat::Cnst1dArt();
+  auto* cnst_art = new Mat::Cnst1dArt();
   cnst_art->unpack(buffer);
   return cnst_art;
 }
@@ -120,6 +120,7 @@ void Mat::Cnst1dArt::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -131,6 +132,7 @@ void Mat::Cnst1dArt::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // diameter
   extract_from_pack(buffer, diam_init_);

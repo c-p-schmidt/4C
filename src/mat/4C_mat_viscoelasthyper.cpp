@@ -29,9 +29,11 @@ Mat::PAR::ViscoElastHyper::ViscoElastHyper(const Core::Mat::PAR::Parameter::Data
 {
   // polyconvexity check is just implemented for isotropic hyperlastic materials
   if (polyconvex_)
+  {
     FOUR_C_THROW(
         "This polyconvexity-check is just implemented for isotropic "
         "hyperelastic-materials (do not use for viscoelastic materials).");
+  }
 }
 
 /*----------------------------------------------------------------------*/
@@ -48,7 +50,7 @@ Mat::ViscoElastHyperType Mat::ViscoElastHyperType::instance_;
 Core::Communication::ParObject* Mat::ViscoElastHyperType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ViscoElastHyper* elhy = new Mat::ViscoElastHyper();
+  auto* elhy = new Mat::ViscoElastHyper();
   elhy->unpack(buffer);
 
   return elhy;
@@ -124,9 +126,9 @@ void Mat::ViscoElastHyper::pack(Core::Communication::PackBuffer& data) const
   if (params_ != nullptr)  // summands are not accessible in postprocessing mode
   {
     // loop map of associated potential summands
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
+    for (const auto& p : potsum_)
     {
-      potsum_[p]->pack_summand(data);
+      p->pack_summand(data);
     }
 
 
@@ -169,9 +171,8 @@ void Mat::ViscoElastHyper::pack(Core::Communication::PackBuffer& data) const
       // pack stepsize
       add_to_pack(data, histfractartstresslastall_->at(0).size());
       // pack history values
-      for (int gp = 0; gp < (int)histfractartstresslastall_->size(); ++gp)
-        for (int step = 0; step < (int)histfractartstresslastall_->at(gp).size(); ++step)
-          add_to_pack(data, histfractartstresslastall_->at(gp).at(step));
+      for (auto& gp : *histfractartstresslastall_)
+        for (int step = 0; step < (int)gp.size(); ++step) add_to_pack(data, gp.at(step));
     }
   }
 }
@@ -398,8 +399,6 @@ void Mat::ViscoElastHyper::setup(int numgp, const Core::IO::InputParameterContai
   }
 
   isinitvis_ = true;
-
-  return;
 }
 
 
@@ -479,8 +478,6 @@ void Mat::ViscoElastHyper::update()
         std::make_shared<std::vector<std::vector<Core::LinAlg::Matrix<NUM_STRESS_3D, 1>>>>(
             numgp, emptybigvec);
   }
-
-  return;
 }
 
 /*----------------------------------------------------------------------*/
@@ -644,7 +641,6 @@ void Mat::ViscoElastHyper::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
     elast_hyper_add_anisotropic_mod(
         *stress, *cmat, C_strain, iC_strain, prinv, gp, eleGID, params, potsum_);
   }
-  return;
 }
 
 /*----------------------------------------------------------------------*/
@@ -733,9 +729,9 @@ void Mat::ViscoElastHyper::evaluate_mu_xi(Core::LinAlg::Matrix<3, 1>& prinv,
   if (summandProperties_.isoprinc)
   {
     // loop map of associated potential summands
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
+    for (auto& p : potsum_)
     {
-      potsum_[p]->add_coefficients_visco_principal(prinv, mu, xi, rateinv, params, gp, eleGID);
+      p->add_coefficients_visco_principal(prinv, mu, xi, rateinv, params, gp, eleGID);
     }
   }
 
@@ -743,10 +739,9 @@ void Mat::ViscoElastHyper::evaluate_mu_xi(Core::LinAlg::Matrix<3, 1>& prinv,
   if (summandProperties_.isomod)
   {
     // loop map of associated potential summands
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
+    for (auto& p : potsum_)
     {
-      potsum_[p]->add_coefficients_visco_modified(
-          modinv, modmu, modxi, modrateinv, params, gp, eleGID);
+      p->add_coefficients_visco_modified(modinv, modmu, modxi, modrateinv, params, gp, eleGID);
     }
   }
 }
@@ -765,8 +760,6 @@ void Mat::ViscoElastHyper::evaluate_iso_visco_principal(Core::LinAlg::Matrix<6, 
 
   // contribution: id4sharp_{ijkl} = 1/2 (\delta_{ik}\delta_{jl} + \delta_{il}\delta_{jk})
   cmat.update(xi(2), id4sharp, 1.0);
-
-  return;
 }
 
 /*----------------------------------------------------------------------*/
@@ -828,11 +821,6 @@ void Mat::ViscoElastHyper::evaluate_iso_visco_modified(
   // contribution: -2/3 (Cinv \otimes S_iso^v + S_iso^v \otimes Cinv)
   cmatisomodisovisco.multiply_nt(-2. / 3., icg, stressisomodisovisco, 1.0);
   cmatisomodisovisco.multiply_nt(-2. / 3., stressisomodisovisco, icg, 1.0);
-
-  // volumetric contribution:
-  // with visco_isoratedep: no volumetric part added --> always 0
-
-  return;
 }
 
 /*----------------------------------------------------------------------*/
@@ -849,8 +837,7 @@ void Mat::ViscoElastHyper::evaluate_visco_gen_max(Core::LinAlg::Matrix<6, 1>* st
   double alpha(true);
 
   // read material parameters of viscogenmax material
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
-    potsum_[p]->read_material_parameters_visco(tau, beta, alpha, solve);
+  for (auto& p : potsum_) p->read_material_parameters_visco(tau, beta, alpha, solve);
 
   if (solve == "OST")
   {
@@ -866,10 +853,12 @@ void Mat::ViscoElastHyper::evaluate_visco_gen_max(Core::LinAlg::Matrix<6, 1>* st
     const auto dyntype = Teuchos::getIntegralValue<Inpar::Solid::DynamicType>(
         Global::Problem::instance()->structural_dynamic_params(), "DYNAMICTYPE");
     if (dyntype == Inpar::Solid::DynamicType::OneStepTheta)
+    {
       theta = Global::Problem::instance()
                   ->structural_dynamic_params()
                   .sublist("ONESTEPTHETA")
                   .get<double>("THETA");
+    }
 
     // get time algorithmic parameters
     // NOTE: dt can be zero (in restart of STI) for Generalized Maxwell model
@@ -942,7 +931,6 @@ void Mat::ViscoElastHyper::evaluate_visco_gen_max(Core::LinAlg::Matrix<6, 1>* st
   }
   else
     FOUR_C_THROW("Invalid input. Try valid input OST or CONVOL");
-  return;
 }  // end evaluate_visco_gen_max
 
 /*----------------------------------------------------------------------*/
@@ -961,10 +949,10 @@ void Mat::ViscoElastHyper::evaluate_visco_generalized_gen_max(Core::LinAlg::Matr
       0);  // vector for each branch of vectors of summands in each branch
 
   // get parameters of ViscoGeneralizedGenMax
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
+  for (const auto& p : potsum_)
   {
     std::shared_ptr<Mat::Elastic::GeneralizedGenMax> GeneralizedGenMax =
-        std::dynamic_pointer_cast<Mat::Elastic::GeneralizedGenMax>(potsum_[p]);
+        std::dynamic_pointer_cast<Mat::Elastic::GeneralizedGenMax>(p);
 
     if (GeneralizedGenMax != nullptr)
     {
@@ -1051,10 +1039,10 @@ void Mat::ViscoElastHyper::evaluate_visco_generalized_gen_max(Core::LinAlg::Matr
     cmatqbranch.update(1.0, cmatiso, 1.0);
 
     // get Parameter of ViscoGeneralizedGenMax
-    for (unsigned int q = 0; q < branchpotsum.size(); ++q)
+    for (const auto& q : branchpotsum)
     {
       std::shared_ptr<Mat::Elastic::ViscoPart> ViscoPart =
-          std::dynamic_pointer_cast<Mat::Elastic::ViscoPart>(branchpotsum[q]);
+          std::dynamic_pointer_cast<Mat::Elastic::ViscoPart>(q);
       if (ViscoPart != nullptr) ViscoPart->read_material_parameters(tau);
     }
 
@@ -1074,10 +1062,12 @@ void Mat::ViscoElastHyper::evaluate_visco_generalized_gen_max(Core::LinAlg::Matr
       const auto dyntype = Teuchos::getIntegralValue<Inpar::Solid::DynamicType>(
           Global::Problem::instance()->structural_dynamic_params(), "DYNAMICTYPE");
       if (dyntype == Inpar::Solid::DynamicType::OneStepTheta)
+      {
         theta = Global::Problem::instance()
                     ->structural_dynamic_params()
                     .sublist("ONESTEPTHETA")
                     .get<double>("THETA");
+      }
 
       // get time algorithmic parameters
       // NOTE: dt can be zero (in restart of STI) for Generalized Maxwell model
@@ -1146,9 +1136,9 @@ void Mat::ViscoElastHyper::evaluate_visco_fract(Core::LinAlg::Matrix<6, 1> stres
   std::string solve = "";
 
   // read material parameters of viscofract-material
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
+  for (auto& p : potsum_)
   {
-    potsum_[p]->read_material_parameters_visco(tau, beta, alpha, solve);
+    p->read_material_parameters_visco(tau, beta, alpha, solve);
   }
 
   // safety checks for alpha
@@ -1228,9 +1218,6 @@ void Mat::ViscoElastHyper::evaluate_visco_fract(Core::LinAlg::Matrix<6, 1> stres
   // viscos constitutive tensor
   cmatq.update(lambdascalar1 * beta, cmat, 0.);  // contribution of Q
   cmatq.update(beta, cmat, -1.);
-
-
-  return;
 }
 
 FOUR_C_NAMESPACE_CLOSE

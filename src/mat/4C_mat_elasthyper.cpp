@@ -35,7 +35,7 @@ Mat::PAR::ElastHyper::ElastHyper(const Core::Mat::PAR::Parameter::Data& matdata)
         matids_.size());
 
   // output, that polyconvexity is checked
-  if (polyconvex_ != 0) std::cout << "Polyconvexity of your simulation is checked." << std::endl;
+  if (polyconvex_ != 0) std::cout << "Polyconvexity of your simulation is checked." << '\n';
 }
 
 /*----------------------------------------------------------------------*/
@@ -286,7 +286,7 @@ void Mat::ElastHyper::get_fiber_vecs(std::vector<Core::LinAlg::Matrix<3, 1>>& fi
 {
   if (summandProperties_.anisoprinc || summandProperties_.anisomod)
   {
-    for (auto& p : potsum_)
+    for (const auto& p : potsum_)
     {
       p->get_fiber_vecs(fibervecs);
     }
@@ -527,9 +527,11 @@ void Mat::ElastHyper::evaluate_cauchy_n_dir_and_derivatives(
       for (int l = 0; l < 3; ++l)
       {
         for (int z = 0; z < 3; ++z)
+        {
           (*d2_cauchyndir_dF_dn)(
               Core::LinAlg::Voigt::IndexMappings::non_symmetric_tensor_to_voigt9_index(k, l), z) +=
               fac * (dir(k, 0) * defgrd(z, l) + static_cast<double>(k == z) * tempvec1x3(0, l));
+        }
       }
     }
 
@@ -540,9 +542,11 @@ void Mat::ElastHyper::evaluate_cauchy_n_dir_and_derivatives(
       for (int l = 0; l < 3; ++l)
       {
         for (int z = 0; z < 3; ++z)
+        {
           (*d2_cauchyndir_dF_dn)(
               Core::LinAlg::Voigt::IndexMappings::non_symmetric_tensor_to_voigt9_index(k, l), z) +=
               fac2 * (ibddir(k, 0) * ibdF(z, l) + ib(z, k) * dirdibdF(0, l));
+        }
       }
     }
 
@@ -582,9 +586,11 @@ void Mat::ElastHyper::evaluate_cauchy_n_dir_and_derivatives(
       for (int l = 0; l < 3; ++l)
       {
         for (int z = 0; z < 3; ++z)
+        {
           (*d2_cauchyndir_dF_ddir)(
               Core::LinAlg::Voigt::IndexMappings::non_symmetric_tensor_to_voigt9_index(k, l), z) +=
               fac * (n(k, 0) * defgrd(z, l) + static_cast<double>(k == z) * tempvec1x3(0, l));
+        }
       }
     }
 
@@ -595,9 +601,11 @@ void Mat::ElastHyper::evaluate_cauchy_n_dir_and_derivatives(
       for (int l = 0; l < 3; ++l)
       {
         for (int z = 0; z < 3; ++z)
+        {
           (*d2_cauchyndir_dF_ddir)(
               Core::LinAlg::Voigt::IndexMappings::non_symmetric_tensor_to_voigt9_index(k, l), z) +=
               fac2 * (ibdn(k, 0) * ibdF(z, l) + ib(z, k) * ndibdF(0, l));
+        }
       }
     }
 
@@ -812,7 +820,7 @@ void Mat::ElastHyper::vis_names(std::map<std::string, int>& names) const
   }
   // do visualization for isotropic materials as well
   // loop map of associated potential summands
-  for (auto& p : potsum_)
+  for (const auto& p : potsum_)
   {
     p->vis_names(names);
   }
@@ -848,7 +856,7 @@ bool Mat::ElastHyper::vis_data(
     return_val = 1;
   }
   // loop map of associated potential summands
-  for (auto& p : potsum_)
+  for (const auto& p : potsum_)
   {
     return_val += static_cast<int>(p->vis_data(name, data, numgp, eleID));
   }

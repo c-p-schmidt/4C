@@ -144,8 +144,8 @@ namespace Mat
         const Core::IO::InputParameterContainer& container) override;
 
     /// Setup and Initialize internal stress variables and align fibers based on a given vector
-    void setup(const int numgp,             ///< number of Gauss points
-        const std::vector<double> thickvec  ///< direction fibers should be oriented in
+    void setup(const int numgp,              ///< number of Gauss points
+        const std::vector<double>& thickvec  ///< direction fibers should be oriented in
     );
 
     /// Update internal stress variables
@@ -214,7 +214,7 @@ namespace Mat
     std::shared_ptr<std::vector<Core::LinAlg::Matrix<NUM_STRESS_3D, 1>>>
         artstresslast_;  ///< artificial stress in last converged state
 
-    bool isinit_;  ///< indicates if material is initialized
+    bool isinit_{};  ///< indicates if material is initialized
   };
 }  // namespace Mat
 

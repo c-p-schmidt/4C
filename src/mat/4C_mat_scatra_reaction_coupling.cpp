@@ -127,8 +127,6 @@ void Mat::PAR::REACTIONCOUPLING::ReactionWithPhiScaling::calc_rea_body_force_der
   // call the real evaluation
   reaction_->calc_rea_body_force_deriv(
       k, numscal, derivs, phinp_mod, constants, couprole, scale_reac, scale_phi);
-
-  return;
 }
 
 /*--------------------------------------------------------------------------------*
@@ -157,8 +155,6 @@ void Mat::PAR::REACTIONCOUPLING::ReactionWithPhiScaling::calc_rea_body_force_der
   // call the real evaluation
   reaction_->calc_rea_body_force_deriv_add_variables(
       k, derivs, variables, constants, couprole, scale_reac, scale_phi);
-
-  return;
 }
 
 /*----------------------------------------------------------------------------------*
@@ -171,9 +167,11 @@ std::vector<double> Mat::PAR::REACTIONCOUPLING::ReactionWithPhiScaling::modify_p
   std::vector<double> phinp_mod(phinp);
 
   if (scale_phi != 1.0)
+  {
     // scale the vector and save the result in phinp_mod
     std::transform(phinp.begin(), phinp.end(), phinp_mod.begin(),
         [&](const double& ele) { return ele * scale_phi; });
+  }
 
   return phinp_mod;
 }
@@ -245,11 +243,9 @@ void Mat::PAR::REACTIONCOUPLING::ReacStart::calc_rea_body_force_deriv(int k,  //
   for (int toderive = 0; toderive < numscal; toderive++)
   {
     // only copy the value if reaction has already started
-    if (not(reacstart_[toderive] > 0 and phinp_mod[toderive] == 0.0))
+    if (reacstart_[toderive] <= 0 || phinp_mod[toderive] != 0.0)
       derivs[toderive] += myderivs[toderive];
   }
-
-  return;
 }
 
 /*----------------------------------------------------------------------------------*
@@ -343,8 +339,6 @@ void Mat::PAR::REACTIONCOUPLING::SimpleMultiplicative::calc_rea_body_force_deriv
 
     derivs[toderive] += scale_reac * bfdmfac;
   }
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -422,8 +416,6 @@ void Mat::PAR::REACTIONCOUPLING::PowerMultiplicative::calc_rea_body_force_deriv(
 
     derivs[toderive] += scale_reac * bfdmfac;
   }
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -471,7 +463,6 @@ void Mat::PAR::REACTIONCOUPLING::Constant::calc_rea_body_force_deriv(int k,  //!
 )
 {
   // zero derivative -> do nothing
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -556,8 +547,6 @@ void Mat::PAR::REACTIONCOUPLING::MichaelisMenten::calc_rea_body_force_deriv(
     }
     derivs[toderive] += scale_reac * bfdmfac;
   }
-
-  return;
 }
 
 
@@ -800,8 +789,6 @@ void Mat::PAR::REACTIONCOUPLING::ByFunction::calc_rea_body_force_deriv_add_varia
   // add it to derivs
   for (unsigned toderive = 0; toderive < variables.size(); toderive++)
     derivs[toderive] += scale_reac * myderivs[toderive];
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -835,8 +822,6 @@ void Mat::PAR::REACTIONCOUPLING::ByFunction::add_additional_variables_internal(
 )
 {
   // nothing to do
-
-  return;
 }
 
 /*---------------------------------------------------------------------------------/
@@ -853,7 +838,6 @@ void Mat::PAR::REACTIONCOUPLING::ByFunction::build_phi_vector_for_function(
   {
     variables_[ii].second = phinp[ii];
   }
-  return;
 }
 
 FOUR_C_NAMESPACE_CLOSE

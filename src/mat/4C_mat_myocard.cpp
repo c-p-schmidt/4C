@@ -51,7 +51,7 @@ Mat::MyocardType Mat::MyocardType::instance_;
 
 Core::Communication::ParObject* Mat::MyocardType::create(Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::Myocard* myocard = new Mat::Myocard();
+  auto* myocard = new Mat::Myocard();
   myocard->unpack(buffer);
   return myocard;
 }
@@ -111,11 +111,11 @@ void Mat::Myocard::pack(Core::Communication::PackBuffer& data) const
 
   // pack history data
   if (myocard_mat_ != nullptr)
+  {
     for (int k = -1; k < nb_state_variables_; ++k)  // Starting from -1 for mechanical activation
       for (int i = 0; i < myocard_mat_->get_number_of_gp(); ++i)  // loop over Gauss points
         add_to_pack(data, myocard_mat_->get_internal_state(k, i));
-
-  return;
+  }
 }
 
 /*----------------------------------------------------------------------*
@@ -134,10 +134,7 @@ void Mat::Myocard::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, unpack_nb_state_variables);
   extract_from_pack(buffer, difftensor_);
   extract_from_pack(buffer, num);
-  if (num)
-    diff_at_ele_center_ = true;
-  else
-    diff_at_ele_center_ = false;
+  diff_at_ele_center_ = num != 0;
   extract_from_pack(buffer, num_gp);
 
   params_ = nullptr;
@@ -167,13 +164,14 @@ void Mat::Myocard::unpack(Core::Communication::UnpackBuffer& buffer)
 
         // unpack history data
         double val;
-        for (int k = -1; k < unpack_nb_state_variables;
-            ++k)                                     // Starting from -1 for mechanical activation
+        for (int k = -1; k < unpack_nb_state_variables; ++k)
+        {                                            // Starting from -1 for mechanical activation
           for (int i = 0; i < params_->num_gp; ++i)  // loop over Gauss points
           {
             extract_from_pack(buffer, val);
             myocard_mat_->set_internal_state(k, val, i);
           }
+        }
       }
     }
   }
@@ -194,10 +192,7 @@ void Mat::Myocard::unpack_material(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, nb_state_variables_);
   extract_from_pack(buffer, difftensor_);
   extract_from_pack(buffer, num);
-  if (num)
-    diff_at_ele_center_ = true;
-  else
-    diff_at_ele_center_ = false;
+  diff_at_ele_center_ = num != 0;
   extract_from_pack(buffer, num_gp);
 
   params_ = nullptr;
@@ -222,12 +217,14 @@ void Mat::Myocard::unpack_material(Core::Communication::UnpackBuffer& buffer)
 
       // unpack history data
       double val;
-      for (int k = -1; k < nb_state_variables_; ++k)  // Starting from -1 for mechanical activation
-        for (int i = 0; i < params_->num_gp; ++i)     // loop over Gauss points
+      for (int k = -1; k < nb_state_variables_; ++k)
+      {                                            // Starting from -1 for mechanical activation
+        for (int i = 0; i < params_->num_gp; ++i)  // loop over Gauss points
         {
           extract_from_pack(buffer, val);
           myocard_mat_->set_internal_state(k, val, i);
         }
+      }
     }
   }
 }
@@ -285,7 +282,6 @@ void Mat::Myocard::setup_diffusion_tensor(const std::vector<double>& fiber1)
   // done
 
   difftensor_.push_back(difftensor);
-  return;
 }
 
 void Mat::Myocard::setup_diffusion_tensor(const Core::LinAlg::Matrix<3, 1>& fiber1)
@@ -316,8 +312,6 @@ void Mat::Myocard::setup_diffusion_tensor(const Core::LinAlg::Matrix<3, 1>& fibe
   // done
 
   difftensor_.push_back(difftensor);
-
-  return;
 }
 
 void Mat::Myocard::setup_diffusion_tensor(const Core::LinAlg::Matrix<2, 1>& fiber1)
@@ -342,14 +336,11 @@ void Mat::Myocard::setup_diffusion_tensor(const Core::LinAlg::Matrix<2, 1>& fibe
   // done
 
   difftensor_.push_back(difftensor);
-
-  return;
 }
 
 void Mat::Myocard::diffusivity(Core::LinAlg::Matrix<1, 1>& diffus3, int gp) const
 {
   diffus3(0, 0) = difftensor_[gp](0, 0);
-  return;
 }
 
 void Mat::Myocard::diffusivity(Core::LinAlg::Matrix<2, 2>& diffus3, int gp) const
@@ -361,8 +352,6 @@ void Mat::Myocard::diffusivity(Core::LinAlg::Matrix<2, 2>& diffus3, int gp) cons
       diffus3(i, j) = difftensor_[gp](i, j);
     }
   }
-
-  return;
 }
 
 void Mat::Myocard::diffusivity(Core::LinAlg::Matrix<3, 3>& diffus3, int gp) const
@@ -374,7 +363,6 @@ void Mat::Myocard::diffusivity(Core::LinAlg::Matrix<3, 3>& diffus3, int gp) cons
       diffus3(i, j) = difftensor_[gp](i, j);
     }
   }
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -535,24 +523,34 @@ double Mat::Myocard::get_ionic_currents(const int k) const
 void Mat::Myocard::initialize()
 {
   if ((params_->model) == "MV")
+  {
     myocard_mat_ =
         std::make_shared<MyocardMinimal>(params_->dt_deriv, (params_->tissue), params_->num_gp);
+  }
   else if ((params_->model) == "FHN")
+  {
     myocard_mat_ = std::make_shared<MyocardFitzhughNagumo>(
         params_->dt_deriv, (params_->tissue), params_->num_gp);
+  }
   else if ((params_->model) == "INADA")
+  {
     myocard_mat_ = std::make_shared<MyocardInada>(params_->dt_deriv, (params_->tissue));
+  }
   else if ((params_->model) == "TNNP")
+  {
     myocard_mat_ = std::make_shared<MyocardTenTusscher>(params_->dt_deriv, (params_->tissue));
+  }
   else if ((params_->model) == "SAN")
+  {
     myocard_mat_ = std::make_shared<MyocardSanGarny>(params_->dt_deriv, (params_->tissue));
+  }
   else
+  {
     FOUR_C_THROW(
         "Myocard Material type is not supported! (for the moment only MV,FHN,INADA,TNNP and SAN)");
+  }
 
   nb_state_variables_ = myocard_mat_->get_number_of_internal_state_variables();
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -561,7 +559,6 @@ void Mat::Myocard::initialize()
 void Mat::Myocard::resize_internal_state_variables()
 {
   myocard_mat_->resize_internal_state_variables(params_->num_gp);
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -570,8 +567,6 @@ void Mat::Myocard::resize_internal_state_variables()
 void Mat::Myocard::update(const double phi, const double dt)
 {
   myocard_mat_->update(phi, dt * (params_->time_scale));
-
-  return;
 }
 
 /*----------------------------------------------------------------------*

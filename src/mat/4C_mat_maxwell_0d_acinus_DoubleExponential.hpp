@@ -131,15 +131,15 @@ namespace Mat
         const double NumOfAcini, const double Vo, double time, double dt) override;
 
    private:
-    double e1_01_;
-    double e1_lin1_;
-    double e1_exp1_;
-    double tau1_;
+    double e1_01_{};
+    double e1_lin1_{};
+    double e1_exp1_{};
+    double tau1_{};
 
-    double e1_02_;
-    double e1_lin2_;
-    double e1_exp2_;
-    double tau2_;
+    double e1_02_{};
+    double e1_lin2_{};
+    double e1_exp2_{};
+    double tau2_{};
   };
 
 }  // namespace Mat

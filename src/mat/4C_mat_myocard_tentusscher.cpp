@@ -197,13 +197,13 @@ FOUR_C_NAMESPACE_OPEN
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
-MyocardTenTusscher::MyocardTenTusscher() {}
+MyocardTenTusscher::MyocardTenTusscher() = default;
 
 
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
-MyocardTenTusscher::MyocardTenTusscher(const double eps_deriv_myocard, const std::string tissue)
+MyocardTenTusscher::MyocardTenTusscher(const double eps_deriv_myocard, const std::string& tissue)
     : tools_(), s0_(29, 0.0), s_(29, 0.0), r_(29, 0.0), a_(82, 0.0), c_(63, 0.0)
 
 {
@@ -701,7 +701,6 @@ void MyocardTenTusscher::set_internal_state(const int k, const double val)
     s0_[k] = val;
     s_[k] = val;
   }
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -727,8 +726,6 @@ void MyocardTenTusscher::update(const double phi, const double dt)
   // update initial values for next time step
   for (int i = 0; i < 19; i++) s0_[i] = s_[i];
   voi_ += dt;
-
-  return;
 }
 
 FOUR_C_NAMESPACE_CLOSE

@@ -31,7 +31,6 @@ Mat::PAR::MembraneActiveStrain::MembraneActiveStrain(const Core::Mat::PAR::Param
       alpha1_(matdata.parameters.get<double>("ALPHA1")),
       alpha2_(matdata.parameters.get<double>("ALPHA2"))
 {
-  return;
 }  // Mat::PAR::MembraneActiveStrain::MembraneActiveStrain
 
 /*----------------------------------------------------------------------*
@@ -47,7 +46,7 @@ Mat::MembraneActiveStrainType Mat::MembraneActiveStrainType::instance_;
 Core::Communication::ParObject* Mat::MembraneActiveStrainType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::MembraneActiveStrain* membrane_activestrain = new Mat::MembraneActiveStrain();
+  auto* membrane_activestrain = new Mat::MembraneActiveStrain();
   membrane_activestrain->unpack(buffer);
 
   return membrane_activestrain;
@@ -64,7 +63,6 @@ Mat::MembraneActiveStrain::MembraneActiveStrain()
       isinit_(false),
       fibervecs_(false)
 {
-  return;
 }  // Mat::MembraneActiveStrain::MembraneActiveStrain()
 
 /*----------------------------------------------------------------------*
@@ -78,7 +76,6 @@ Mat::MembraneActiveStrain::MembraneActiveStrain(Mat::PAR::MembraneActiveStrain* 
       isinit_(false),
       fibervecs_(false)
 {
-  return;
 }  // Mat::MembraneActiveStrain::MembraneActiveStrain()
 
 /*----------------------------------------------------------------------*
@@ -130,7 +127,6 @@ void Mat::MembraneActiveStrain::pack(Core::Communication::PackBuffer& data) cons
     add_to_pack(data, activation_->at(gp));
   }
 
-  return;
 }  // Mat::MembraneActiveStrain::pack()
 
 /*----------------------------------------------------------------------*
@@ -144,6 +140,7 @@ void Mat::MembraneActiveStrain::unpack(Core::Communication::UnpackBuffer& buffer
   int matid = -1;
   extract_from_pack(buffer, matid);
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -155,6 +152,7 @@ void Mat::MembraneActiveStrain::unpack(Core::Communication::UnpackBuffer& buffer
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // fiber vectors: Fiber1, Fiber2, Normal
   extract_from_pack(buffer, fibervecs_);
@@ -165,7 +163,7 @@ void Mat::MembraneActiveStrain::unpack(Core::Communication::UnpackBuffer& buffer
   if (matpassive_exists)
   {
     Core::Communication::ParObject* o = Core::Communication::factory(buffer);
-    Mat::So3Material* matpassive = dynamic_cast<Mat::So3Material*>(o);
+    auto* matpassive = dynamic_cast<Mat::So3Material*>(o);
     if (matpassive == nullptr) FOUR_C_THROW("failed to unpack passive material");
 
     matpassive_ = std::shared_ptr<So3Material>(matpassive);
@@ -343,8 +341,6 @@ void Mat::MembraneActiveStrain::evaluate_membrane(const Core::LinAlg::Matrix<3, 
 
   // pullback of the linearization
   pullback4th_tensor_voigt(defgrd_active_inv_loc_red, cmatpassive_loc, cmat);
-
-  return;
 }  // Mat::MembraneActiveStrain::Evaluate
 
 /*----------------------------------------------------------------------*
@@ -457,9 +453,9 @@ void Mat::MembraneActiveStrain::setup_fiber_vectors(
       std::abs(fibervecs_[1].dot(fibervecs_[2])) > eps or
       std::abs(fibervecs_[0].dot(fibervecs_[2])) > eps)
   {
-    std::cout << std::endl;
-    std::cout << "\tWARNING: fiber vectors do NOT build orthonormal basis!" << std::endl;
-    std::cout << std::endl;
+    std::cout << '\n';
+    std::cout << "\tWARNING: fiber vectors do NOT build orthonormal basis!" << '\n';
+    std::cout << '\n';
     FOUR_C_THROW(
         "Fiber vectors are not orthonormal: while this is not necessary in general, for now we "
         "limit ourselves to the orthonomal case!\n"
@@ -473,7 +469,7 @@ void Mat::MembraneActiveStrain::setup_fiber_vectors(
  * Function which reads in the fiber direction
  *----------------------------------------------------------------------*/
 void Mat::MembraneActiveStrain::read_dir(const Core::IO::InputParameterContainer& container,
-    std::string specifier, Core::LinAlg::Matrix<3, 1>& dir)
+    const std::string& specifier, Core::LinAlg::Matrix<3, 1>& dir)
 {
   const auto& fiber_opt = container.get<std::optional<std::vector<double>>>(specifier);
   FOUR_C_ASSERT(fiber_opt.has_value(), "Internal error: fiber vector not found.");
@@ -489,8 +485,6 @@ void Mat::MembraneActiveStrain::read_dir(const Core::IO::InputParameterContainer
 
   // fill final normalized vector
   for (int i = 0; i < 3; ++i) dir(i) = fiber[i] / fnorm;
-
-  return;
 }  // Mat::MembraneActiveStrain::read_dir
 
 void Mat::MembraneActiveStrain::setup_normal_direction()

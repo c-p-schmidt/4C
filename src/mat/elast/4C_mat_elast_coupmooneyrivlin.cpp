@@ -68,20 +68,26 @@ void Mat::Elastic::CoupMooneyRivlin::add_coup_deriv_vol(
     *dPj1 += 2. * c1 * pow(J, -1. / 3.) + 4. * c2 * pow(J, 1. / 3.) - (2. * c1 + 4. * c2) / J +
              2. * c3 * (sqrt(J * J) - 1.) * pow(J * J, -1. / 2.) * J;
   if (dPj2)
+  {
     *dPj2 += -2. / 3. * c1 * pow(J, -4. / 3.) + 4. / 3. * c2 * pow(J, -2. / 3.) +
              (2. * c1 + 4. * c2) * pow(J, -2.) + (2. * c3) -
              2. * c3 * (sqrt(J * J) - 1.) * pow(J * J, -3. / 2.) * J * J +
              2. * c3 * (sqrt(J * J) - 1.) * pow(J * J, -1. / 2.);
+  }
   if (dPj3)
+  {
     *dPj3 += 8. / 9. * c1 * pow(J, -0.7e1 / 3.) - 8. / 9. * c2 * pow(J, -5. / 3.) -
              2. * (2. * c1 + 4. * c2) * pow(J, -3.) +
              6. * c3 * (sqrt(J * J) - 1.) * pow(J * J, -5. / 2.) * pow(J, 3.) -
              6. * c3 * (sqrt(J * J) - 1.) * pow(J * J, -3. / 2.) * J;
+  }
   if (dPj4)
+  {
     *dPj4 += -56. / 27. * c1 * pow(J, -10. / 3.) + 40. / 27. * c2 * pow(J, -8. / 3.) +
              6. * (2. * c1 + 40 * c2) * pow(J, -4.) -
              30. * c3 * (sqrt(J * J) - 1.) * pow(J * J, -7. / 2.) * pow(J, 4.) +
              36. * c3 * (sqrt(J * J) - 1.) * pow(J * J, -5. / 2.) * J * J -
              6. * c3 * (sqrt(J * J) - 1.) * pow(J * J, -3. / 2.);
+  }
 }
 FOUR_C_NAMESPACE_CLOSE

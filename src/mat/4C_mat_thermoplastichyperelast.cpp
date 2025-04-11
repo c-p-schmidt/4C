@@ -60,7 +60,7 @@ Mat::ThermoPlasticHyperElastType Mat::ThermoPlasticHyperElastType::instance_;
 Core::Communication::ParObject* Mat::ThermoPlasticHyperElastType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ThermoPlasticHyperElast* thrplhyper = new Mat::ThermoPlasticHyperElast();
+  auto* thrplhyper = new Mat::ThermoPlasticHyperElast();
   thrplhyper->unpack(buffer);
   return thrplhyper;
 }
@@ -613,12 +613,12 @@ void Mat::ThermoPlasticHyperElast::evaluate(const Core::LinAlg::Matrix<3, 3>* de
   {
     // only first plastic call is output at screen for every processor
     // visualisation of whole plastic behaviour via PLASTIC_STRAIN in postprocessing
-    if (plastic_step_ == false)
+    if (!plastic_step_)
     {
       plastic_ele_id_ = eleGID;
 
-      if ((plastic_step_ == false) and (eleGID == plastic_ele_id_) and (gp == 0))
-        std::cout << "plasticity starts in element = " << plastic_ele_id_ << std::endl;
+      if ((!plastic_step_) and (eleGID == plastic_ele_id_) and (gp == 0))
+        std::cout << "plasticity starts in element = " << plastic_ele_id_ << '\n';
 
       plastic_step_ = true;
     }
@@ -995,7 +995,7 @@ void Mat::ThermoPlasticHyperElast::setup_cmat_elasto_plastic(
     double Dgamma, double Hiso_temp, double sigma_y0infty_temp, double sigma_y0_temp, double mubar,
     double q_trial,                            // || s_{n+1}^{trial} ||
     const Core::LinAlg::Matrix<3, 3>& defgrd,  // F
-    Core::LinAlg::Matrix<3, 3> invdefgrdcurr, Core::LinAlg::Matrix<3, 3> n,
+    const Core::LinAlg::Matrix<3, 3>& invdefgrdcurr, const Core::LinAlg::Matrix<3, 3>& n,
     double bulk,  // bulk modulus
     int gp        // current Gauss point
 ) const
@@ -1479,7 +1479,7 @@ void Mat::ThermoPlasticHyperElast::fd_check(
         std::cout << i << k << stress_comp << "fd: "
                   << 2.0 *
                          ((disturb_stresstemp(stress_comp) / (delta)-stress(stress_comp) / (delta)))
-                  << "ref: " << cmat(stress_comp, array[i][k]) << std::endl;
+                  << "ref: " << cmat(stress_comp, array[i][k]) << '\n';
       }
       // undisturb the respective strain quantities (disturbstrain=strain)
       RCG_disturb(i, k) -= delta / 2.0;

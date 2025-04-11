@@ -324,11 +324,17 @@ void Mat::setup_linear_isotropic_elastic_tensor(Core::LinAlg::FourTensor<3>& ela
   const auto eye = [](int i, int j) { return i == j ? 1.0 : 0.0; };
 
   for (unsigned int i = 0; i < 3; ++i)
+  {
     for (unsigned int j = 0; j < 3; ++j)
+    {
       for (unsigned int k = 0; k < 3; ++k)
+      {
         for (unsigned int l = 0; l < 3; ++l)
           elasticity_tensor(i, j, k, l) =
               lambda * eye(i, j) * eye(k, l) + mu * (eye(i, k) * eye(j, l) + eye(i, l) * eye(j, k));
+      }
+    }
+  }
 }
 
 

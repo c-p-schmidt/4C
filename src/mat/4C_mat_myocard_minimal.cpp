@@ -19,13 +19,14 @@ FOUR_C_NAMESPACE_OPEN
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
-MyocardMinimal::MyocardMinimal() {}
+MyocardMinimal::MyocardMinimal() = default;
 
 
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
-MyocardMinimal::MyocardMinimal(const double eps_deriv_myocard, const std::string tissue, int num_gp)
+MyocardMinimal::MyocardMinimal(
+    const double eps_deriv_myocard, const std::string& tissue, int num_gp)
     : tools_(),
       v0_(num_gp),
       w0_(num_gp),
@@ -413,7 +414,6 @@ double MyocardMinimal::get_internal_state(const int k, int gp) const
 void MyocardMinimal::set_internal_state(const int k, const double val)
 {
   set_internal_state(k, val, 0);
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -454,7 +454,6 @@ void MyocardMinimal::set_internal_state(const int k, const double val, int gp)
       break;
     }
   }
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -504,8 +503,6 @@ void MyocardMinimal::update(const double phi, const double dt)
   v0_ = v_;
   w0_ = w_;
   s0_ = s_;
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -522,7 +519,6 @@ void MyocardMinimal::resize_internal_state_variables(int gp)
   jfi_.resize(gp);
   jso_.resize(gp);
   jsi_.resize(gp);
-  return;
 }
 
 /*----------------------------------------------------------------------*

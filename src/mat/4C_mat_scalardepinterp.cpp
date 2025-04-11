@@ -38,7 +38,7 @@ Mat::ScalarDepInterpType Mat::ScalarDepInterpType::instance_;
 Core::Communication::ParObject* Mat::ScalarDepInterpType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ScalarDepInterp* ScalarDepInterp = new Mat::ScalarDepInterp();
+  auto* ScalarDepInterp = new Mat::ScalarDepInterp();
   ScalarDepInterp->unpack(buffer);
   return ScalarDepInterp;
 }
@@ -223,6 +223,7 @@ void Mat::ScalarDepInterp::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -234,6 +235,7 @@ void Mat::ScalarDepInterp::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   int numgp;
   extract_from_pack(buffer, numgp);
@@ -256,14 +258,14 @@ void Mat::ScalarDepInterp::unpack(Core::Communication::UnpackBuffer& buffer)
   {
     {
       Core::Communication::ParObject* o = Core::Communication::factory(buffer);
-      Mat::So3Material* matel = dynamic_cast<Mat::So3Material*>(o);
+      auto* matel = dynamic_cast<Mat::So3Material*>(o);
       if (matel == nullptr) FOUR_C_THROW("failed to unpack elastic material");
       lambda_zero_mat_ = std::shared_ptr<So3Material>(matel);
     }
 
     {
       Core::Communication::ParObject* o = Core::Communication::factory(buffer);
-      Mat::So3Material* matel = dynamic_cast<Mat::So3Material*>(o);
+      auto* matel = dynamic_cast<Mat::So3Material*>(o);
       if (matel == nullptr) FOUR_C_THROW("failed to unpack elastic material");
       lambda_unit_mat_ = std::shared_ptr<So3Material>(matel);
     }
@@ -337,9 +339,9 @@ void Mat::ScalarDepInterp::strain_energy(
   lambda_unit_mat_->strain_energy(glstrain, psi_lambda_unit, gp, eleGID);
 
   double lambda = 0.0;
-  for (unsigned gp = 0; gp < lambda_.size(); gp++)
+  for (double gp : lambda_)
   {
-    lambda += lambda_.at(gp);
+    lambda += gp;
   }
   lambda = lambda / (lambda_.size());
 

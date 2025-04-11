@@ -198,7 +198,7 @@ namespace Mat
     std::vector<Core::LinAlg::Matrix<NUM_STRESS_3D, 1>> strainplcurr_;
     std::vector<double> strainbarpllast_;
     std::vector<double> strainbarplcurr_;
-    bool isinit_;
+    bool isinit_{};
   };
 }  // namespace Mat
 FOUR_C_NAMESPACE_CLOSE

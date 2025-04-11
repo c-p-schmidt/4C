@@ -641,7 +641,7 @@ Core::LinAlg::Matrix<2, 2>& Mat::ViscoPlasticNoYieldSurface::calculate_lineariza
 Mat::PreCalculatedTerms Mat::ViscoPlasticNoYieldSurface::pre_calculate_terms(
     const double equ_tens_stress_np, const double flow_resistance_np, const double dt)
 {
-  Mat::PreCalculatedTerms terms;
+  Mat::PreCalculatedTerms terms{};
 
   // Elasticity parameters
   const double E = params_->young();

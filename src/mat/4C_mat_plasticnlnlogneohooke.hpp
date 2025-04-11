@@ -244,7 +244,7 @@ namespace Mat
     const Core::Utils::FunctionOfAnything* hardening_function_{nullptr};
 
     //! indicator if #Initialize routine has been called
-    bool isinit_;
+    bool isinit_{};
   };  // class PlasticNlnLogNeoHooke
 }  // namespace Mat
 

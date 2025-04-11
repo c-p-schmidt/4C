@@ -20,7 +20,6 @@ FOUR_C_NAMESPACE_OPEN
 Mat::PAR::Soret::Soret(const Core::Mat::PAR::Parameter::Data& matdata)
     : Fourier(matdata), soretcoefficient_(matdata.parameters.get<double>("SORET"))
 {
-  return;
 }
 
 
@@ -36,7 +35,7 @@ Mat::SoretType Mat::SoretType::instance_;
 
 Core::Communication::ParObject* Mat::SoretType::create(Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::Soret* soret = new Mat::Soret();
+  auto* soret = new Mat::Soret();
   soret->unpack(buffer);
   return soret;
 }
@@ -45,13 +44,13 @@ Core::Communication::ParObject* Mat::SoretType::create(Core::Communication::Unpa
 /*------------------------------------------------------------------*
  | construct empty Soret material                        fang 06/15 |
  *------------------------------------------------------------------*/
-Mat::Soret::Soret() : params_(nullptr) { return; }
+Mat::Soret::Soret() : params_(nullptr) {}
 
 
 /*-------------------------------------------------------------------------*
  | construct Soret material with specific material parameters   fang 06/15 |
  *-------------------------------------------------------------------------*/
-Mat::Soret::Soret(Mat::PAR::Soret* params) : Fourier(params), params_(params) { return; }
+Mat::Soret::Soret(Mat::PAR::Soret* params) : Fourier(params), params_(params) {}
 
 
 /*----------------------------------------------------------------------*
@@ -84,6 +83,7 @@ void Mat::Soret::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -95,6 +95,7 @@ void Mat::Soret::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not match calling type {}!", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   Fourier::unpack(buffer);

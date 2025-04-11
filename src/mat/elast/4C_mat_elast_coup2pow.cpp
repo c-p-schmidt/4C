@@ -42,9 +42,11 @@ void Mat::Elastic::Coup2Pow::add_derivatives_principal(Core::LinAlg::Matrix<3, 1
 
   // If d<2 the material model is not stress free in the reference configuration
   if (d < 2)
+  {
     FOUR_C_THROW(
         "The Elast_Coup2Pow - material only works for positive integer exponents, which are larger "
         "than two.");
+  }
 
   dPI(1) += c * d * pow((prinv(1) - 3.), d - 1.);
 

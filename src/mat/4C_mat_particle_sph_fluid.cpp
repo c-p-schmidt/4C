@@ -51,7 +51,7 @@ std::shared_ptr<Core::Mat::Material> Mat::PAR::ParticleMaterialSPHFluid::create_
 Core::Communication::ParObject* Mat::ParticleMaterialSPHFluidType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ParticleMaterialSPHFluid* particlematsph = new Mat::ParticleMaterialSPHFluid();
+  auto* particlematsph = new Mat::ParticleMaterialSPHFluid();
   particlematsph->unpack(buffer);
   return particlematsph;
 }
@@ -100,6 +100,7 @@ void Mat::ParticleMaterialSPHFluid::unpack(Core::Communication::UnpackBuffer& bu
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       // note: dynamic_cast needed due diamond inheritance structure
@@ -112,6 +113,7 @@ void Mat::ParticleMaterialSPHFluid::unpack(Core::Communication::UnpackBuffer& bu
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 FOUR_C_NAMESPACE_CLOSE

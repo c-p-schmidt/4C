@@ -47,7 +47,7 @@ class MyocardSanGarny : public MyocardGeneral
   MyocardSanGarny();
 
   /// construct empty material object
-  explicit MyocardSanGarny(const double eps_deriv_myocard, const std::string tissue);
+  explicit MyocardSanGarny(const double eps_deriv_myocard, const std::string& tissue);
 
   /// compute reaction coefficient
   double rea_coeff(const double phi, const double dt) override;
@@ -74,7 +74,7 @@ class MyocardSanGarny : public MyocardGeneral
   MyocardTools tools_;
 
   /// perturbation for numerical approximation of the derivative
-  double eps_deriv_;
+  double eps_deriv_{};
 
   /// gating variables SAN_Garny
   std::vector<double> s0_;

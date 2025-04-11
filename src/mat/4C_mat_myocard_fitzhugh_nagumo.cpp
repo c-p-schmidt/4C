@@ -19,14 +19,14 @@ FOUR_C_NAMESPACE_OPEN
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
-MyocardFitzhughNagumo::MyocardFitzhughNagumo() {}
+MyocardFitzhughNagumo::MyocardFitzhughNagumo() = default;
 
 
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
 MyocardFitzhughNagumo::MyocardFitzhughNagumo(
-    const double eps_deriv_myocard, const std::string tissue, int num_gp)
+    const double eps_deriv_myocard, const std::string& tissue, int num_gp)
     : tools_(), r0_(num_gp), r_(num_gp), j1_(num_gp), j2_(num_gp), mechanical_activation_(num_gp)
 {
   // Initial condition
@@ -114,7 +114,6 @@ double MyocardFitzhughNagumo::get_internal_state(const int k, int gp) const
 void MyocardFitzhughNagumo::set_internal_state(const int k, const double val)
 {
   set_internal_state(k, val, 0);
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -142,7 +141,6 @@ void MyocardFitzhughNagumo::set_internal_state(const int k, const double val, in
       break;
     }
   }
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -189,8 +187,6 @@ void MyocardFitzhughNagumo::update(const double phi, const double dt)
 {
   // update initial values for next time step
   r0_ = r_;
-
-  return;
 }
 
 FOUR_C_NAMESPACE_CLOSE

@@ -50,7 +50,7 @@ Mat::AAAneohookeType Mat::AAAneohookeType::instance_;
 Core::Communication::ParObject* Mat::AAAneohookeType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::AAAneohooke* aaa = new Mat::AAAneohooke();
+  auto* aaa = new Mat::AAAneohooke();
   aaa->unpack(buffer);
   return aaa;
 }
@@ -93,6 +93,7 @@ void Mat::AAAneohooke::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -104,6 +105,7 @@ void Mat::AAAneohooke::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 
@@ -300,6 +302,7 @@ void Mat::AAAneohooke::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
 
   // contribution: Cinv \otimes Cinv
   for (int i = 0; i < 6; i++)
+  {
     for (int j = 0; j < 6; j++)
     {
       // contribution: Cinv \otimes I + I \otimes Cinv
@@ -307,6 +310,7 @@ void Mat::AAAneohooke::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
       // contribution: Cinv \otimes Cinv
       (*cmat)(i, j) += delta6 * invc(i) * invc(j);
     }
+  }
 
   // contribution: boeppel-product
   Core::LinAlg::Tensor::add_holzapfel_product(*cmat, invc, delta7);
@@ -322,8 +326,6 @@ void Mat::AAAneohooke::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
 
   // contribution: boeppel-product
   Core::LinAlg::Tensor::add_holzapfel_product(*cmat, invc, delta7);
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -365,7 +367,6 @@ void Mat::AAAneohooke::strain_energy(
   // W_vol = K beta2^(-2) ( beta2 ln (J) + J^(-beta2) -1 )
   psi +=
       komp * pow(beta2, -2.) * (beta2 * log(pow(iiinv, -2.)) + pow(pow(iiinv, -2.), -beta2) - 1.0);
-  return;
 }
 
 

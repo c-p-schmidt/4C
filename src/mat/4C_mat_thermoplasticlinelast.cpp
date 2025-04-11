@@ -55,7 +55,7 @@ Mat::ThermoPlasticLinElastType Mat::ThermoPlasticLinElastType::instance_;
 Core::Communication::ParObject* Mat::ThermoPlasticLinElastType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ThermoPlasticLinElast* plastic = new Mat::ThermoPlasticLinElast();
+  auto* plastic = new Mat::ThermoPlasticLinElast();
   plastic->unpack(buffer);
   return plastic;
 }
@@ -129,8 +129,6 @@ void Mat::ThermoPlasticLinElast::pack(Core::Communication::PackBuffer& data) con
 
   add_to_pack(data, plastic_step_);
 
-  return;
-
 }  // pack()
 
 
@@ -149,6 +147,7 @@ void Mat::ThermoPlasticLinElast::unpack(Core::Communication::UnpackBuffer& buffe
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -160,6 +159,7 @@ void Mat::ThermoPlasticLinElast::unpack(Core::Communication::UnpackBuffer& buffe
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // history data
   int histsize;
@@ -275,8 +275,6 @@ void Mat::ThermoPlasticLinElast::setup(
 
   isinit_ = true;
 
-  return;
-
 }  // setup()
 
 
@@ -314,7 +312,6 @@ void Mat::ThermoPlasticLinElast::update()
     strainbarplcurr_->at(i) = 0.0;
   }
 
-  return;
 }  // update()
 
 
@@ -523,12 +520,12 @@ void Mat::ThermoPlasticLinElast::evaluate(const Core::LinAlg::Matrix<3, 3>* defg
   {
     // only first plastic call is output at screen for every processor
     // visualisation of whole plastic behaviour via PLASTIC_STRAIN in postprocessing
-    if (plastic_step_ == false)
+    if (!plastic_step_)
     {
       plastic_ele_id_ = eleGID;
 
-      if ((plastic_step_ == false) and (eleGID == plastic_ele_id_) and (gp == 0))
-        std::cout << "plasticity starts in element = " << plastic_ele_id_ << std::endl;
+      if ((!plastic_step_) and (eleGID == plastic_ele_id_) and (gp == 0))
+        std::cout << "plasticity starts in element = " << plastic_ele_id_ << '\n';
 
       plastic_step_ = true;
     }
@@ -617,7 +614,7 @@ void Mat::ThermoPlasticLinElast::evaluate(const Core::LinAlg::Matrix<3, 3>* defg
       // beta_{n+1} = Hkin * astrain^p_{n+1}
       betabar = Hkin * strainbar_p;
 
-      if (bool_linisotrophard == true)
+      if (bool_linisotrophard)
       {
         // linear isotropic hardening
         // sigma = sigma_y0 + sigma_yiso(strainbar^p_{n+1})
@@ -1132,7 +1129,6 @@ void Mat::ThermoPlasticLinElast::strain_rate_split(int gp,    // current Gauss p
     strainelrate_->at(gp)(i) = strainrate(i, 0) - (1.0 / stepsize) * incstrainpl_->at(gp)(i);
   }
 
-  return;
 
 }  // StrainRateSplit
 

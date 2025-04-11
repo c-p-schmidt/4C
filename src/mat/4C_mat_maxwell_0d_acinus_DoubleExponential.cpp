@@ -39,8 +39,7 @@ Mat::Maxwell0dAcinusDoubleExponentialType Mat::Maxwell0dAcinusDoubleExponentialT
 Core::Communication::ParObject* Mat::Maxwell0dAcinusDoubleExponentialType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::Maxwell0dAcinusDoubleExponential* mxwll_0d_acin =
-      new Mat::Maxwell0dAcinusDoubleExponential();
+  auto* mxwll_0d_acin = new Mat::Maxwell0dAcinusDoubleExponential();
   mxwll_0d_acin->unpack(buffer);
   return mxwll_0d_acin;
 }
@@ -108,6 +107,7 @@ void Mat::Maxwell0dAcinusDoubleExponential::unpack(Core::Communication::UnpackBu
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -119,6 +119,7 @@ void Mat::Maxwell0dAcinusDoubleExponential::unpack(Core::Communication::UnpackBu
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 

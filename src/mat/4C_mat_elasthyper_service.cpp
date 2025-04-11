@@ -96,7 +96,7 @@ void Mat::elast_hyper_evaluate_invariant_derivatives(const Core::LinAlg::Matrix<
   if (properties.isoprinc)
   {
     // loop map of associated potential summands
-    for (auto& p : potsum)
+    for (const auto& p : potsum)
     {
       p->add_derivatives_principal(dPI, ddPII, prinv, gp, eleGID);
     }
@@ -115,7 +115,7 @@ void Mat::elast_hyper_evaluate_invariant_derivatives(const Core::LinAlg::Matrix<
     // Evaluate modified invariants
     Mat::invariants_modified(modinv, prinv);
 
-    for (auto& p : potsum)
+    for (const auto& p : potsum)
     {
       p->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
     }
@@ -391,7 +391,7 @@ void Mat::elast_hyper_add_anisotropic_princ(Core::LinAlg::Matrix<6, 1>& S_stress
   // Loop over all summands and add aniso stress
   // ToDo: This should be solved in analogy to the solution in elast_remodelfiber.cpp
   // ToDo: i.e. by evaluating the derivatives of the potsum w.r.t. the anisotropic invariants
-  for (auto& p : potsum)
+  for (const auto& p : potsum)
     p->add_stress_aniso_principal(C_strain, cmat, S_stress, params, gp, eleGID);
 }
 
@@ -406,7 +406,7 @@ void Mat::elast_hyper_add_anisotropic_mod(Core::LinAlg::Matrix<6, 1>& S_stress,
   // Loop over all summands and add aniso stress
   // ToDo: This should be solved in analogy to the solution in elast_remodelfiber.cpp
   // ToDo: i.e. by evaluating the derivatives of the potsum w.r.t. the anisotropic invariants
-  for (auto& p : potsum)
+  for (const auto& p : potsum)
     p->add_stress_aniso_modified(C_strain, iC_stress, cmat, S_stress, prinv(2), gp, eleGID, params);
 }
 
@@ -433,7 +433,7 @@ void Mat::calculate_gamma_delta(Core::LinAlg::Matrix<3, 1>& gamma,
 void Mat::elast_hyper_properties(const std::vector<std::shared_ptr<Mat::Elastic::Summand>>& potsum,
     SummandProperties& properties)
 {
-  for (auto& p : potsum)
+  for (const auto& p : potsum)
   {
     p->specify_formulation(properties.isoprinc, properties.isomod, properties.anisoprinc,
         properties.anisomod, properties.viscoGeneral);
@@ -452,9 +452,11 @@ void Mat::elast_hyper_check_polyconvexity(const Core::LinAlg::Matrix<3, 3>& defg
   // --> error if anisotropic material is tested (plastic and viscoelastic materials should not get
   // in here)
   if (properties.anisoprinc || properties.anisomod)
+  {
     FOUR_C_THROW(
         "This polyconvexity-check is just implemented for isotropic "
         "hyperelastic-materials (do not use for anistropic materials).");
+  }
 
   // principal invariants (i)
   // first strain energy derivative dPI (i)
@@ -533,6 +535,7 @@ void Mat::elast_hyper_check_polyconvexity(const Core::LinAlg::Matrix<3, 3>& defg
   //         FreeDcFF  FreeDcFcF   FreeDcFJ
   //         FreeDFJ   FreeDcFJ    FreeDJJ]
   for (int i = 0; i < 9; i++)
+  {
     for (int j = 0; j < 9; j++)
     {
       FreeD(i, j) = FreeDFF(i, j);
@@ -540,6 +543,7 @@ void Mat::elast_hyper_check_polyconvexity(const Core::LinAlg::Matrix<3, 3>& defg
       FreeD(i + 9, j) = FreeDcFF(i, j);
       FreeD(i + 9, j + 9) = FreeDcFcF(i, j);
     }
+  }
 
   for (int i = 0; i < 9; i++)
   {
@@ -559,16 +563,22 @@ void Mat::elast_hyper_check_polyconvexity(const Core::LinAlg::Matrix<3, 3>& defg
 
   // Just positive EigenValues --> System is polyconvex
   for (int i = 0; i < 19; i++)
+  {
     for (int j = 0; j < 19; j++)
-      if (i == j)  // values on diagonal = EigenValues
+    {
+      if (i == j)
+      {  // values on diagonal = EigenValues
         if (EWFreeD(i, i) <
             (-1.0e-10 * EWFreeD.norm_inf()))  // do not test < 0, but reasonable small value
         {
-          std::cout << "\nWARNING: Your system is not polyconvex!" << std::endl;
+          std::cout << "\nWARNING: Your system is not polyconvex!" << '\n';
           std::cout << "Polyconvexity fails at: Element-Id: " << eleGID
-                    << " and Gauss-Point: " << gp << std::endl;
-          std::cout << "Eigenvalues of the Frechet Derivative are: " << EWFreeD << std::endl;
+                    << " and Gauss-Point: " << gp << '\n';
+          std::cout << "Eigenvalues of the Frechet Derivative are: " << EWFreeD << '\n';
         }
+      }
+    }
+  }
 }
 
 void Mat::elast_hyper_get_derivs_of_elastic_right_cg_tensor(const Core::LinAlg::Matrix<3, 3>& iFinM,

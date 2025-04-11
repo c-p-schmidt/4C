@@ -269,13 +269,13 @@ FOUR_C_NAMESPACE_OPEN
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
-MyocardSanGarny::MyocardSanGarny() {}
+MyocardSanGarny::MyocardSanGarny() = default;
 
 
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
-MyocardSanGarny::MyocardSanGarny(const double eps_deriv_myocard, const std::string tissue)
+MyocardSanGarny::MyocardSanGarny(const double eps_deriv_myocard, const std::string& tissue)
     : tools_(), s0_(15, 0.0), s_(15, 0.0), r_(15, 0.0), a_(52, 0.0), c_(133, 0.0)
 
 {
@@ -711,7 +711,6 @@ void MyocardSanGarny::set_internal_state(const int k, const double val)
 {
   s0_[k] = val;
   s_[k] = val;
-  return;
 }
 
 /*----------------------------------------------------------------------*

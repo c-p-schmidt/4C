@@ -288,8 +288,9 @@ namespace Mat
     //! and a given vector of plastic shears gamma_trial and
     //! sets up the respective residuals residuals_trial, the 2nd Piola-Kirchhoff stress PK2_trial
     //! and trial defect densities def_dens_trial
-    void setup_flow_rule(Core::LinAlg::Matrix<3, 3> deform_grad,  //!< [IN] deformation gradient
-        std::vector<double> gamma_trial,  //!< [OUT] trial vector of plastic shears
+    void setup_flow_rule(
+        const Core::LinAlg::Matrix<3, 3>& deform_grad,  //!< [IN] deformation gradient
+        std::vector<double> gamma_trial,                //!< [OUT] trial vector of plastic shears
         Core::LinAlg::Matrix<3, 3>&
             plastic_deform_grad_trial,  //!< [OUT] plastic deformation gradient
         std::vector<double>&
@@ -320,10 +321,10 @@ namespace Mat
     Mat::PAR::CrystalPlasticity* params_;
 
     //! Gauss point number
-    int gp_;
+    int gp_{};
 
     //! time increment
-    double dt_;
+    double dt_{};
 
     //! indicator whether the material model has been initialized already
     bool isinit_ = false;
@@ -343,27 +344,27 @@ namespace Mat
     //! General Properties:
     //!-------------------
     //! tolerance for local Newton Raphson iteration
-    double newton_tolerance_;
+    double newton_tolerance_{};
 
     //! Elastic Properties:
     //!-------------------------
     //! Young's Modulus
-    double youngs_mod_;
+    double youngs_mod_{};
     //! Poisson's ratio
-    double poisson_ratio_;
+    double poisson_ratio_{};
 
     //! Crystal Properties:
     //!-------------------
     //! Lattice type
     std::string lattice_type_;
     //! c to a ratio of the crystal's unit cell
-    double c_to_a_ratio_;
+    double c_to_a_ratio_{};
     //! Lattice constant a of unit cell
-    double lattice_constant_;
+    double lattice_constant_{};
     //! number of slip systems
-    int slip_system_count_;
+    int slip_system_count_{};
     //! number of twinning systems
-    int twin_system_count_;
+    int twin_system_count_{};
     //! Index to which subset a slip system belongs
     std::vector<int> slip_set_index_;
     //! Index to which subset a twinning system belongs
@@ -428,18 +429,18 @@ namespace Mat
     //! Elastic Properties:
     //!-------------------------
     //! 1st Lame constant
-    double lambda_;
+    double lambda_{};
     //! Shear modulus / 2nd Lame constant
-    double mue_;
+    double mue_{};
     //! Bulk modulus
-    double bulk_mod_;
+    double bulk_mod_{};
 
     //! Crystal Properties:
     //!-------------------
     //! total number of slip and twinning systems slip_system_count_ + twin_system_count_
-    int def_system_count_;
+    int def_system_count_{};
     //! Switch for mechanical twinning
-    bool is_twinning_;
+    bool is_twinning_{};
     //! magnitudes of Burgers vectors for slip systems
     std::vector<double> slip_burgers_mag_;
     //! magnitudes of Burgers vectors for twinning systems

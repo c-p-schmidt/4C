@@ -166,9 +166,11 @@ Mat::PAR::PlasticNlnLogNeoHooke::PlasticNlnLogNeoHooke(
       max_iterations_(50)
 {
   if (yield_ == 0 && functionID_hardening_ == 0)
+  {
     FOUR_C_THROW(
         "You have to provide either a parameter for "
         "HARDENING_FUNC or YIELD in MAT_Struct_PlasticNlnLogNeoHooke");
+  }
 }
 
 
@@ -190,7 +192,7 @@ Mat::PlasticNlnLogNeoHookeType Mat::PlasticNlnLogNeoHookeType::instance_;
 Core::Communication::ParObject* Mat::PlasticNlnLogNeoHookeType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::PlasticNlnLogNeoHooke* plasticneo = new Mat::PlasticNlnLogNeoHooke();
+  auto* plasticneo = new Mat::PlasticNlnLogNeoHooke();
   plasticneo->unpack(buffer);
   return plasticneo;
 }
@@ -261,6 +263,7 @@ void Mat::PlasticNlnLogNeoHooke::unpack(Core::Communication::UnpackBuffer& buffe
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -282,6 +285,7 @@ void Mat::PlasticNlnLogNeoHooke::unpack(Core::Communication::UnpackBuffer& buffe
                 functionID_hardening);
       }
     }
+  }
 
   // history data
   int histsize;

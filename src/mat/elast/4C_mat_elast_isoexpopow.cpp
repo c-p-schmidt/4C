@@ -45,9 +45,11 @@ void Mat::Elastic::IsoExpoPow::add_derivatives_modified(Core::LinAlg::Matrix<3, 
   const double expf = std::exp(k2 * std::pow(modinv(0) - 3., (double)d));
 
   if (d < 1)
+  {
     FOUR_C_THROW(
         "The Elast_IsoExpoPow - material only works for positive integer exponents (C) larger than "
         "one.");
+  }
 
   if (d == 1)
     dPmodI(0) += k1 * d * 0.5 * expf;
@@ -57,10 +59,14 @@ void Mat::Elastic::IsoExpoPow::add_derivatives_modified(Core::LinAlg::Matrix<3, 
   if (d == 1)
     ddPmodII(0) += k1 * d * d * k2 * 0.5 * expf;
   else if (d == 2)
+  {
     ddPmodII(0) += k1 * d * d * k2 * 0.5 * expf * pow((modinv(0) - 3.), 2. * (d - 1.)) +
                    k1 * d * 0.5 * expf * (d - 1.);
+  }
   else
+  {
     ddPmodII(0) += k1 * d * d * k2 * 0.5 * expf * pow((modinv(0) - 3.), 2. * (d - 1.)) +
                    k1 * d * 0.5 * expf * (d - 1.) * pow((modinv(0) - 3.), (d - 2.));
+  }
 }
 FOUR_C_NAMESPACE_CLOSE

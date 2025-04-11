@@ -19,7 +19,6 @@ FOUR_C_NAMESPACE_OPEN
 Mat::PAR::MembraneElastHyper::MembraneElastHyper(const Core::Mat::PAR::Parameter::Data& matdata)
     : Mat::PAR::ElastHyper(matdata)
 {
-  return;
 }  // Mat::PAR::MembraneElastHyper::MembraneElastHyper
 
 /*----------------------------------------------------------------------*
@@ -37,7 +36,7 @@ Mat::MembraneElastHyperType Mat::MembraneElastHyperType::instance_;
 Core::Communication::ParObject* Mat::MembraneElastHyperType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::MembraneElastHyper* memelhy = new Mat::MembraneElastHyper();
+  auto* memelhy = new Mat::MembraneElastHyper();
   memelhy->unpack(buffer);
 
   return memelhy;
@@ -46,10 +45,8 @@ Core::Communication::ParObject* Mat::MembraneElastHyperType::create(
 /*----------------------------------------------------------------------*
  |                                                                      |
  *----------------------------------------------------------------------*/
-Mat::MembraneElastHyper::MembraneElastHyper() : Mat::ElastHyper(), fibervecs_(true)
-{
-  return;
-}  // Mat::MembraneElastHyper::MembraneElastHyper()
+Mat::MembraneElastHyper::MembraneElastHyper()
+    : Mat::ElastHyper(), fibervecs_(true) {}  // Mat::MembraneElastHyper::MembraneElastHyper()
 
 /*----------------------------------------------------------------------*
  |                                                                      |
@@ -57,7 +54,6 @@ Mat::MembraneElastHyper::MembraneElastHyper() : Mat::ElastHyper(), fibervecs_(tr
 Mat::MembraneElastHyper::MembraneElastHyper(Mat::PAR::MembraneElastHyper* params)
     : Mat::ElastHyper(params), fibervecs_(true)
 {
-  return;
 }  // Mat::MembraneElastHyper::MembraneElastHyper()
 
 /*----------------------------------------------------------------------*
@@ -73,8 +69,6 @@ void Mat::MembraneElastHyper::pack(Core::Communication::PackBuffer& data) const
   Mat::ElastHyper::pack(data);
 
   add_to_pack(data, fibervecs_);
-
-  return;
 }  // Mat::MembraneElastHyper::pack()
 
 /*----------------------------------------------------------------------*
@@ -88,8 +82,6 @@ void Mat::MembraneElastHyper::unpack(Core::Communication::UnpackBuffer& buffer)
   Mat::ElastHyper::unpack(buffer);
 
   extract_from_pack(buffer, fibervecs_);
-
-  return;
 }  // Mat::MembraneElastHyper::unpack()
 
 /*----------------------------------------------------------------------*
@@ -101,8 +93,6 @@ void Mat::MembraneElastHyper::setup(int numgp, const Core::IO::InputParameterCon
   Mat::ElastHyper::setup(numgp, container);
 
   get_fiber_vecs(fibervecs_);
-
-  return;
 }  // Mat::MembraneElastHyper::setup()
 
 /*----------------------------------------------------------------------*
@@ -152,7 +142,6 @@ void Mat::MembraneElastHyper::evaluate_membrane(const Core::LinAlg::Matrix<3, 3>
     FOUR_C_THROW("anisomod_ not implemented for membrane elasthyper materials!");
   }
 
-  return;
 }  // Mat::MembraneElastHyper::Evaluate
 
 /*----------------------------------------------------------------------*

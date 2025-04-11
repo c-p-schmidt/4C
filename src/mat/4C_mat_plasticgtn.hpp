@@ -167,7 +167,7 @@ namespace Mat
     std::vector<double> epbar_n_;
     std::vector<double> epbar_n1_;
     const Core::Utils::FunctionOfAnything* hardening_function_{nullptr};
-    bool isinit_;
+    bool isinit_{};
 
     /**************************************************
                 PLASTIC CALCULATION ROUTINES

@@ -73,16 +73,22 @@ void Mat::Elastic::CoupSVK::add_coup_deriv_vol(
     *dPj1 += 12. * (mu / 4. + lambda / 8.) * pow(J, 1. / 3.) -
              2. * (3. / 4. * lambda + mu / 2.) * pow(J, -1. / 3.) - 2. * mu * pow(J, 1. / 3.);
   if (dPj2)
+  {
     *dPj2 += 4. * (mu / 4. + lambda / 8.) * pow(J, -2. / 3.) +
              2. / 3. * (3. / 4. * lambda + mu / 2.) * pow(J, -4. / 3.) -
              2. / 3. * mu * pow(J, -2. / 3.);
+  }
   if (dPj3)
+  {
     *dPj3 += -8. / 3. * (mu / 4. + lambda / 8.) * pow(J, -5. / 3.) -
              8. / 9. * (3. / 4. * lambda + mu / 2.) * pow(J, -7. / 3.) +
              4. / 9. * mu * pow(J, -5. / 3.);
+  }
   if (dPj4)
+  {
     *dPj4 += 40. / 9. * (mu / 4. + lambda / 8.) * pow(J, -8. / 3.) +
              56. / 27. * (3. / 4. * lambda + mu / 2.) * pow(J, -10. / 3.) -
              20. / 27. * mu * pow(J, -8. / 3.);
+  }
 }
 FOUR_C_NAMESPACE_CLOSE

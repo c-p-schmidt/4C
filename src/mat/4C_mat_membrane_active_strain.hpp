@@ -221,7 +221,7 @@ namespace Mat
     void setup_fiber_vectors(int numgp, const Core::IO::InputParameterContainer& container);
 
     // read RAD-AXI-CIR
-    void read_dir(const Core::IO::InputParameterContainer& container, std::string specifier,
+    void read_dir(const Core::IO::InputParameterContainer& container, const std::string& specifier,
         Core::LinAlg::Matrix<3, 1>& dir);
 
     // calculate normal direction from FIBER1 and FIBER2

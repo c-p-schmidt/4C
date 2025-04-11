@@ -289,11 +289,11 @@ namespace Mat
         double sigma_y0_temp,       //!< temperature-dependent flow/yield stress
         double mubar,               //!< deformation-dependent shear modulus
         double q_trial,             //!< trial von Mises equivalent stress
-        const Core::LinAlg::Matrix<3, 3>& defgrd,  //!< F_{n+1}
-        Core::LinAlg::Matrix<3, 3> invdefgrdcurr,  //!< inverse of F_{n+1}
-        Core::LinAlg::Matrix<3, 3> n,              //!< spatial flow vector
-        double bulk,                               //!< bulk modulus
-        int gp                                     //!< current Gauss-point
+        const Core::LinAlg::Matrix<3, 3>& defgrd,         //!< F_{n+1}
+        const Core::LinAlg::Matrix<3, 3>& invdefgrdcurr,  //!< inverse of F_{n+1}
+        const Core::LinAlg::Matrix<3, 3>& n,              //!< spatial flow vector
+        double bulk,                                      //!< bulk modulus
+        int gp                                            //!< current Gauss-point
     ) const;
 
     //! calculate updated value of bebar_{n+1}
@@ -430,11 +430,11 @@ namespace Mat
     //@}
 
     //! indicator if #Initialize routine has been called
-    bool isinit_;
+    bool isinit_{};
     //! indicator if material has started to be plastic
-    bool plastic_step_;
+    bool plastic_step_{};
     //! element ID, in which first plasticity occurs
-    int plastic_ele_id_;
+    int plastic_ele_id_{};
 
   };  // class ThermoPlasticHyperElast
 }  // namespace Mat

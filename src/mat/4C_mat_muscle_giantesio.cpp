@@ -59,11 +59,17 @@ namespace
     // result = part1 + part2 + part3
     Core::LinAlg::FourTensor<3> tAmBmCmAtBmCmAmBtC(true);
     for (unsigned i = 0; i < 3; ++i)
+    {
       for (unsigned j = 0; j < 3; ++j)
+      {
         for (unsigned k = 0; k < 3; ++k)
+        {
           for (unsigned l = 0; l < 3; ++l)
             tAmBmCmAtBmCmAmBtC(i, j, k, l) +=
                 scalar * (part1(i, j, k, l) + part2(i, j, k, l) + part3(i, j, k, l));
+        }
+      }
+    }
 
     return tAmBmCmAtBmCmAmBtC;
   }
@@ -304,7 +310,7 @@ Mat::MuscleGiantesio::MuscleGiantesio()
       lambda_m_old_(1.0),
       omegaa_old_(-1.0),
       anisotropy_(),
-      anisotropy_extension_(true, 0.0, 0,
+      anisotropy_extension_(true, 0.0, false,
           std::shared_ptr<Mat::Elastic::StructuralTensorStrategyBase>(
               new Mat::Elastic::StructuralTensorStrategyStandard(nullptr)),
           {0})
@@ -316,7 +322,7 @@ Mat::MuscleGiantesio::MuscleGiantesio(Mat::PAR::MuscleGiantesio* params)
       lambda_m_old_(1.0),
       omegaa_old_(-1.0),
       anisotropy_(),
-      anisotropy_extension_(true, 0.0, 0,
+      anisotropy_extension_(true, 0.0, false,
           std::shared_ptr<Mat::Elastic::StructuralTensorStrategyBase>(
               new Mat::Elastic::StructuralTensorStrategyStandard(nullptr)),
           {0})

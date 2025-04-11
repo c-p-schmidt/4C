@@ -13,6 +13,7 @@
 #include "4C_utils_enum.hpp"
 #include "4C_utils_function.hpp"
 
+#include <cstddef>
 #include <vector>
 
 FOUR_C_NAMESPACE_OPEN
@@ -173,28 +174,24 @@ void Mat::PAR::FluidPoroSingleReaction::evaluate_function_internal(std::vector<d
   constants.reserve(0);
 
   // set pressure values as variable
-  for (int k = 0; k < numfluidphases_; k++)
-    variables.push_back(std::pair<std::string, double>(pressurenames_[k], pressure[k]));
+  for (int k = 0; k < numfluidphases_; k++) variables.emplace_back(pressurenames_[k], pressure[k]);
 
   // set saturation values as variable
   for (int k = 0; k < numfluidphases_; k++)
-    variables.push_back(std::pair<std::string, double>(saturationnames_[k], saturation[k]));
+    variables.emplace_back(saturationnames_[k], saturation[k]);
 
   // set porosity value as variable
-  variables.push_back(std::pair<std::string, double>(porosityname_, porosity));
+  variables.emplace_back(porosityname_, porosity);
 
   // set scalar values as variables
-  for (int k = 0; k < numscal_; k++)
-    variables.push_back(std::pair<std::string, double>(scalarnames_[k], scalar[k]));
+  for (int k = 0; k < numscal_; k++) variables.emplace_back(scalarnames_[k], scalar[k]);
 
   // set volfrac values as variables
-  for (int k = 0; k < numvolfrac_; k++)
-    variables.push_back(std::pair<std::string, double>(volfracnames_[k], volfracs[k]));
+  for (int k = 0; k < numvolfrac_; k++) variables.emplace_back(volfracnames_[k], volfracs[k]);
 
   // set volfrac pressure values as variables
   for (int k = 0; k < numvolfrac_; k++)
-    variables.push_back(
-        std::pair<std::string, double>(volfracpressurenames_[k], volfracpressures[k]));
+    variables.emplace_back(volfracpressurenames_[k], volfracpressures[k]);
 
   // evaluate the reaction term
   double curval = Global::Problem::instance()
@@ -238,8 +235,6 @@ void Mat::PAR::FluidPoroSingleReaction::evaluate_function_internal(std::vector<d
       }
     }
   }
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -283,9 +278,11 @@ void Mat::PAR::FluidPoroSingleReaction::check_sizes(std::vector<double>& reacval
   for (int k = 0; k < totalnummultiphasedof_; k++)
   {
     if (numfluidphases_ != (int)reacderivspressure[k].size())
+    {
       FOUR_C_THROW(
           "Invalid length of vector for pressure derivatives for this fluid poro reaction "
           "material!");
+    }
   }
   if (totalnummultiphasedof_ != (int)reacderivssaturation.size())
     FOUR_C_THROW(
@@ -293,9 +290,11 @@ void Mat::PAR::FluidPoroSingleReaction::check_sizes(std::vector<double>& reacval
   for (int k = 0; k < totalnummultiphasedof_; k++)
   {
     if (numfluidphases_ != (int)reacderivssaturation[k].size())
+    {
       FOUR_C_THROW(
           "Invalid length of vector for pressure derivatives for this fluid poro reaction "
           "material!");
+    }
   }
   if (totalnummultiphasedof_ != (int)reacderivsscalar.size())
     FOUR_C_THROW(
@@ -324,8 +323,6 @@ void Mat::PAR::FluidPoroSingleReaction::check_sizes(std::vector<double>& reacval
       FOUR_C_THROW(
           "Invalid length of vector for scalar derivatives for this fluid poro reaction material!");
   }
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -368,7 +365,7 @@ Mat::FluidPoroSingleReactionType Mat::FluidPoroSingleReactionType::instance_;
 Core::Communication::ParObject* Mat::FluidPoroSingleReactionType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::FluidPoroSingleReaction* fluid_poro = new Mat::FluidPoroSingleReaction();
+  auto* fluid_poro = new Mat::FluidPoroSingleReaction();
   fluid_poro->unpack(buffer);
   return fluid_poro;
 }
@@ -413,6 +410,7 @@ void Mat::FluidPoroSingleReaction::unpack(Core::Communication::UnpackBuffer& buf
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -424,16 +422,13 @@ void Mat::FluidPoroSingleReaction::unpack(Core::Communication::UnpackBuffer& buf
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 /*----------------------------------------------------------------------*
  *  initialize                                              vuong 08/16 |
  *----------------------------------------------------------------------*/
-void Mat::FluidPoroSingleReaction::initialize()
-{
-  params_->initialize();
-  return;
-}
+void Mat::FluidPoroSingleReaction::initialize() { params_->initialize(); }
 
 /*----------------------------------------------------------------------*
  *  set values in function                                 vuong 08/16 |
@@ -451,8 +446,6 @@ void Mat::FluidPoroSingleReaction::evaluate_reaction(std::vector<double>& reacva
   params_->evaluate_function(reacval, reacderivspressure, reacderivssaturation, reacderivsporosity,
       reacderivsvolfrac, reacderivsvolfracpressure, reacderivsscalar, pressure, saturation,
       porosity, volfracs, volfracpressures, scalar);
-
-  return;
 }
 
 FOUR_C_NAMESPACE_CLOSE

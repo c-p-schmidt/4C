@@ -37,7 +37,7 @@ Mat::StructPoroReactionType Mat::StructPoroReactionType::instance_;
 Core::Communication::ParObject* Mat::StructPoroReactionType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::StructPoroReaction* struct_poro = new Mat::StructPoroReaction();
+  auto* struct_poro = new Mat::StructPoroReaction();
   struct_poro->unpack(buffer);
   return struct_poro;
 }
@@ -99,6 +99,7 @@ void Mat::StructPoroReaction::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -110,6 +111,7 @@ void Mat::StructPoroReaction::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // refporosity_
   extract_from_pack(buffer, refporosity_);
@@ -146,9 +148,11 @@ void Mat::StructPoroReaction::constitutive_derivatives(Teuchos::ParameterList& p
     double* W)
 {
   if (porosity == 0.0)
+  {
     FOUR_C_THROW(
         "porosity equals zero!! Wrong initial porosity? (or wrong collagen density for ecm "
         "material)");
+  }
 
   // evaluate change of reference porosity due to reaction
 
@@ -163,8 +167,6 @@ void Mat::StructPoroReaction::constitutive_derivatives(Teuchos::ParameterList& p
   // call base class
   StructPoro::constitutive_derivatives(
       params, press, J, porosity, refporosity_, dW_dp, dW_dphi, dW_dJ, dW_dphiref, W);
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -192,7 +194,6 @@ void Mat::StructPoroReaction::reaction(const double porosity, const double J,
   {
     // do nothing
   }
-  return;
 }
 
 /*----------------------------------------------------------------------*

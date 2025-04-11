@@ -67,7 +67,7 @@ Mat::RobinsonType Mat::RobinsonType::instance_;
  *----------------------------------------------------------------------*/
 Core::Communication::ParObject* Mat::RobinsonType::create(Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::Robinson* robinson = new Mat::Robinson();
+  auto* robinson = new Mat::Robinson();
   robinson->unpack(buffer);
   return robinson;
 }
@@ -133,7 +133,6 @@ void Mat::Robinson::pack(Core::Communication::PackBuffer& data) const
     add_to_pack(data, strain_last_.at(var));
   }
 
-  return;
 
 }  // pack()
 
@@ -153,6 +152,7 @@ void Mat::Robinson::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -164,6 +164,7 @@ void Mat::Robinson::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // history data
   int numgp;
@@ -215,8 +216,6 @@ void Mat::Robinson::unpack(Core::Communication::UnpackBuffer& buffer)
 
 
 
-  return;
-
 }  // unpack()
 
 
@@ -267,8 +266,6 @@ void Mat::Robinson::setup(const int numgp, const Core::IO::InputParameterContain
 
   isinit_ = true;
 
-  return;
-
 }  // setup()
 
 
@@ -305,7 +302,6 @@ void Mat::Robinson::update()
     backstresscurr_->at(i) = emptymat;
   }
 
-  return;
 
 }  // update()
 
@@ -1185,10 +1181,10 @@ double Mat::Robinson::get_mat_parameter_at_tempnp(
 
   // Param = a + b . T + c . T^2 + d . T^3 + ...
   // with T: current temperature
-  for (unsigned int i = 0; i < (*paramvector).size(); ++i)
+  for (double i : *paramvector)
   {
     // calculate coefficient of variable T^i
-    parambytempnp += (*paramvector)[i] * tempnp_pow;
+    parambytempnp += i * tempnp_pow;
     // for the higher polynom increase the exponent of the temperature
     tempnp_pow *= tempnp;
   }
@@ -1383,7 +1379,7 @@ void Mat::Robinson::calculate_condensed_system(
  | are condensed out of the system within calculate_condensed_system()    |
  *----------------------------------------------------------------------*/
 void Mat::Robinson::iterative_update_of_internal_variables(const int gp,
-    const Core::LinAlg::Matrix<Mat::NUM_STRESS_3D, 1> straininc  // total strain increment
+    const Core::LinAlg::Matrix<Mat::NUM_STRESS_3D, 1>& straininc  // total strain increment
 )
 {
   // get the condensed / reduced residual vector

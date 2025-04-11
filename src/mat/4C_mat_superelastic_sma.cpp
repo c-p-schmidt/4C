@@ -117,7 +117,7 @@ Mat::SuperElasticSMAType Mat::SuperElasticSMAType::instance_;
 Core::Communication::ParObject* Mat::SuperElasticSMAType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::SuperElasticSMA* superelast = new Mat::SuperElasticSMA();
+  auto* superelast = new Mat::SuperElasticSMA();
   superelast->unpack(buffer);
   return superelast;
 }
@@ -171,7 +171,6 @@ void Mat::SuperElasticSMA::pack(Core::Communication::PackBuffer& data) const
     add_to_pack(data, xi_s_last_->at(var));
   }
 
-  return;
 }  // pack()
 
 
@@ -191,6 +190,7 @@ void Mat::SuperElasticSMA::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -202,6 +202,7 @@ void Mat::SuperElasticSMA::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // history data
   int histsize;
@@ -236,8 +237,6 @@ void Mat::SuperElasticSMA::unpack(Core::Communication::UnpackBuffer& buffer)
 
 
 
-  return;
-
 }  // unpack()
 
 
@@ -266,7 +265,6 @@ void Mat::SuperElasticSMA::setup(int numgp, const Core::IO::InputParameterContai
   }
 
   isinit_ = true;
-  return;
 
 }  // setup()
 
@@ -292,7 +290,6 @@ void Mat::SuperElasticSMA::update()
     druckerpragerloadingcurr_->at(i) = 0.0;
     xi_s_curr_->at(i) = 0.0;
   }
-  return;
 }  // update()
 
 
@@ -309,7 +306,7 @@ void Mat::SuperElasticSMA::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
    * Step 0.1 * Load material data from the input file        *
    **********************************************************
    */
-  Material matdata;
+  Material matdata{};
   // elastic material data
   matdata.youngs = params_->youngs_;                                      // Young's modulus
   matdata.poisson = params_->poissonratio_;                               // Poisson's ratio
@@ -852,11 +849,15 @@ void Mat::SuperElasticSMA::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
 
     // Build up I_dev and scale with 2G*
     for (int i = 0; i < 3; i++)
+    {
       for (int j = 0; j < 3; j++)
+      {
         if (i == j)
           cmat_eul_2(i, j) = 2.0 / 3.0;
         else
           cmat_eul_2(i, j) = -1.0 / 3.0;
+      }
+    }
     for (int i = 3; i < 6; i++) cmat_eul_2(i, i) = 0.5;
     cmat_eul_2.scale(2.0 * G_star);
 
@@ -992,8 +993,6 @@ void Mat::SuperElasticSMA::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
   xi_s_curr_->at(gp) = xi_S;
   druckerpragerloadingcurr_->at(gp) = drucker_prager_loading;
 
-  return;
-
 }  // evaluate()
 
 /*---------------------------------------------------------------------*
@@ -1087,7 +1086,7 @@ Core::LinAlg::Matrix<2, 2> Mat::SuperElasticSMA::compute_local_newton_jacobian(
 Mat::SuperElasticSMA::LoadingData Mat::SuperElasticSMA::compute_local_newton_loading(
     double xi_S, double log_strain_vol, double log_strain_dev_norm, Material mat_data)
 {
-  LoadingData loading;
+  LoadingData loading{};
   double kirchhoff_stress_volumetric_tmp =
       mat_data.bulk * (log_strain_vol - 3.0 * mat_data.alpha * mat_data.epsilon_L * xi_S);
   double kirchhoff_stress_deviatoric_norm_tmp =
@@ -1139,7 +1138,6 @@ void Mat::SuperElasticSMA::strain_energy(
     const Core::LinAlg::Matrix<6, 1>& glstrain, double& psi, const int gp, const int eleGID) const
 {
   psi = strainenergy_;
-  return;
 }
 
 

@@ -38,10 +38,12 @@ Mat::PAR::ScatraReactionMat::ScatraReactionMat(const Core::Mat::PAR::Parameter::
 {
   // Some checks for more safety
   if (coupling_ == reac_coup_none)
+  {
     FOUR_C_THROW(
         "The coupling '{}' is not a valid reaction coupling. Valid couplings are "
         "'simple_multiplicative', 'constant' and 'michaelis_menten'.",
         (matdata.parameters.get<std::string>("COUPLING")).c_str());
+  }
 
   if (numscal_ != (int)stoich_.size())
     FOUR_C_THROW("number of scalars {} does not fit to size of the STOICH vector {}", numscal_,
@@ -81,13 +83,17 @@ Mat::PAR::ScatraReactionMat::ScatraReactionMat(const Core::Mat::PAR::Parameter::
           if (couprole_.at(ii) != 0.0) roleallzero = false;
         }
         if (roleallzero)
+        {
           FOUR_C_THROW(
               "reac_coup_simple_multiplicative must contain at least one non-zero entry in the "
               "ROLE list");
+        }
         if (stoichallzero)
+        {
           FOUR_C_THROW(
               "reac_coup_simple_multiplicative must contain at least one non-zero entry in the "
               "STOICH list");
+        }
 
         break;
       }
@@ -102,13 +108,17 @@ Mat::PAR::ScatraReactionMat::ScatraReactionMat(const Core::Mat::PAR::Parameter::
           if (couprole_.at(ii) != 0.0) roleallzero = false;
         }
         if (roleallzero)
+        {
           FOUR_C_THROW(
               "reac_coup_power_multiplicative must contain at least one positive entry in the ROLE "
               "list");
+        }
         if (stoichallzero)
+        {
           FOUR_C_THROW(
               "reac_coup_michaelis_menten must contain at least one non-zero entry in the STOICH "
               "list");
+        }
 
         break;
       }
@@ -142,13 +152,17 @@ Mat::PAR::ScatraReactionMat::ScatraReactionMat(const Core::Mat::PAR::Parameter::
           if (couprole_.at(ii) != 0) roleallzero = false;
         }
         if (roleallzero)
+        {
           FOUR_C_THROW(
               "reac_coup_michaelis_menten must contain at least one non-zero entry in the ROLE "
               "list");
+        }
         if (stoichallzero)
+        {
           FOUR_C_THROW(
               "reac_coup_michaelis_menten must contain at least one non-zero entry in the STOICH "
               "list");
+        }
 
         break;
       }
@@ -161,9 +175,11 @@ Mat::PAR::ScatraReactionMat::ScatraReactionMat(const Core::Mat::PAR::Parameter::
           if (stoich_.at(ii) != 0)
           {
             if (round(couprole_.at(ii)) < 1)
+            {
               FOUR_C_THROW(
                   "reac_coup_byfunction: no function defined in the ROLE list for scalar with "
                   "positive entry in the STOICH list");
+            }
             if (functID == -1)
               functID = round(couprole_.at(ii));
             else if (functID != round(couprole_.at(ii)))
@@ -190,8 +206,6 @@ Mat::PAR::ScatraReactionMat::ScatraReactionMat(const Core::Mat::PAR::Parameter::
   // if all checks are passed, we can build the reaction class
   reaction_ = Mat::PAR::REACTIONCOUPLING::ReactionInterface::create_reaction(
       coupling_, isreacstart_, reacstart_);
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -249,7 +263,7 @@ Mat::PAR::ReactionCoupling Mat::PAR::ScatraReactionMat::set_coupling_type(
 Core::Communication::ParObject* Mat::ScatraReactionMatType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ScatraReactionMat* scatra_reaction_mat = new Mat::ScatraReactionMat();
+  auto* scatra_reaction_mat = new Mat::ScatraReactionMat();
   scatra_reaction_mat->unpack(buffer);
   return scatra_reaction_mat;
 }
@@ -291,6 +305,7 @@ void Mat::ScatraReactionMat::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -302,6 +317,7 @@ void Mat::ScatraReactionMat::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 /*-------------------------------------------------------------------------------/
@@ -373,8 +389,6 @@ void Mat::ScatraReactionMat::calc_rea_body_force_deriv_matrix(const int k,  //!<
   {
     calc_rea_body_force_deriv(k, derivs, phinp, constants, reaccoeff * stoich()->at(k), scale_phi);
   }
-
-  return;
 }
 
 /*--------------------------------------------------------------------------------*
@@ -397,8 +411,6 @@ void Mat::ScatraReactionMat::calc_rea_body_force_deriv_matrix_add_variables(
     calc_rea_body_force_deriv_add_variables(
         k, derivs, variables, constants, reaccoeff * stoich()->at(k), scale_phi);
   }
-
-  return;
 }
 
 /*----------------------------------------------------------------------/
@@ -412,8 +424,6 @@ void Mat::ScatraReactionMat::add_additional_variables(const int k,  //!< current
   {
     params_->reaction_->add_additional_variables(k, variables, *couprole());
   }
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -447,8 +457,6 @@ void Mat::ScatraReactionMat::calc_rea_body_force_deriv(int k,  //!< current scal
 {
   params_->reaction_->calc_rea_body_force_deriv(
       k, num_scal(), derivs, phinp, constants, *couprole(), scale_reac, scale_phi);
-
-  return;
 }
 
 /*--------------------------------------------------------------------------------*
@@ -467,8 +475,6 @@ void Mat::ScatraReactionMat::calc_rea_body_force_deriv_add_variables(int k,  //!
 {
   params_->reaction_->calc_rea_body_force_deriv_add_variables(
       k, derivs, variables, constants, *couprole(), scale_reac, scale_phi);
-
-  return;
 }
 
 /*---------------------------------------------------------------------------------/
@@ -483,10 +489,10 @@ double Mat::ScatraReactionMat::calc_perm_influence(const int k,  //!< current sc
 {
   // set time and space coordinates
   std::vector<std::pair<std::string, double>> constants;
-  constants.push_back(std::pair<std::string, double>("t", time));
-  constants.push_back(std::pair<std::string, double>("x", gpcoord[0]));
-  constants.push_back(std::pair<std::string, double>("y", gpcoord[1]));
-  constants.push_back(std::pair<std::string, double>("z", gpcoord[2]));
+  constants.emplace_back("t", time);
+  constants.emplace_back("x", gpcoord[0]);
+  constants.emplace_back("y", gpcoord[1]);
+  constants.emplace_back("z", gpcoord[2]);
 
   if (not(stoich()->at(k) > 0))
     FOUR_C_THROW("You need to specify a positive STOICH entry for scalar {}", k);
@@ -508,10 +514,10 @@ void Mat::ScatraReactionMat::calc_perm_influence_deriv(const int k,  //!< curren
 {
   // set time and space coordinates
   std::vector<std::pair<std::string, double>> constants;
-  constants.push_back(std::pair<std::string, double>("t", time));
-  constants.push_back(std::pair<std::string, double>("x", gpcoord[0]));
-  constants.push_back(std::pair<std::string, double>("y", gpcoord[1]));
-  constants.push_back(std::pair<std::string, double>("z", gpcoord[2]));
+  constants.emplace_back("t", time);
+  constants.emplace_back("x", gpcoord[0]);
+  constants.emplace_back("y", gpcoord[1]);
+  constants.emplace_back("z", gpcoord[2]);
 
   calc_rea_body_force_deriv(k, derivs, phinp, constants, stoich()->at(k), scale);
 }
