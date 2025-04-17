@@ -42,11 +42,10 @@ void ScaTra::LevelSetAlgorithm::set_velocity_field(bool init)
  *----------------------------------------------------------------------*/
 void ScaTra::LevelSetAlgorithm::set_velocity_field(
     std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
-    std::shared_ptr<const Core::LinAlg::Vector<double>> vel,
-    std::shared_ptr<const Core::LinAlg::Vector<double>> fsvel)
+    std::shared_ptr<const Core::LinAlg::Vector<double>> vel)
 {
   // call routine of base class
-  ScaTraTimIntImpl::set_velocity_field(acc, vel, fsvel);
+  ScaTraTimIntImpl::set_velocity_field(acc, vel);
 
   // manipulate velocity field away from the interface
   if (extract_interface_vel_) manipulate_fluid_field_for_gfunc();
