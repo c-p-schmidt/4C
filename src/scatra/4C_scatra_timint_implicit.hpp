@@ -244,17 +244,18 @@ namespace ScaTra
      */
     void set_external_force() const;
 
+
+    void set_convective_velocity(const Core::LinAlg::Vector<double>& convective_velocity) const;
+
     /*!
      * @brief set convective velocity field (+ pressure and acceleration field as well as fine-scale
      * velocity field, if required)
      *
-     * @param convvel convective velocity/press. vector
      * @param acc     acceleration vector
      * @param vel     velocity vector
      * @param fsvel   fine-scale velocity vector
      */
-    virtual void set_velocity_field(std::shared_ptr<const Core::LinAlg::Vector<double>> convvel,
-        std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
+    virtual void set_velocity_field(std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
         std::shared_ptr<const Core::LinAlg::Vector<double>> vel,
         std::shared_ptr<const Core::LinAlg::Vector<double>> fsvel);
 
