@@ -68,8 +68,7 @@ namespace ScaTra
 
     /// set convective velocity field (+ pressure and acceleration field as
     /// well as fine-scale velocity field, if required) (function for coupled fluid problems)
-    void set_velocity_field(std::shared_ptr<const Core::LinAlg::Vector<double>> convvel,
-        std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
+    void set_velocity_field(std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
         std::shared_ptr<const Core::LinAlg::Vector<double>> vel,
         std::shared_ptr<const Core::LinAlg::Vector<double>> fsvel) override;
 
