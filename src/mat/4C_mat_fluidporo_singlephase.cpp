@@ -90,7 +90,6 @@ void Mat::PAR::FluidPoroSinglePhase::initialize()
     phasedof_->initialize();
     isinit_ = true;
   }
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -105,7 +104,7 @@ Mat::FluidPoroSinglePhaseType Mat::FluidPoroSinglePhaseType::instance_;
 Core::Communication::ParObject* Mat::FluidPoroSinglePhaseType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::FluidPoroSinglePhase* fluid_poro = new Mat::FluidPoroSinglePhase();
+  auto* fluid_poro = new Mat::FluidPoroSinglePhase();
   fluid_poro->unpack(buffer);
   return fluid_poro;
 }
@@ -150,6 +149,7 @@ void Mat::FluidPoroSinglePhase::unpack(Core::Communication::UnpackBuffer& buffer
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -161,16 +161,13 @@ void Mat::FluidPoroSinglePhase::unpack(Core::Communication::UnpackBuffer& buffer
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 /*----------------------------------------------------------------------*
  *  initialize                                              vuong 08/16 |
  *----------------------------------------------------------------------*/
-void Mat::FluidPoroSinglePhase::initialize()
-{
-  params_->initialize();
-  return;
-}
+void Mat::FluidPoroSinglePhase::initialize() { params_->initialize(); }
 
 /*----------------------------------------------------------------------*
  *  return dof type                                         vuong 08/16 |
@@ -195,7 +192,6 @@ void Mat::FluidPoroSinglePhase::fill_do_f_matrix(
     Core::LinAlg::SerialDenseMatrix& dofmat, int numphase) const
 {
   params_->phasedof_->fill_do_f_matrix(dofmat, numphase);
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -288,9 +284,11 @@ Mat::PAR::FluidPoroSingleVolFrac::FluidPoroSingleVolFrac(
     FOUR_C_THROW("AddScalarDependentFlux has been set to NO, but NUMSCAL is greater than zero");
 
   if (!scalardependentflux_ && scalardiffs_.size() > 0)
+  {
     FOUR_C_THROW(
         "AddScalarDependentFlux has been set to NO, but length of SCALARDIFFS is greater than "
         "zero");
+  }
 
   if (!scalardependentflux_ && omega_half_.size() > 0)
     FOUR_C_THROW(
@@ -308,11 +306,7 @@ std::shared_ptr<Core::Mat::Material> Mat::PAR::FluidPoroSingleVolFrac::create_ma
 /*----------------------------------------------------------------------*
  *  Create Material (public)                           kremheller 10/17 |
  *----------------------------------------------------------------------*/
-void Mat::PAR::FluidPoroSingleVolFrac::initialize()
-{
-  isinit_ = true;
-  return;
-}
+void Mat::PAR::FluidPoroSingleVolFrac::initialize() { isinit_ = true; }
 
 /*----------------------------------------------------------------------*
   global instance of parameter class                   kremheller 10/17 |
@@ -326,7 +320,7 @@ Mat::FluidPoroSingleVolFracType Mat::FluidPoroSingleVolFracType::instance_;
 Core::Communication::ParObject* Mat::FluidPoroSingleVolFracType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::FluidPoroSingleVolFrac* fluid_poro = new Mat::FluidPoroSingleVolFrac();
+  auto* fluid_poro = new Mat::FluidPoroSingleVolFrac();
   fluid_poro->unpack(buffer);
   return fluid_poro;
 }
@@ -371,6 +365,7 @@ void Mat::FluidPoroSingleVolFrac::unpack(Core::Communication::UnpackBuffer& buff
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -382,16 +377,13 @@ void Mat::FluidPoroSingleVolFrac::unpack(Core::Communication::UnpackBuffer& buff
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 /*----------------------------------------------------------------------*
  *  initialize                                         kremheller 10/17 |
  *----------------------------------------------------------------------*/
-void Mat::FluidPoroSingleVolFrac::initialize()
-{
-  params_->initialize();
-  return;
-}
+void Mat::FluidPoroSingleVolFrac::initialize() { params_->initialize(); }
 
 /*----------------------------------------------------------------------*
  *  constructor (public)                               kremheller 02/18 |
@@ -429,11 +421,7 @@ std::shared_ptr<Core::Mat::Material> Mat::PAR::FluidPoroVolFracPressure::create_
 /*----------------------------------------------------------------------*
  *  Create Material (public)                           kremheller 02/18 |
  *----------------------------------------------------------------------*/
-void Mat::PAR::FluidPoroVolFracPressure::initialize()
-{
-  isinit_ = true;
-  return;
-}
+void Mat::PAR::FluidPoroVolFracPressure::initialize() { isinit_ = true; }
 
 /*----------------------------------------------------------------------*
   global instance of parameter class                   kremheller 02/18 |
@@ -447,7 +435,7 @@ Mat::FluidPoroVolFracPressureType Mat::FluidPoroVolFracPressureType::instance_;
 Core::Communication::ParObject* Mat::FluidPoroVolFracPressureType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::FluidPoroVolFracPressure* fluid_poro = new Mat::FluidPoroVolFracPressure();
+  auto* fluid_poro = new Mat::FluidPoroVolFracPressure();
   fluid_poro->unpack(buffer);
   return fluid_poro;
 }
@@ -492,6 +480,7 @@ void Mat::FluidPoroVolFracPressure::unpack(Core::Communication::UnpackBuffer& bu
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -503,15 +492,12 @@ void Mat::FluidPoroVolFracPressure::unpack(Core::Communication::UnpackBuffer& bu
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 /*----------------------------------------------------------------------*
  *  initialize                                         kremheller 02/18 |
  *----------------------------------------------------------------------*/
-void Mat::FluidPoroVolFracPressure::initialize()
-{
-  params_->initialize();
-  return;
-}
+void Mat::FluidPoroVolFracPressure::initialize() { params_->initialize(); }
 
 FOUR_C_NAMESPACE_CLOSE

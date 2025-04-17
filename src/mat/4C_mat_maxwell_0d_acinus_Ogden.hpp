@@ -152,8 +152,8 @@ namespace Mat
     void set_params(std::string parametername, double new_value) override;
 
    private:
-    double kappa_;
-    double beta_;
+    double kappa_{};
+    double beta_{};
   };
 
 }  // namespace Mat

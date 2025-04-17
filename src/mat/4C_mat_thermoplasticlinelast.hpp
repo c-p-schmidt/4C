@@ -421,11 +421,11 @@ namespace Mat
     //@}
 
     //! indicator if #Initialize routine has been called
-    bool isinit_;
+    bool isinit_{};
     //! indicator if material has started to be plastic
-    bool plastic_step_;
+    bool plastic_step_{};
     //! element ID, in which first plasticity occurs
-    int plastic_ele_id_;
+    int plastic_ele_id_{};
 
   };  // class ThermoThermoPlasticLinElast : public Core::Mat::Material
 }  // namespace Mat

@@ -238,8 +238,7 @@ std::shared_ptr<Mat::Elastic::Summand> Mat::Elastic::Summand::factory(int matnum
     }
     case Core::Materials::mes_isomuscleblemker:
     {
-      Mat::Elastic::PAR::IsoMuscleBlemker* params =
-          static_cast<Mat::Elastic::PAR::IsoMuscleBlemker*>(curmat);
+      auto* params = static_cast<Mat::Elastic::PAR::IsoMuscleBlemker*>(curmat);
       return std::make_shared<IsoMuscleBlemker>(params);
     }
     case Core::Materials::mes_isoneohooke:
@@ -330,9 +329,9 @@ void Mat::Elastic::Summand::add_shear_mod(bool& haveshearmod, double& shearmod) 
 
 int Mat::Elastic::Summand::unique_par_object_id() const { return -1; }
 
-void Mat::Elastic::Summand::pack(Core::Communication::PackBuffer& data) const { return; }
+void Mat::Elastic::Summand::pack(Core::Communication::PackBuffer& data) const {}
 
-void Mat::Elastic::Summand::unpack(Core::Communication::UnpackBuffer& buffer) { return; };
+void Mat::Elastic::Summand::unpack(Core::Communication::UnpackBuffer& buffer) {};
 
 
 // Function which reads in the given fiber value due to the FIBER1 nomenclature

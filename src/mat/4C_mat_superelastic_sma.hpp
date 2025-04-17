@@ -251,9 +251,9 @@ namespace Mat
         double xi_s, double log_strain_vol, double log_strain_dev_norm, Material mat_data);
 
     //! indicator if #Initialize routine has been called
-    bool isinit_;
+    bool isinit_{};
 
-    double strainenergy_;
+    double strainenergy_{};
   };  // class SuperElasticSMA
 
 }  // namespace Mat

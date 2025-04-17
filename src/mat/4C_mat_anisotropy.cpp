@@ -118,7 +118,7 @@ void Mat::Anisotropy::read_anisotropy_from_element(
 
       // We count up until we hit a fiber that we do not know about. Thus we need to use the
       // get_if mechanism.
-      auto* fiber_ptr = container.get_if<std::optional<std::vector<double>>>(fiber_name);
+      const auto* fiber_ptr = container.get_if<std::optional<std::vector<double>>>(fiber_name);
       if (!fiber_ptr or !fiber_ptr->has_value())
       {
         break;

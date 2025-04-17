@@ -43,7 +43,7 @@ void Mat::MicroMaterial::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
 {
   if (eleGID == -1) FOUR_C_THROW("no element ID provided in material");
 
-  Core::LinAlg::Matrix<3, 3>* defgrd_enh = const_cast<Core::LinAlg::Matrix<3, 3>*>(defgrd);
+  auto* defgrd_enh = const_cast<Core::LinAlg::Matrix<3, 3>*>(defgrd);
 
   if (params.get("EASTYPE", "none") != "none")
   {

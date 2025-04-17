@@ -44,10 +44,12 @@ Mat::Elastic::PAR::StructuralTensorParameter::StructuralTensorParameter(
 
     if (c1_ == 0.0) FOUR_C_THROW("invalid parameter C1=0.0 for von Mises-Fisher distribution");
     if (c1_ > 500.0)
+    {
       FOUR_C_THROW(
           "von Mises-Fisher distribution with parameter C1>500 is too sharp.\n"
           "Mechanical behaviour is very close to fiber without any dispersion.\n"
           "Better switch to ELAST_StructuralTensor STRATEGY Standard");
+    }
   }
   else if (distr_type == "Bingham")
   {
@@ -56,10 +58,12 @@ Mat::Elastic::PAR::StructuralTensorParameter::StructuralTensorParameter(
     if (c4_ == 0.0) FOUR_C_THROW("invalid parameter C4=0.0 for Bingham distribution");
   }
   else if (distr_type == "none" and strategy_type_ == strategy_type_bydistributionfunction)
+  {
     FOUR_C_THROW(
         "You chose structural tensor strategy 'ByDistributionFunction' but you forgot to specify "
         "the 'DISTR' parameter.\n"
         "Check the definitions of anisotropic materials in your input file.");
+  }
   else if (distr_type == "none" and
            (strategy_type_ == strategy_type_standard or
                strategy_type_ == strategy_type_dispersedtransverselyisotropic))

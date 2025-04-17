@@ -224,7 +224,7 @@ namespace Mat
       const std::vector<double> poly_coeffs_;
 
       /// value of polynomial at reference intercalation fraction
-      double polynom_reference_value_;
+      double polynom_reference_value_{};
 
       //! upper bound of polynomial
       const double x_max_;
@@ -1430,9 +1430,9 @@ namespace Mat
 
 
     //! current Gauss Point
-    int gp_;
+    int gp_{};
     //! current element ID
-    int ele_gid_;
+    int ele_gid_{};
 
     //! map to elastic materials/potential summands (only isotropic)
     std::vector<std::shared_ptr<Mat::Elastic::Summand>> potsumel_;
@@ -1460,7 +1460,7 @@ namespace Mat
       //! minimum substep length
       double min_dt_;
     };
-    TimeStepSettings time_step_settings_;
+    TimeStepSettings time_step_settings_{};
 
 
     //! struct containing quantities at the last and current time points (i.e., at \f[ t_n \f] and

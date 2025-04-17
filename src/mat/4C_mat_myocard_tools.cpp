@@ -9,14 +9,14 @@
 
 #include "4C_comm_pack_helpers.hpp"
 
-#include <math.h> /* tanh, log */
+#include <cmath> /* tanh, log */
 
 FOUR_C_NAMESPACE_OPEN
 
 /*----------------------------------------------------------------------*
  |  Constructor                                    (public)  cbert 08/13 |
  *----------------------------------------------------------------------*/
-MyocardTools::MyocardTools() {}
+MyocardTools::MyocardTools() = default;
 
 /*----------------------------------------------------------------------*
  |                                                           cbert 08/13 |

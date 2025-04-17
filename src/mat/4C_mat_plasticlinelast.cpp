@@ -49,7 +49,7 @@ Mat::PlasticLinElastType Mat::PlasticLinElastType::instance_;
 Core::Communication::ParObject* Mat::PlasticLinElastType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::PlasticLinElast* plastic = new Mat::PlasticLinElast();
+  auto* plastic = new Mat::PlasticLinElast();
   plastic->unpack(buffer);
   return plastic;
 }
@@ -105,8 +105,6 @@ void Mat::PlasticLinElast::pack(Core::Communication::PackBuffer& data) const
   }
 
   add_to_pack(data, plastic_step_);
-
-  return;
 }  // pack()
 
 
@@ -125,6 +123,7 @@ void Mat::PlasticLinElast::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -136,6 +135,7 @@ void Mat::PlasticLinElast::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // history data
   int histsize;
@@ -218,7 +218,6 @@ void Mat::PlasticLinElast::setup(int numgp, const Core::IO::InputParameterContai
   }
 
   isinit_ = true;
-  return;
 
 }  // setup()
 
@@ -257,7 +256,6 @@ void Mat::PlasticLinElast::update()
     strainbarplcurr_->at(i) = 0.0;
   }
 
-  return;
 }  // update()
 
 
@@ -433,9 +431,9 @@ void Mat::PlasticLinElast::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
   {
     // only first plastic call is output at screen for every processor
     // visualisation of whole plastic behaviour via PLASTIC_STRAIN in postprocessing
-    if (plastic_step_ == false)
+    if (!plastic_step_)
     {
-      if (gp == 0) std::cout << "first plastic step: plastic strains unequal zero!" << std::endl;
+      if (gp == 0) std::cout << "first plastic step: plastic strains unequal zero!" << '\n';
       plastic_step_ = true;
     }
 
@@ -733,8 +731,6 @@ void Mat::PlasticLinElast::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
   plstrain = strainplcurr_->at(gp);
   // save the plastic strain for postprocessing
   params.set<Core::LinAlg::Matrix<Mat::NUM_STRESS_3D, 1>>("plglstrain", plstrain);
-
-  return;
 
 }  // evaluate()
 
@@ -1077,7 +1073,6 @@ void Mat::PlasticLinElast::fd_check(
   std::cout << "end of fd_check!!\n\n\n" << std::endl;
 #endif
 
-  return;
 
 }  // fd_check()
 

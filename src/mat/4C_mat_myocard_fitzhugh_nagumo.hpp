@@ -48,7 +48,7 @@ class MyocardFitzhughNagumo : public MyocardGeneral
 
   /// construct empty material object
   explicit MyocardFitzhughNagumo(
-      const double eps_deriv_myocard, const std::string tissue, int num_gp);
+      const double eps_deriv_myocard, const std::string& tissue, int num_gp);
 
   /// compute reaction coefficient
   double rea_coeff(const double phi, const double dt) override;
@@ -100,7 +100,7 @@ class MyocardFitzhughNagumo : public MyocardGeneral
   MyocardTools tools_;
 
   /// perturbation for numerical approximation of the derivative
-  double eps_deriv_;
+  double eps_deriv_{};
 
   /// last gating variables MV
   std::vector<double> r0_;  /// fast inward current
@@ -113,17 +113,17 @@ class MyocardFitzhughNagumo : public MyocardGeneral
   std::vector<double> j2_;
 
   /// model parameters
-  double a_;
-  double b_;
-  double c1_;
-  double c2_;
-  double d_;
+  double a_{};
+  double b_{};
+  double c1_{};
+  double c2_{};
+  double d_{};
 
   // Variables for electromechanical coupling
   std::vector<double>
       mechanical_activation_;  // to store the variable for activation (phi in this case=)
-  double act_thres_;  // activation threshold (so that activation = 1.0 if mechanical_activation_ >=
-                      // act_thres_)
+  double act_thres_{};  // activation threshold (so that activation = 1.0 if mechanical_activation_
+                        // >= act_thres_)
 
 
 };  // Myocard_Fitzhugh_Nagumo

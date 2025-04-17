@@ -147,7 +147,7 @@ Core::Communication::ParObject* Mat::MuscleComboType::create(
 Mat::MuscleCombo::MuscleCombo()
     : params_(nullptr),
       anisotropy_(),
-      anisotropy_extension_(true, 0.0, 0,
+      anisotropy_extension_(true, 0.0, false,
           std::shared_ptr<Mat::Elastic::StructuralTensorStrategyBase>(
               new Mat::Elastic::StructuralTensorStrategyStandard(nullptr)),
           {0}),
@@ -158,7 +158,7 @@ Mat::MuscleCombo::MuscleCombo()
 Mat::MuscleCombo::MuscleCombo(Mat::PAR::MuscleCombo* params)
     : params_(params),
       anisotropy_(),
-      anisotropy_extension_(true, 0.0, 0,
+      anisotropy_extension_(true, 0.0, false,
           std::shared_ptr<Mat::Elastic::StructuralTensorStrategyBase>(
               new Mat::Elastic::StructuralTensorStrategyStandard(nullptr)),
           {0}),

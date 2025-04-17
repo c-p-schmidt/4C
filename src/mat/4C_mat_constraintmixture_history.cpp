@@ -17,7 +17,7 @@ Mat::ConstraintMixtureHistoryType Mat::ConstraintMixtureHistoryType::instance_;
 Core::Communication::ParObject* Mat::ConstraintMixtureHistoryType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ConstraintMixtureHistory* cmhis = new Mat::ConstraintMixtureHistory();
+  auto* cmhis = new Mat::ConstraintMixtureHistory();
   cmhis->unpack(buffer);
   return cmhis;
 }

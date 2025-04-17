@@ -83,7 +83,7 @@ Core::Communication::ParObject* Mat::BeamElastPlasticMaterialType<T>::create(
     Core::Communication::UnpackBuffer& buffer)
 {
   // create material from packed data
-  Mat::BeamPlasticMaterial<T>* matobject = new Mat::BeamPlasticMaterial<T>();
+  auto* matobject = new Mat::BeamPlasticMaterial<T>();
   matobject->unpack(buffer);
   return matobject;
 }
@@ -207,6 +207,7 @@ void Mat::BeamPlasticMaterial<T>::unpack(Core::Communication::UnpackBuffer& buff
   this->set_parameter(nullptr);
 
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -217,6 +218,7 @@ void Mat::BeamPlasticMaterial<T>::unpack(Core::Communication::UnpackBuffer& buff
 
       this->set_parameter(static_cast<Mat::PAR::BeamReissnerElastPlasticMaterialParams*>(mat));
     }
+  }
 }
 
 /*-----------------------------------------------------------------------------------------------*

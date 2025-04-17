@@ -57,11 +57,13 @@ Mat::PAR::PlasticElastHyper::PlasticElastHyper(const Core::Mat::PAR::Parameter::
 
   // check plastic parameter validity
   if (inityield_ <= 0.)
+  {
     std::cout << "***************************************************\n"
                  "Warning: negative initial yield stress detected!!!\n"
                  "this will be converted to a purely elastic response"
               << "\n***************************************************\n"
-              << std::endl;
+              << '\n';
+  }
 
   // no infyield provided 0. is default
   if (infyield_ == 0.)
@@ -70,9 +72,11 @@ Mat::PAR::PlasticElastHyper::PlasticElastHyper(const Core::Mat::PAR::Parameter::
 
   // polyconvexity check is just implemented for isotropic hyperlastic materials
   if (polyconvex_)
+  {
     FOUR_C_THROW(
         "This polyconvexity-check is just implemented for isotropic "
         "hyperelastic-materials (do not use for plastic materials).");
+  }
 }
 
 /*----------------------------------------------------------------------*/
@@ -89,7 +93,7 @@ Mat::PlasticElastHyperType Mat::PlasticElastHyperType::instance_;
 Core::Communication::ParObject* Mat::PlasticElastHyperType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::PlasticElastHyper* elhy = new Mat::PlasticElastHyper();
+  auto* elhy = new Mat::PlasticElastHyper();
   elhy->unpack(buffer);
 
   return elhy;
@@ -174,9 +178,9 @@ void Mat::PlasticElastHyper::pack(Core::Communication::PackBuffer& data) const
   if (mat_params() != nullptr)  // summands are not accessible in postprocessing mode
   {
     // loop map of associated potential summands
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
+    for (const auto& p : potsum_)
     {
-      potsum_[p]->pack_summand(data);
+      p->pack_summand(data);
     }
   }
 
@@ -202,8 +206,6 @@ void Mat::PlasticElastHyper::pack(Core::Communication::PackBuffer& data) const
   add_to_pack(data, s());
 
   anisotropy_.pack_anisotropy(data);
-
-  return;
 }
 
 
@@ -257,10 +259,10 @@ void Mat::PlasticElastHyper::unpack(Core::Communication::UnpackBuffer& buffer)
     }
 
     // loop map of associated potential summands
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
+    for (auto& p : potsum_)
     {
-      potsum_[p]->unpack_summand(buffer);
-      potsum_[p]->register_anisotropy_extensions(anisotropy_);
+      p->unpack_summand(buffer);
+      p->register_anisotropy_extensions(anisotropy_);
     }
   }
 
@@ -324,9 +326,9 @@ void Mat::PlasticElastHyper::setup(int numgp, const Core::IO::InputParameterCont
   anisotropy_.read_anisotropy_from_element(container);
 
   // Setup summands
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
+  for (auto& p : potsum_)
   {
-    potsum_[p]->setup(numgp, container);
+    p->setup(numgp, container);
   }
 
   // find out which formulations are used
@@ -337,7 +339,7 @@ void Mat::PlasticElastHyper::setup(int numgp, const Core::IO::InputParameterCont
 
   // in this case the mandel stress become non-symmetric and the
   // calculated derivatives have to be extended.
-  if (summandProperties_.anisomod == true || summandProperties_.anisoprinc == true)
+  if (summandProperties_.anisomod || summandProperties_.anisoprinc)
     FOUR_C_THROW("PlasticElastHyper only for isotropic elastic material!");
 
   // no visco-elasticity (yet?)
@@ -373,9 +375,11 @@ void Mat::PlasticElastHyper::setup_tsi(const int numgp, const int numdofpereleme
 {
   // dissipation mode
   if (mode == Inpar::TSI::pl_multiplier)
+  {
     if (mat_params()->rY_11_ != 0. || mat_params()->rY_22_ != 0. || mat_params()->rY_33_ != 0. ||
         mat_params()->rY_12_ != 0. || mat_params()->rY_23_ != 0. || mat_params()->rY_13_ != 0.)
       FOUR_C_THROW("TSI with Hill plasticity not available with DISSIPATION_MODE pl_multiplier");
+  }
   set_dissipation_mode(mode);
 
   // allocate memory
@@ -417,9 +421,11 @@ void Mat::PlasticElastHyper::setup_hill_plasticity(
   // check if parameters are valid
   if (mat_params()->rY_11_ != 0. || mat_params()->rY_22_ != 0. || mat_params()->rY_33_ != 0. ||
       mat_params()->rY_12_ != 0. || mat_params()->rY_23_ != 0. || mat_params()->rY_13_ != 0.)
+  {
     if (mat_params()->rY_11_ <= 0. || mat_params()->rY_22_ <= 0. || mat_params()->rY_33_ <= 0. ||
         mat_params()->rY_12_ <= 0. || mat_params()->rY_23_ <= 0. || mat_params()->rY_13_ <= 0.)
       FOUR_C_THROW("Hill parameters all must be positive (incomplete set?)");
+  }
 
   // all (optional) Hill parameters are zero (default value)
   // --> we want to do von Mises plasticity
@@ -428,11 +434,15 @@ void Mat::PlasticElastHyper::setup_hill_plasticity(
   {
     PlAniso_full_.clear();
     for (int i = 0; i < 3; i++)
+    {
       for (int j = 0; j < 3; j++)
+      {
         if (i == j)
           PlAniso_full_(i, j) = 2. / 3.;
         else
           PlAniso_full_(i, j) = -1. / 3.;
+      }
+    }
     for (int i = 3; i < 6; i++) PlAniso_full_(i, i) = 1.;
     InvPlAniso_full_.update(PlAniso_full_);
   }
@@ -568,8 +578,6 @@ void Mat::PlasticElastHyper::evaluate_elast(const Core::LinAlg::Matrix<3, 3>* de
     evaluate_isotropic_princ_elast(*pk2, *cmat, dPI, ddPII);
   else
     FOUR_C_THROW("only isotropic hyperelastic materials");
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -600,12 +608,10 @@ double Mat::PlasticElastHyper::strain_energy_tsi(
   for (int i = 0; i < 3; ++i) idv(i) = 1.0;
   glstrain.update(0.5, elRCGv, 0.0);
   glstrain.update(-0.5, idv, 1.0);
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
-    potsum_[p]->add_strain_energy(psi, prinv, modinv, glstrain, gp, eleGID);
+  for (auto& p : potsum_) p->add_strain_energy(psi, prinv, modinv, glstrain, gp, eleGID);
 
   double dPj1 = 0.;
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
-    potsum_[p]->add_coup_deriv_vol(sqrt(prinv(0)), &dPj1, nullptr, nullptr, nullptr);
+  for (auto& p : potsum_) p->add_coup_deriv_vol(sqrt(prinv(0)), &dPj1, nullptr, nullptr, nullptr);
   psi -= 3. * cte() * (temp - init_temp()) * dPj1;
 
 
@@ -624,9 +630,11 @@ void Mat::PlasticElastHyper::evaluate_thermal_stress(const Core::LinAlg::Matrix<
   // due to thermal expansion can be easily calculated by the volumetric
   // part of the strain energy function
   if (summandProperties_.anisomod || summandProperties_.anisoprinc)
+  {
     FOUR_C_THROW(
         "TSI with semi-Smooth Newton type plasticity algorithm only "
         "with isotropic strain energy functions");
+  }
 
   // temperature difference
   double deltaT = temp - init_temp();
@@ -641,11 +649,11 @@ void Mat::PlasticElastHyper::evaluate_thermal_stress(const Core::LinAlg::Matrix<
   double dddPmodIII = 0.;
 
   // loop map of associated potential summands
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
+  for (auto& p : potsum_)
   {
-    potsum_[p]->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
-    potsum_[p]->add3rd_vol_deriv(modinv, dddPmodIII);
-    potsum_[p]->add_coup_deriv_vol(modinv(2), &dPmodI(2), &ddPmodII(2), &dddPmodIII, nullptr);
+    p->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
+    p->add3rd_vol_deriv(modinv, dddPmodIII);
+    p->add_coup_deriv_vol(modinv(2), &dPmodI(2), &ddPmodII(2), &dddPmodIII, nullptr);
   }
 
   // inverse RCG
@@ -665,8 +673,6 @@ void Mat::PlasticElastHyper::evaluate_thermal_stress(const Core::LinAlg::Matrix<
       *cmat, -3. * cte() * deltaT * modinv(2) * ddPmodII(2), invRCG, invRCG, 1.);
   Core::LinAlg::Tensor::add_kronecker_tensor_product(
       *cmat, +6. * cte() * deltaT * modinv(2) * ddPmodII(2), invRCG, invRCG, 1.);
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -680,9 +686,11 @@ void Mat::PlasticElastHyper::evaluate_c_tvol(const Core::LinAlg::Matrix<3, 3>* d
   // due to thermal expansion can be easily calculated by the volumetric
   // part of the strain energy function
   if (summandProperties_.anisomod || summandProperties_.anisoprinc)
+  {
     FOUR_C_THROW(
         "TSI with semi-Smooth Newton type plasticity algorithm only "
         "with isotropic strain energy functions");
+  }
 
   // we are only interested in the volumetric response
   // which is for decoupled strain energy functions defined by
@@ -694,11 +702,11 @@ void Mat::PlasticElastHyper::evaluate_c_tvol(const Core::LinAlg::Matrix<3, 3>* d
   double dddPmodIII = 0.;
 
   // loop map of associated potential summands
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
+  for (auto& p : potsum_)
   {
-    potsum_[p]->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
-    potsum_[p]->add3rd_vol_deriv(modinv, dddPmodIII);
-    potsum_[p]->add_coup_deriv_vol(modinv(2), &dPmodI(2), &ddPmodII(2), &dddPmodIII, nullptr);
+    p->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
+    p->add3rd_vol_deriv(modinv, dddPmodIII);
+    p->add_coup_deriv_vol(modinv(2), &dPmodI(2), &ddPmodII(2), &dddPmodIII, nullptr);
   }
 
   // clear
@@ -722,8 +730,6 @@ void Mat::PlasticElastHyper::evaluate_c_tvol(const Core::LinAlg::Matrix<3, 3>* d
       *dCTvoldE, -3. * cte() * modinv(2) * ddPmodII(2), invRCG, invRCG, 1.);
   Core::LinAlg::Tensor::add_kronecker_tensor_product(
       *dCTvoldE, +6. * cte() * modinv(2) * ddPmodII(2), invRCG, invRCG, 1.);
-
-  return;
 }
 
 
@@ -743,16 +749,15 @@ void Mat::PlasticElastHyper::evaluate_gough_joule(
   double dddPmodIII = 0.;
 
   // loop map of associated potential summands
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
+  for (auto& p : potsum_)
   {
-    potsum_[p]->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
-    potsum_[p]->add3rd_vol_deriv(modinv, dddPmodIII);
-    potsum_[p]->add_coup_deriv_vol(modinv(2), &dPmodI(2), &ddPmodII(2), &dddPmodIII, nullptr);
+    p->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
+    p->add3rd_vol_deriv(modinv, dddPmodIII);
+    p->add_coup_deriv_vol(modinv(2), &dPmodI(2), &ddPmodII(2), &dddPmodIII, nullptr);
   }
 
   he_fac = -3. * cte() * ddPmodII(2);
   he_fac_deriv = -3. * cte() * dddPmodIII;
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -770,7 +775,7 @@ void Mat::PlasticElastHyper::evaluate_plast(const Core::LinAlg::Matrix<3, 3>* de
 {
   int check = +(cauchy != nullptr) + (d_cauchy_dC != nullptr) + (d_cauchy_dF != nullptr) +
               (d_cauchy_ddp != nullptr);
-  if (!(check == 0 || check == 4)) FOUR_C_THROW("some inconsistency with provided variables");
+  if (check != 0 && check != 4) FOUR_C_THROW("some inconsistency with provided variables");
 
   Core::LinAlg::Matrix<3, 1> dPI;
   Core::LinAlg::Matrix<6, 1> ddPII;
@@ -814,8 +819,6 @@ void Mat::PlasticElastHyper::evaluate_plast(const Core::LinAlg::Matrix<3, 3>* de
   evaluate_ncp(&mStr, &dMdC, &dMdFpinv, &dPK2dFpinv, deltaDp, gp, temp, NCP, dNCPdC, dNCPdDp,
       dNCPdT, dPK2dDp, active, elast, as_converged, dHdC, dHdDp, params, dt, &d_cauchy_dFpi,
       d_cauchy_ddp);
-
-  return;
 }
 
 
@@ -843,11 +846,15 @@ void Mat::PlasticElastHyper::evaluate_ncp(const Core::LinAlg::Matrix<3, 3>* mStr
   // deviatoric projection tensor
   Core::LinAlg::Matrix<6, 6> pdev(Core::LinAlg::Initialization::zero);
   for (int i = 0; i < 3; i++)
+  {
     for (int j = 0; j < 3; j++)
+    {
       if (i == j)
         pdev(i, j) = 2. / 3.;
       else
         pdev(i, j) = -1. / 3.;
+    }
+  }
   for (int i = 3; i < 6; i++) pdev(i, i) = 1.;
 
   // effective stress
@@ -970,7 +977,7 @@ void Mat::PlasticElastHyper::evaluate_ncp(const Core::LinAlg::Matrix<3, 3>* mStr
   // activity state check
   if (ypl < absetatr_H)
   {
-    if (activity_state_[gp] == false)  // gp switches state
+    if (!activity_state_[gp])  // gp switches state
     {
       if (abs(ypl - absetatr_H) > AS_CONVERGENCE_TOL * inityield() ||
           deltaDp->norm_inf() > AS_CONVERGENCE_TOL * inityield() / cpl())
@@ -981,7 +988,7 @@ void Mat::PlasticElastHyper::evaluate_ncp(const Core::LinAlg::Matrix<3, 3>* mStr
   }
   else
   {
-    if (activity_state_[gp] == true)  // gp switches state
+    if (activity_state_[gp])  // gp switches state
     {
       if (abs(ypl - absetatr_H) > AS_CONVERGENCE_TOL * inityield() ||
           deltaDp->norm_inf() > AS_CONVERGENCE_TOL * inityield() / cpl())
@@ -1028,23 +1035,35 @@ void Mat::PlasticElastHyper::evaluate_ncp(const Core::LinAlg::Matrix<3, 3>* mStr
     // Derivative of inverse plastic deformation gradient
     Core::LinAlg::Matrix<9, 6> dFpiDdeltaDp(Core::LinAlg::Initialization::zero);
     for (int A = 0; A < 3; A++)
+    {
       for (int a = 0; a < 3; a++)
+      {
         for (int b = 0; b < 3; b++)
+        {
           for (int i = 0; i < 6; i++)
+          {
             if (i <= 2)
+            {
               dFpiDdeltaDp(
                   Core::LinAlg::Voigt::IndexMappings::non_symmetric_tensor_to_voigt9_index(A, a),
                   i) -=
                   last_plastic_defgrd_inverse_[gp](A, b) *
                   Dexp(Core::LinAlg::Voigt::IndexMappings::symmetric_tensor_to_voigt6_index(b, a),
                       i);
+            }
             else
+            {
               dFpiDdeltaDp(
                   Core::LinAlg::Voigt::IndexMappings::non_symmetric_tensor_to_voigt9_index(A, a),
                   i) -=
                   2. * last_plastic_defgrd_inverse_[gp](A, b) *
                   Dexp(Core::LinAlg::Voigt::IndexMappings::symmetric_tensor_to_voigt6_index(b, a),
                       i);
+            }
+          }
+        }
+      }
+    }
 
     // derivative of mandel stress
     // we spare the deviatoric projection of the mandel stress derivative to get the effective
@@ -1284,8 +1303,6 @@ void Mat::PlasticElastHyper::evaluate_ncp(const Core::LinAlg::Matrix<3, 3>* mStr
   {
     *elast = true;
   }
-
-  return;
 }
 
 
@@ -1304,7 +1321,7 @@ void Mat::PlasticElastHyper::evaluate_plast(const Core::LinAlg::Matrix<3, 3>* de
 {
   int check = +(cauchy != nullptr) + (d_cauchy_dC != nullptr) + (d_cauchy_dF != nullptr) +
               (d_cauchy_ddp != nullptr) + (d_cauchy_dT != nullptr);
-  if (!(check == 0 || check == 5)) FOUR_C_THROW("some inconsistency with provided variables");
+  if (check != 0 && check != 5) FOUR_C_THROW("some inconsistency with provided variables");
 
   Core::LinAlg::Matrix<3, 1> dPI(Core::LinAlg::Initialization::zero);
   Core::LinAlg::Matrix<6, 1> ddPII(Core::LinAlg::Initialization::zero);
@@ -1348,8 +1365,6 @@ void Mat::PlasticElastHyper::evaluate_plast(const Core::LinAlg::Matrix<3, 3>* de
 
   evaluate_nc_pand_spin(&mStr, &dMdC, &dMdFpinv, &dPK2dFpinv, deltaLp, gp, NCP, dNCPdC, dNCPdLp,
       dPK2dLp, active, elast, as_converged, dt, &d_cauchy_dFpi, d_cauchy_ddp);
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -1369,21 +1384,29 @@ void Mat::PlasticElastHyper::evaluate_nc_pand_spin(const Core::LinAlg::Matrix<3,
   // deviatoric projection tensor
   Core::LinAlg::Matrix<6, 6> pdev(Core::LinAlg::Initialization::zero);
   for (int i = 0; i < 3; i++)
+  {
     for (int j = 0; j < 3; j++)
+    {
       if (i == j)
         pdev(i, j) = +2. / 3.;
       else
         pdev(i, j) = -1. / 3.;
+    }
+  }
   for (int i = 3; i < 6; i++) pdev(i, i) = 1.;
 
   // deviatoric symmetric projection tensor (A-->dev(sym(A))
   Core::LinAlg::Matrix<6, 9> psymdev(Core::LinAlg::Initialization::zero);
   for (int i = 0; i < 3; i++)
+  {
     for (int j = 0; j < 3; j++)
+    {
       if (i == j)
         psymdev(i, j) = +2. / 3.;
       else
         psymdev(i, j) = -1. / 3.;
+    }
+  }
   for (int i = 3; i < 6; i++) psymdev(i, i) = psymdev(i, i + 3) = .5;
 
   // symmetric identity
@@ -1475,7 +1498,7 @@ void Mat::PlasticElastHyper::evaluate_nc_pand_spin(const Core::LinAlg::Matrix<3,
   // check activity state
   if (ypl < absetatr_H)
   {
-    if (activity_state_[gp] == false)  // gp switches state
+    if (!activity_state_[gp])  // gp switches state
     {
       if (abs(ypl - absetatr_H) > AS_CONVERGENCE_TOL * inityield() ||
           deltaLp->norm_inf() > AS_CONVERGENCE_TOL * inityield() / cpl())
@@ -1486,7 +1509,7 @@ void Mat::PlasticElastHyper::evaluate_nc_pand_spin(const Core::LinAlg::Matrix<3,
   }
   else
   {
-    if (activity_state_[gp] == true)  // gp switches state
+    if (activity_state_[gp])  // gp switches state
     {
       if (abs(ypl - absetatr_H) > AS_CONVERGENCE_TOL * inityield() ||
           deltaLp->norm_inf() > AS_CONVERGENCE_TOL * inityield() / cpl())
@@ -1538,15 +1561,23 @@ void Mat::PlasticElastHyper::evaluate_nc_pand_spin(const Core::LinAlg::Matrix<3,
     // Derivative of inverse plastic deformation gradient
     Core::LinAlg::Matrix<9, 9> dFpiDdeltaLp(Core::LinAlg::Initialization::zero);
     for (int A = 0; A < 3; A++)
+    {
       for (int a = 0; a < 3; a++)
+      {
         for (int b = 0; b < 3; b++)
+        {
           for (int i = 0; i < 9; i++)
+          {
             dFpiDdeltaLp(
                 Core::LinAlg::Voigt::IndexMappings::non_symmetric_tensor_to_voigt9_index(A, a),
                 i) -=
                 last_plastic_defgrd_inverse_[gp](A, b) *
                 Dexp(Core::LinAlg::Voigt::IndexMappings::non_symmetric_tensor_to_voigt9_index(b, a),
                     i);
+          }
+        }
+      }
+    }
 
     // derivative of mandel stress
     Core::LinAlg::Matrix<6, 9> dMdLp;
@@ -1753,8 +1784,6 @@ void Mat::PlasticElastHyper::evaluate_nc_pand_spin(const Core::LinAlg::Matrix<3,
   {
     *elast = true;
   }
-
-  return;
 }
 
 void Mat::PlasticElastHyper::evaluate_cauchy_plast(const Core::LinAlg::Matrix<3, 1>& dPI,
@@ -1837,8 +1866,7 @@ void Mat::PlasticElastHyper::evaluate_cauchy_plast(const Core::LinAlg::Matrix<3,
     const double j = sqrt(prinv_(2));
     double d_dPI2_dT = 0.;
     if (summandProperties_.isomod) FOUR_C_THROW("only coupled SEF are supposed to end up here");
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
-      potsum_[p]->add_coup_deriv_vol(j, nullptr, &d_dPI2_dT, nullptr, nullptr);
+    for (auto& p : potsum_) p->add_coup_deriv_vol(j, nullptr, &d_dPI2_dT, nullptr, nullptr);
 
     const double fac = -3. * cte();
     d_dPI2_dT *= fac * .5 / j;
@@ -1852,12 +1880,12 @@ void Mat::PlasticElastHyper::evaluate_cauchy_derivs(const Core::LinAlg::Matrix<3
     const int gp, int eleGID, Core::LinAlg::Matrix<3, 1>& dPI, Core::LinAlg::Matrix<6, 1>& ddPII,
     Core::LinAlg::Matrix<10, 1>& dddPIII, const double* temp)
 {
-  for (unsigned i = 0; i < potsum_.size(); ++i)
+  for (auto& i : potsum_)
   {
     if (summandProperties_.isoprinc)
     {
-      potsum_[i]->add_derivatives_principal(dPI, ddPII, prinv, gp, eleGID);
-      potsum_[i]->add_third_derivatives_principal_iso(dddPIII, prinv, gp, eleGID);
+      i->add_derivatives_principal(dPI, ddPII, prinv, gp, eleGID);
+      i->add_third_derivatives_principal_iso(dddPIII, prinv, gp, eleGID);
     }
     if (summandProperties_.isomod || summandProperties_.anisomod || summandProperties_.anisoprinc)
       FOUR_C_THROW("not implemented for this form of strain energy function");
@@ -1865,9 +1893,11 @@ void Mat::PlasticElastHyper::evaluate_cauchy_derivs(const Core::LinAlg::Matrix<3
   if (temp)
   {
     if (summandProperties_.isomod || summandProperties_.anisomod || summandProperties_.anisoprinc)
+    {
       FOUR_C_THROW(
           "thermo-elastic Nitsche contact only with strain energies"
           "\ndepending on unmodified invariants");
+    }
 
     const double dT = *temp - init_temp();
 
@@ -1876,8 +1906,8 @@ void Mat::PlasticElastHyper::evaluate_cauchy_derivs(const Core::LinAlg::Matrix<3
     double ddPmodII = 0.;
     double dddPmodIII = 0.;
     double ddddPmodIIII = 0.;
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
-      potsum_[p]->add_coup_deriv_vol(j, &dPmodI, &ddPmodII, &dddPmodIII, &ddddPmodIIII);
+    for (auto& p : potsum_)
+      p->add_coup_deriv_vol(j, &dPmodI, &ddPmodII, &dddPmodIII, &ddddPmodIIII);
 
     const double fac = -3. * cte() * dT;
     dPI(2) += fac * .5 / j * ddPmodII;
@@ -1900,8 +1930,7 @@ void Mat::PlasticElastHyper::evaluate_cauchy_temp_deriv(const Core::LinAlg::Matr
   double dPmodI = 0.0;
   double ddPmodII = 0.0;
   double dddPmodIII = 0.0;
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
-    potsum_[p]->add_coup_deriv_vol(sqI3, &dPmodI, &ddPmodII, &dddPmodIII, nullptr);
+  for (auto& p : potsum_) p->add_coup_deriv_vol(sqI3, &dPmodI, &ddPmodII, &dddPmodIII, nullptr);
 
   // those are actually the temperature derivatives of the coefficients
   // then we plug them into the cauchy stress derivative and voila
@@ -1951,11 +1980,11 @@ void Mat::PlasticElastHyper::add_thermal_expansion_derivs(const Core::LinAlg::Ma
   Core::LinAlg::Matrix<3, 1> dPmodI;
   Core::LinAlg::Matrix<6, 1> ddPmodII;
   double dddPmodIII = 0.;
-  for (unsigned int p = 0; p < potsum_.size(); ++p)
+  for (auto& p : potsum_)
   {
-    potsum_[p]->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
-    potsum_[p]->add3rd_vol_deriv(modinv, dddPmodIII);
-    potsum_[p]->add_coup_deriv_vol(j, nullptr, &(ddPmodII(2)), &dddPmodIII, nullptr);
+    p->add_derivatives_modified(dPmodI, ddPmodII, modinv, gp, eleGID);
+    p->add3rd_vol_deriv(modinv, dddPmodIII);
+    p->add_coup_deriv_vol(j, nullptr, &(ddPmodII(2)), &dddPmodIII, nullptr);
   }
 
   const double dT = temp - init_temp();
@@ -1966,7 +1995,7 @@ void Mat::PlasticElastHyper::add_thermal_expansion_derivs(const Core::LinAlg::Ma
 
 void Mat::PlasticElastHyper::update_gp(const int gp, const Core::LinAlg::Matrix<3, 3>* deltaDp)
 {
-  if (activity_state_[gp] == true)
+  if (activity_state_[gp])
   {
     // update plastic deformation gradient
     Core::LinAlg::Matrix<3, 3> tmp;
@@ -1985,8 +2014,6 @@ void Mat::PlasticElastHyper::update_gp(const int gp, const Core::LinAlg::Matrix<
     last_alpha_kinematic_[gp].update(-.5, *deltaDp, 1.);
     last_alpha_kinematic_[gp].update_t(-.5, *deltaDp, 1.);
   }
-
-  return;
 }
 
 
@@ -2048,8 +2075,6 @@ void Mat::PlasticElastHyper::evaluate_kin_quant_elast(const Core::LinAlg::Matrix
 
   // principal invariants of elastic Cauchy-Green strain
   Core::LinAlg::Voigt::Strains::invariants_principal(prinv_, elasticRCGv);
-
-  return;
 }
 
 
@@ -2160,12 +2185,16 @@ int Mat::PlasticElastHyper::evaluate_kin_quant_plast(const Core::LinAlg::Matrix<
 
   double det = CeM_.determinant();
   if (det > -1e-30 and det < 1e-30)
+  {
     if (params.isParameter("tolerate_errors"))
-      if (params.get<bool>("tolerate_errors") == true)
+    {
+      if (params.get<bool>("tolerate_errors"))
       {
         params.get<bool>("eval_error") = true;
         return 1;
       }
+    }
+  }
 
   tmp.invert(CeM_);
   tmp33.multiply(invpldefgrd_, tmp);
@@ -2230,8 +2259,6 @@ void Mat::PlasticElastHyper::evaluate_isotropic_princ_elast(
   cmatisoprinc.multiply_nt(delta(5), ircg_, ircg_, 1.);
   Core::LinAlg::Tensor::add_holzapfel_product(cmatisoprinc, ircg_, delta(6));
   Core::LinAlg::Tensor::add_holzapfel_product(cmatisoprinc, Cpi_, delta(7));
-
-  return;
 }
 
 /*----------------------------------------------------------------------*/
@@ -2303,8 +2330,6 @@ void Mat::PlasticElastHyper::evaluate_isotropic_princ_plast(
   dMdFpinvIsoprinc.multiply_nt(delta(4), Ce2_, CFpiCei_, 1.);
   dMdFpinvIsoprinc.multiply_nt(delta(4), id2V_, CFpiCe_, 1.);
   dMdFpinvIsoprinc.multiply_nt(delta(5), id2V_, CFpiCei_, 1.);
-
-  return;
 }
 
 /*---------------------------------------------------------------------*
@@ -2341,7 +2366,7 @@ bool Mat::PlasticElastHyper::vis_data(
   {
     if ((int)data.size() != 1) FOUR_C_THROW("size mismatch");
     double tmp = 0.;
-    for (unsigned gp = 0; gp < delta_alpha_i_.size(); gp++) tmp += delta_alpha_i_.at(gp);
+    for (double gp : delta_alpha_i_) tmp += gp;
     data[0] = tmp / delta_alpha_i_.size();
   }
   else if (name == "plastic_zone")
@@ -2360,9 +2385,9 @@ bool Mat::PlasticElastHyper::vis_data(
   {
     if ((int)data.size() != 9) FOUR_C_THROW("size mismatch");
     std::vector<double> tmp(9, 0.);
-    for (std::size_t gp = 0; gp < last_alpha_kinematic_.size(); ++gp)
+    for (const auto& gp : last_alpha_kinematic_)
     {
-      const double* values = last_alpha_kinematic_[gp].data();
+      const double* values = gp.data();
       for (std::size_t i = 0; i < 9; ++i)
       {
         tmp[i] += values[i];

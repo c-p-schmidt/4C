@@ -58,7 +58,7 @@ Mat::DamageType Mat::DamageType::instance_;
  *----------------------------------------------------------------------*/
 Core::Communication::ParObject* Mat::DamageType::create(Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::Damage* plastic = new Mat::Damage();
+  auto* plastic = new Mat::Damage();
   plastic->unpack(buffer);
   return plastic;
 }
@@ -118,6 +118,7 @@ void Mat::Damage::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -129,6 +130,7 @@ void Mat::Damage::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // history data
   extract_from_pack(buffer, strainpllast_);
@@ -213,7 +215,6 @@ void Mat::Damage::setup(int numgp, const Core::IO::InputParameterContainer& cont
       FOUR_C_THROW("yield stress values have to be in ascending order!");
   }
   isinit_ = true;
-  return;
 
 }  // setup()
 
@@ -265,7 +266,6 @@ void Mat::Damage::update()
     failedcurr_.at(i) = false;
   }
 
-  return;
 }  // update()
 
 
@@ -281,11 +281,15 @@ void Mat::Damage::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
   // in case kinematic hardening is ignored, use implementation according to de
   // Souza Neto, Computational Methods for Plasticity
   if ((params_->kinhard_ == 0.0) and (params_->kinhard_rec_ == 0.0) and (params_->hardexpo_ == 0.0))
+  {
     evaluate_simplified_lemaitre(defgrd, linstrain, params, stress, cmat, gp, eleGID);
-  // in case full Lemaitre material model is considered, i.e. including
-  // kinematic hardening, use implementation according to Doghri
+    // in case full Lemaitre material model is considered, i.e. including
+    // kinematic hardening, use implementation according to Doghri
+  }
   else
+  {
     evaluate_full_lemaitre(defgrd, linstrain, params, stress, cmat, gp, eleGID);
+  }
 }  // Evaluate
 
 
@@ -615,7 +619,7 @@ void Mat::Damage::evaluate_simplified_lemaitre(const Core::LinAlg::Matrix<3, 3>*
     // damage has to be considered (strainbar_p > strainbar_p_D)
     //-------------------------------------------------------------------
 
-    if (damevolution == true)
+    if (damevolution)
     {
 #ifdef DEBUGMATERIAL
       // only first plastic call is output at screen for every processor
@@ -815,8 +819,6 @@ void Mat::Damage::evaluate_simplified_lemaitre(const Core::LinAlg::Matrix<3, 3>*
 
   // ------------------------------- return plastic strains for post-processing
   params.set<Core::LinAlg::Matrix<Mat::NUM_STRESS_3D, 1>>("plglstrain", strainplcurr_.at(gp));
-
-  return;
 
 }  // EvaluateSimplifiedLemaitre()
 
@@ -1039,7 +1041,7 @@ void Mat::Damage::evaluate_full_lemaitre(const Core::LinAlg::Matrix<3, 3>* defgr
   double Rplast = isohardvarlast_.at(gp);
   if (isohardvarlast_.at(gp) < 0.0)
   {
-    std::cout << "Rplast am ele = " << eleGID << ": " << Rplast << std::endl;
+    std::cout << "Rplast am ele = " << eleGID << ": " << Rplast << '\n';
     FOUR_C_THROW("damaged isotropic hardening variable has to be equal to or greater than zero!");
   }
 
@@ -1922,18 +1924,6 @@ void Mat::Damage::evaluate_full_lemaitre(const Core::LinAlg::Matrix<3, 3>* defgr
       g, h_alg, G, Hiso, bulk, Hkin, Hkin_rec, Nbetaold, gp, qbar_tilde, y, dy_dsigma_tilde,
       b_NbetaoldN);
 
-#ifdef DEBUGMATERIAL
-  std::cout << "Nach Setup Cep\n" << std::endl;
-  std::cout << " Dgamma " << Dgamma << std::endl;
-  std::cout << " G " << G << std::endl;
-  std::cout << " q " << q << std::endl;
-  std::cout << " flow vector " << Nbar << std::endl;
-  std::cout << " active_plasticity " << active_plasticity << std::endl;
-  std::cout << "--> cmat " << cmat << std::endl;
-#endif  // #ifdef DEBUGMATERIAL
-
-  return;
-
 }  // evaluate_full_lemaitre()
 
 
@@ -2039,7 +2029,7 @@ void Mat::Damage::setup_cmat_elasto_plastic(Core::LinAlg::Matrix<NUM_STRESS_3D, 
 )
 {
   // damage threshold is still not passed, i.e. use undamaged material tangent
-  if (damevolution == false)
+  if (!damevolution)
   {
     // incremental constitutive function for the stress tensor
     // sigma_n+1 = [ cmat - (Dgamma 6 G^2/q) I_d ] : strain_n+1^{e,trial}
@@ -2357,8 +2347,8 @@ void Mat::Damage::setup_cmat_elasto_plastic_full_lemaitre(
     int gp,               // current Gauss point
     double qbar_tilde,    // effective trial stress ^tilde
     double y,             // (-Y / r)^s
-    Core::LinAlg::Matrix<NUM_STRESS_3D, 1> dy_dsigma_tilde,
-    Core::LinAlg::Matrix<NUM_STRESS_3D, 1>
+    const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& dy_dsigma_tilde,
+    const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>&
         b_NbetaoldN  // beta_n - 2/3 . (N_tilde : beta_n) . N_tilde
 )
 {

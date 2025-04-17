@@ -45,7 +45,7 @@ namespace Mat
    * @param fiber_vector (out) : Fiber vector
    */
   void read_anisotropy_fiber(const Core::IO::InputParameterContainer& container,
-      std::string specifier, Core::LinAlg::Matrix<3, 1>& fiber_vector);
+      const std::string& specifier, Core::LinAlg::Matrix<3, 1>& fiber_vector);
 
   /*!
    * \brief Compute structural tensors of a 2D vector of fibers with the structural tensor

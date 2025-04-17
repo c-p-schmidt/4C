@@ -45,7 +45,7 @@ Mat::NewmanMultiScaleType Mat::NewmanMultiScaleType::instance_;
 Core::Communication::ParObject* Mat::NewmanMultiScaleType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::NewmanMultiScale* NewmanMultiScale = new Mat::NewmanMultiScale();
+  auto* NewmanMultiScale = new Mat::NewmanMultiScale();
   NewmanMultiScale->unpack(buffer);
   return NewmanMultiScale;
 }

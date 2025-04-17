@@ -41,20 +41,26 @@ void Mat::Elastic::Coup3Pow::add_derivatives_principal(Core::LinAlg::Matrix<3, 1
 
   // If d<2
   if (d < 2)
+  {
     FOUR_C_THROW(
         "The Elast_Coup3Pow - material only works for positive integer exponents, which are larger "
         "than two.");
+  }
 
   dPI(2) += 1. / 3. * c * d * pow(prinv(2), -2. / 3.) * pow((pow(prinv(2), 1. / 3.) - 1.), d - 1.);
 
   if (d == 2)
+  {
     ddPII(2) +=
         -2. / 9. * c * d * pow(prinv(2), -5. / 3.) * pow((pow(prinv(2), 1. / 3.) - 1.), d - 1.) +
         1. / 9. * c * d * (d - 1.) * pow(prinv(2), -4. / 3.);
+  }
   else
+  {
     ddPII(2) +=
         -2. / 9. * c * d * pow(prinv(2), -5. / 3.) * pow((pow(prinv(2), 1. / 3.) - 1.), d - 1.) +
         1. / 9. * c * d * (d - 1.) * pow(prinv(2), -4. / 3.) *
             pow((pow(prinv(2), 1. / 3.) - 1.), d - 2.);
+  }
 }
 FOUR_C_NAMESPACE_CLOSE

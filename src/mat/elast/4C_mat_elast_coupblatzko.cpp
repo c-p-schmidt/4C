@@ -42,10 +42,12 @@ void Mat::Elastic::CoupBlatzKo::add_strain_energy(double& psi,
 
   double psiadd =
       f * mue * 0.5 * (prinv(0) - 3.) + (1. - f) * mue * 0.5 * (prinv(1) / prinv(2) - 3.);
-  if (beta != 0)  // take care of possible division by zero in case of Poisson's ratio nu = 0.0
+  if (beta != 0)
+  {  // take care of possible division by zero in case of Poisson's ratio nu = 0.0
 
     // add to overall strain energy
     psi += psiadd;
+  }
 }
 
 void Mat::Elastic::CoupBlatzKo::add_derivatives_principal(Core::LinAlg::Matrix<3, 1>& dPI,
@@ -113,6 +115,7 @@ void Mat::Elastic::CoupBlatzKo::add_coup_deriv_vol(
     *dPj1 += f * mu * (2. * pow(J, -1. / 3.) - 2. * pow(J * J, -beta) / J) / 2. +
              (1. - f) * mu * (-2. * pow(J, -5. / 3.) + 2. * pow(J * J, beta) / J) / 2.;
   if (dPj2)
+  {
     *dPj2 += f * mu *
                  (-2. / 3. * pow(J, -4. / 3.) + 4. * pow(J * J, -beta) * beta * pow(J, -2.) +
                      2. * pow(J * J, -beta) * pow(J, -2.)) /
@@ -121,7 +124,9 @@ void Mat::Elastic::CoupBlatzKo::add_coup_deriv_vol(
                  (10. / 3. * pow(J, -8. / 3.) + 4. * pow(J * J, beta) * beta * pow(J, -2.) -
                      2. * pow(J * J, beta) * pow(J, -2.)) /
                  2.;
+  }
   if (dPj3)
+  {
     *dPj3 +=
         f * mu *
             (8. / 9. * pow(J, -7. / 3.) - 8. * pow(J * J, -beta) * beta * beta * pow(J, -3.) -
@@ -132,7 +137,9 @@ void Mat::Elastic::CoupBlatzKo::add_coup_deriv_vol(
             (-80. / 9. * pow(J, -11. / 3.) + 8. * pow(J * J, beta) * beta * beta * pow(J, -3.) -
                 12. * pow(J * J, beta) * beta * pow(J, -3.) + 4. * pow(J * J, beta) * pow(J, -3.)) /
             2.;
+  }
   if (dPj4)
+  {
     *dPj4 +=
         f * mu *
             (-56. / 27. * pow(J, -10. / 3.) +
@@ -147,5 +154,6 @@ void Mat::Elastic::CoupBlatzKo::add_coup_deriv_vol(
                 44. * pow(J * J, beta) * beta * pow(J, -4.) -
                 12. * pow(J * J, beta) * pow(J, -4.)) /
             2.;
+  }
 }
 FOUR_C_NAMESPACE_CLOSE

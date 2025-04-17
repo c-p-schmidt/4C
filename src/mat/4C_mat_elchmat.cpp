@@ -55,7 +55,7 @@ Mat::ElchMatType Mat::ElchMatType::instance_;
 
 Core::Communication::ParObject* Mat::ElchMatType::create(Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ElchMat* elchmat = new Mat::ElchMat();
+  auto* elchmat = new Mat::ElchMat();
   elchmat->unpack(buffer);
   return elchmat;
 }
@@ -98,7 +98,6 @@ void Mat::ElchMat::setup_mat_map()
     if (mat == nullptr) FOUR_C_THROW("Failed to allocate this material");
     mat_.insert(std::pair<int, std::shared_ptr<Core::Mat::Material>>(phaseid, mat));
   }
-  return;
 }
 
 
@@ -108,7 +107,6 @@ void Mat::ElchMat::clear()
 {
   params_ = nullptr;
   mat_.clear();
-  return;
 }
 
 /*----------------------------------------------------------------------*/
@@ -150,6 +148,7 @@ void Mat::ElchMat::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -161,6 +160,7 @@ void Mat::ElchMat::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   Core::Communication::PotentiallyUnusedBufferScope mat_scope{buffer};
   if (params_ != nullptr && params_->local_)  // params_ are not accessible in postprocessing mode

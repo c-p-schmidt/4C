@@ -35,9 +35,11 @@ Mat::Elastic::PAR::CoupLogNeoHooke::CoupLogNeoHooke(const Core::Mat::PAR::Parame
     lambda_ = c2;
   }
   else
+  {
     FOUR_C_THROW(
         "unknown parameter set for NeoHooke material!\n Must be either YN (Young's modulus and "
         "Poisson's ratio) or Lame");
+  }
 }
 
 Mat::Elastic::CoupLogNeoHooke::CoupLogNeoHooke(Mat::Elastic::PAR::CoupLogNeoHooke* params)

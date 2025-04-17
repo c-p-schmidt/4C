@@ -198,7 +198,7 @@ namespace Mat
     Core::Mat::PAR::Parameter* parameter() const override { return params_; }
 
    private:
-    std::map<int, std::shared_ptr<MicroMaterialGP>> matgp_;
+    std::map<int, std::shared_ptr<MicroMaterialGP>> matgp_{};
 
     double density_{0.0};
 

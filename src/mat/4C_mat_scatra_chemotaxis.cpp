@@ -42,11 +42,11 @@ Mat::PAR::ScatraChemotaxisMat::ScatraChemotaxisMat(const Core::Mat::PAR::Paramet
       numneg++;
   }
   if (numpos != 1 or numneg != 1)
+  {
     FOUR_C_THROW(
         "Each PAIR vector must contain exactly one '-1' (i.e. chemotractant) and exactly one '1' "
         "(i.e. attractant)!");
-
-  return;
+  }
 }
 
 
@@ -62,7 +62,7 @@ Mat::ScatraChemotaxisMatType Mat::ScatraChemotaxisMatType::instance_;
 Core::Communication::ParObject* Mat::ScatraChemotaxisMatType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::ScatraChemotaxisMat* scatra_chemotaxis_mat = new Mat::ScatraChemotaxisMat();
+  auto* scatra_chemotaxis_mat = new Mat::ScatraChemotaxisMat();
   scatra_chemotaxis_mat->unpack(buffer);
   return scatra_chemotaxis_mat;
 }
@@ -107,6 +107,7 @@ void Mat::ScatraChemotaxisMat::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -118,6 +119,7 @@ void Mat::ScatraChemotaxisMat::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 FOUR_C_NAMESPACE_CLOSE

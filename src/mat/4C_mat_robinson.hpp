@@ -342,7 +342,7 @@ namespace Mat
     //! strainplcurr_ = strainpllast_ + Delta strain_p (o)
     //! backstresscurr_ = backstresslast_ + Delta backstress (o)
     void iterative_update_of_internal_variables(const int numgp,  //!< total number of Gauss points
-        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1> straininc    //!< (i) increment of total strain
+        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& straininc   //!< (i) increment of total strain
     );
 
     //! return density
@@ -418,7 +418,7 @@ namespace Mat
     Mat::PAR::Robinson* params_;
 
     //! indicator if #Initialize routine has been called
-    bool isinit_;
+    bool isinit_{};
 
     //! pointer to the internal thermal material
     std::shared_ptr<Mat::Trait::Thermo> thermo_;

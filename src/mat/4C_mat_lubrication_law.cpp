@@ -18,7 +18,6 @@ FOUR_C_NAMESPACE_OPEN
 Mat::PAR::LubricationLaw::LubricationLaw(const Core::Mat::PAR::Parameter::Data& matdata)
     : Parameter(matdata)
 {
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -27,7 +26,6 @@ Mat::PAR::LubricationLawConstant::LubricationLawConstant(
     const Core::Mat::PAR::Parameter::Data& matdata)
     : LubricationLaw(matdata), viscosity_(matdata.parameters.get<double>("VISCOSITY"))
 {
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -42,7 +40,6 @@ std::shared_ptr<Core::Mat::Material> Mat::PAR::LubricationLawConstant::create_ma
 void Mat::PAR::LubricationLawConstant::compute_viscosity(const double& press, double& viscosity)
 {
   viscosity = viscosity_;
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -51,8 +48,6 @@ void Mat::PAR::LubricationLawConstant::constitutive_derivatives(
     const double& press, const double& viscosity, double& dviscosity_dp)
 {
   dviscosity_dp = 0.0;
-
-  return;
 }
 
 /*---------------------------------------------------------------------*
@@ -65,7 +60,6 @@ Mat::PAR::LubricationLawBarus::LubricationLawBarus(const Core::Mat::PAR::Paramet
       ABSViscosity_(matdata.parameters.get<double>("ABSViscosity")),
       PreVisCoeff_(matdata.parameters.get<double>("PreVisCoeff"))
 {
-  return;
 }
 
 // Create material instance of matching type with my parameters
@@ -78,8 +72,6 @@ std::shared_ptr<Core::Mat::Material> Mat::PAR::LubricationLawBarus::create_mater
 void Mat::PAR::LubricationLawBarus::compute_viscosity(const double& press, double& viscosity)
 {
   viscosity = ABSViscosity_ * (std::exp(PreVisCoeff_ * press));
-
-  return;
 }
 
 // Evaluate constitutive relation for viscosity and compute derivatives
@@ -87,8 +79,6 @@ void Mat::PAR::LubricationLawBarus::constitutive_derivatives(
     const double& press, const double& viscosity, double& dviscosity_dp)
 {
   dviscosity_dp = viscosity * PreVisCoeff_;
-
-  return;
 }
 
 /*---------------------------------------------------------------------*
@@ -105,7 +95,6 @@ Mat::PAR::LubricationLawRoeland::LubricationLawRoeland(
       RefPress_(matdata.parameters.get<double>("RefPress"))
 {
   z_ = (PreVisCoeff_ * RefPress_) / (log(ABSViscosity_ / RefVisc_));
-  return;
 }
 
 // Create material instance of matching type with my parameters
@@ -121,8 +110,6 @@ void Mat::PAR::LubricationLawRoeland::compute_viscosity(const double& press, dou
 
   viscosity =
       ABSViscosity_ * exp(log(ABSViscosity_ / RefVisc_) * (pow((1 + press / RefPress_), z_) - 1));
-
-  return;
 }
 
 // Evaluate constitutive relation for viscosity and compute derivatives
@@ -133,8 +120,6 @@ void Mat::PAR::LubricationLawRoeland::constitutive_derivatives(
 
   dviscosity_dp = viscosity * log(ABSViscosity_ / RefVisc_) * z_ *
                   pow((1 + press / RefPress_), (z_ - 1)) * (1 / RefPress_);
-
-  return;
 }
 
 FOUR_C_NAMESPACE_CLOSE

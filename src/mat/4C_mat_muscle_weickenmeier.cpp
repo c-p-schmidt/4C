@@ -114,7 +114,7 @@ Mat::MuscleWeickenmeier::MuscleWeickenmeier()
     : params_(nullptr),
       lambda_m_old_(1.0),
       anisotropy_(),
-      anisotropy_extension_(true, 0.0, 0,
+      anisotropy_extension_(true, 0.0, false,
           std::shared_ptr<Mat::Elastic::StructuralTensorStrategyBase>(
               new Mat::Elastic::StructuralTensorStrategyStandard(nullptr)),
           {0})
@@ -125,7 +125,7 @@ Mat::MuscleWeickenmeier::MuscleWeickenmeier(Mat::PAR::MuscleWeickenmeier* params
     : params_(params),
       lambda_m_old_(1.0),
       anisotropy_(),
-      anisotropy_extension_(true, 0.0, 0,
+      anisotropy_extension_(true, 0.0, false,
           std::shared_ptr<Mat::Elastic::StructuralTensorStrategyBase>(
               new Mat::Elastic::StructuralTensorStrategyStandard(nullptr)),
           {0})

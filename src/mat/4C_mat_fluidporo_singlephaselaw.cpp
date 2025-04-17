@@ -20,7 +20,6 @@ FOUR_C_NAMESPACE_OPEN
 Mat::PAR::FluidPoroPhaseLaw::FluidPoroPhaseLaw(const Core::Mat::PAR::Parameter::Data& matdata)
     : Parameter(matdata)
 {
-  return;
 }
 
 
@@ -90,8 +89,6 @@ Mat::PAR::FluidPoroPhaseLawLinear::FluidPoroPhaseLawLinear(
   if (numdof_ != (int)presids_.size())
     FOUR_C_THROW(
         "number of dofs {} does not fit to size of dof vector {}", numdof_, presids_.size());
-
-  return;
 }
 
 /*----------------------------------------------------------------------*
@@ -180,7 +177,6 @@ Mat::PAR::FluidPoroPhaseLawTangent::FluidPoroPhaseLawTangent(
   if (numdof_ != (int)presids_.size())
     FOUR_C_THROW(
         "number of dofs {} does not fit to size of dof vector {}", numdof_, presids_.size());
-  return;
 }
 
 

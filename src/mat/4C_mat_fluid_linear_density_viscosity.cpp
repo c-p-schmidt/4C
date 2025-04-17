@@ -45,7 +45,7 @@ Mat::LinearDensityViscosityType Mat::LinearDensityViscosityType::instance_;
 Core::Communication::ParObject* Mat::LinearDensityViscosityType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::LinearDensityViscosity* fluid = new Mat::LinearDensityViscosity();
+  auto* fluid = new Mat::LinearDensityViscosity();
   fluid->unpack(buffer);
   return fluid;
 }
@@ -90,6 +90,7 @@ void Mat::LinearDensityViscosity::unpack(Core::Communication::UnpackBuffer& buff
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -101,6 +102,7 @@ void Mat::LinearDensityViscosity::unpack(Core::Communication::UnpackBuffer& buff
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 

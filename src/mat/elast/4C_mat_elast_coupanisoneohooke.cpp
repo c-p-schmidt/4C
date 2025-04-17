@@ -44,7 +44,7 @@ void Mat::Elastic::CoupAnisoNeoHooke::setup(
     int numgp, const Core::IO::InputParameterContainer& container)
 {
   // warning message
-  std::cout << "Material does not respect a stress free reference state" << std::endl;
+  std::cout << "Material does not respect a stress free reference state" << '\n';
 
   // path if fibers aren't given in input file
   if (params_->init_ == 0)

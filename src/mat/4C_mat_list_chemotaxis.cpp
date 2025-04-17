@@ -60,7 +60,7 @@ Mat::MatListChemotaxisType Mat::MatListChemotaxisType::instance_;
 Core::Communication::ParObject* Mat::MatListChemotaxisType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::MatListChemotaxis* MatListChemotaxis = new Mat::MatListChemotaxis();
+  auto* MatListChemotaxis = new Mat::MatListChemotaxis();
   MatListChemotaxis->unpack(buffer);
   return MatListChemotaxis;
 }
@@ -103,18 +103,13 @@ void Mat::MatListChemotaxis::setup_mat_map()
     if (mat == nullptr) FOUR_C_THROW("Failed to allocate this material");
     material_map_write()->insert(std::pair<int, std::shared_ptr<Core::Mat::Material>>(pairid, mat));
   }
-  return;
 }
 
 
 /*----------------------------------------------------------------------*
  | reset everything                                          thon 06/15 |
  *----------------------------------------------------------------------*/
-void Mat::MatListChemotaxis::clear()
-{
-  paramschemo_ = nullptr;
-  return;
-}
+void Mat::MatListChemotaxis::clear() { paramschemo_ = nullptr; }
 
 
 /*----------------------------------------------------------------------*
@@ -154,6 +149,7 @@ void Mat::MatListChemotaxis::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   paramschemo_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -169,6 +165,7 @@ void Mat::MatListChemotaxis::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   Mat::MatList::unpack(buffer);

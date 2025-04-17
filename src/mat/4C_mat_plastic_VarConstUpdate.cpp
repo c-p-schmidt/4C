@@ -32,9 +32,11 @@ Mat::PAR::PlasticElastHyperVCU::PlasticElastHyperVCU(const Core::Mat::PAR::Param
 {
   // polyconvexity check is just implemented for isotropic hyperlastic materials
   if (polyconvex_)
+  {
     FOUR_C_THROW(
         "This polyconvexity-check is just implemented for isotropic "
         "hyperelastic-materials (do not use for plastic materials).");
+  }
 }
 
 /*----------------------------------------------------------------------*/
@@ -51,7 +53,7 @@ Mat::PlasticElastHyperVCUType Mat::PlasticElastHyperVCUType::instance_;
 Core::Communication::ParObject* Mat::PlasticElastHyperVCUType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::PlasticElastHyperVCU* elhy = new Mat::PlasticElastHyperVCU();
+  auto* elhy = new Mat::PlasticElastHyperVCU();
   elhy->unpack(buffer);
 
   return elhy;
@@ -95,17 +97,15 @@ void Mat::PlasticElastHyperVCU::pack(Core::Communication::PackBuffer& data) cons
   if (mat_params() != nullptr)  // summands are not accessible in postprocessing mode
   {
     // loop map of associated potential summands
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
+    for (const auto& p : potsum_)
     {
-      potsum_[p]->pack_summand(data);
+      p->pack_summand(data);
     }
   }
 
   // plastic history data
   add_to_pack(data, last_plastic_defgrd_inverse_);
   add_to_pack(data, last_alpha_isotropic_);
-
-  return;
 }
 
 
@@ -155,9 +155,9 @@ void Mat::PlasticElastHyperVCU::unpack(Core::Communication::UnpackBuffer& buffer
     }
 
     // loop map of associated potential summands
-    for (unsigned int p = 0; p < potsum_.size(); ++p)
+    for (auto& p : potsum_)
     {
-      potsum_[p]->unpack_summand(buffer);
+      p->unpack_summand(buffer);
     }
   }
 
@@ -168,12 +168,6 @@ void Mat::PlasticElastHyperVCU::unpack(Core::Communication::UnpackBuffer& buffer
   // no need to pack this
   delta_alpha_i_.resize(last_alpha_isotropic_.size(), 0.);
   plastic_defgrd_inverse_.resize(last_plastic_defgrd_inverse_.size());
-
-  // in the postprocessing mode, we do not unpack everything we have packed
-  // -> position check cannot be done in this case
-
-
-  return;
 }
 
 /*----------------------------------------------------------------------*/
@@ -185,8 +179,6 @@ void Mat::PlasticElastHyperVCU::setup(int numgp, const Core::IO::InputParameterC
 
   // setup history
   plastic_defgrd_inverse_.resize(numgp);
-
-  return;
 }
 
 // MAIN
@@ -209,7 +201,7 @@ void Mat::PlasticElastHyperVCU::evaluate(const Core::LinAlg::Matrix<3, 3>* defgr
   // get 2pk stresses
   Core::LinAlg::Matrix<6, 1> etstr;
   Core::LinAlg::Matrix<6, 6> etcmat;
-  ElastHyper::evaluate(nullptr, &ee_test, params, &etstr, &etcmat, gp, eleGID);
+  FourC::Mat::PlasticElastHyper::evaluate(nullptr, &ee_test, params, &etstr, &etcmat, gp, eleGID);
 
   double yf;
   double normZero = 0.0;
@@ -228,7 +220,8 @@ void Mat::PlasticElastHyperVCU::evaluate(const Core::LinAlg::Matrix<3, 3>* defgr
     Core::LinAlg::Matrix<6, 6> checkCmat;
     Core::LinAlg::Matrix<3, 3> emptymat;
     PlasticElastHyper::evaluate_elast(defgrd, &emptymat, stress, cmat, gp, eleGID);
-    ElastHyper::evaluate(defgrd, &ee_test, params, &checkStr, &checkCmat, gp, eleGID);
+    FourC::Mat::PlasticElastHyper::evaluate(
+        defgrd, &ee_test, params, &checkStr, &checkCmat, gp, eleGID);
 
     // push back
     Core::LinAlg::Matrix<3, 3> checkStrMat;
@@ -303,7 +296,8 @@ void Mat::PlasticElastHyperVCU::evaluate(const Core::LinAlg::Matrix<3, 3>* defgr
       Core::LinAlg::Matrix<6, 6> elastCmat;
       Core::LinAlg::Matrix<6, 1> elastStressDummy;
       Core::LinAlg::Matrix<6, 6> elastCmatDummy;
-      ElastHyper::evaluate(nullptr, &eeOut, params, &elastStress, &elastCmat, gp, eleGID);
+      FourC::Mat::PlasticElastHyper::evaluate(
+          nullptr, &eeOut, params, &elastStress, &elastCmat, gp, eleGID);
 
       Core::LinAlg::Matrix<6, 6> d2ced2lpVoigt[6];
       ce2nd_deriv(defgrd, last_plastic_defgrd_inverse_[gp], dLp, d2ced2lpVoigt);
@@ -315,12 +309,18 @@ void Mat::PlasticElastHyperVCU::evaluate(const Core::LinAlg::Matrix<3, 3>* defgr
 
       Core::LinAlg::Matrix<6, 6> spart6x6;
       for (int A = 0; A < 6; ++A)
+      {
         for (int B = 0; B < 6; ++B)
+        {
           for (int C = 0; C < 6; ++C)
+          {
             if (A < 3)
               spart6x6(B, C) += 0.5 * elastStress(A) * d2ced2lpVoigt[A](B, C);
             else
               spart6x6(B, C) += 1. * elastStress(A) * d2ced2lpVoigt[A](B, C);
+          }
+        }
+      }
 
       Core::LinAlg::Matrix<6, 6> hessElast6x6(spart6x6);
       hessElast6x6.update(1., cpart, 1.);
@@ -410,7 +410,7 @@ void Mat::PlasticElastHyperVCU::evaluate(const Core::LinAlg::Matrix<3, 3>* defgr
 
     if (!converged)
     {
-      std::cout << "eleGID: " << eleGID << "gp: " << gp << std::endl;
+      std::cout << "eleGID: " << eleGID << "gp: " << gp << '\n';
       FOUR_C_THROW("unconverged");
     }
 
@@ -461,8 +461,6 @@ void Mat::PlasticElastHyperVCU::evaluate(const Core::LinAlg::Matrix<3, 3>* defgr
 
     cmat->update(cmat_summand1, cmat_summand2);
   }
-
-  return;
 }
 
 
@@ -476,8 +474,6 @@ void Mat::PlasticElastHyperVCU::update()
     last_plastic_defgrd_inverse_[gp] = plastic_defgrd_inverse_[gp];
     last_alpha_isotropic_[gp] += delta_alpha_i_[gp];
   }
-
-  return;
 };
 
 
@@ -508,16 +504,28 @@ void Mat::PlasticElastHyperVCU::eval_dce_dlp(const Core::LinAlg::Matrix<3, 3> fp
   // Derivative of inverse plastic deformation gradient
   dFpiDdeltaDp.clear();
   for (int A = 0; A < 3; A++)
+  {
     for (int a = 0; a < 3; a++)
+    {
       for (int b = 0; b < 3; b++)
+      {
         for (int i = 0; i < 6; i++)
+        {
           if (i <= 2)
+          {
             dFpiDdeltaDp(vmap::non_symmetric_tensor_to_voigt9_index(A, a), i) -=
                 fpi(A, b) * Dexp(vmap::symmetric_tensor_to_voigt6_index(b, a), i);
+          }
           else
+          {
             dFpiDdeltaDp(vmap::non_symmetric_tensor_to_voigt9_index(A, a), i) -=
                 2. * fpi(A, b) *
                 Dexp(vmap::symmetric_tensor_to_voigt6_index(b, a), i);  // fixme factor 2
+          }
+        }
+      }
+    }
+  }
 
   dceDdeltalp.multiply(dcedfpi, dFpiDdeltaDp);
 
@@ -556,9 +564,11 @@ void Mat::PlasticElastHyperVCU::yield_function(const double last_ai,
   for (int i = 3; i < 6; i++) se_strain(i) *= 2.;
 
   for (int i = 0; i < 3; i++)
+  {
     for (int j = 0; j < 3; j++)
       for (int k = 0; k < 3; k++)
         MandelStr(i, k) += ce(i, j) * str(vmap::symmetric_tensor_to_voigt6_index(j, k));
+  }
 
   // Compute the trace of the mandel stresses
   Core::LinAlg::Matrix<3, 3> id2;
@@ -574,8 +584,6 @@ void Mat::PlasticElastHyperVCU::yield_function(const double last_ai,
   double yf = 0.0;
   yf = NormDevMandelStr + Qi - Qeq;
   *yieldFunc = yf;
-
-  return;
 }
 
 
@@ -608,8 +616,6 @@ void Mat::PlasticElastHyperVCU::comp_elast_quant(const Core::LinAlg::Matrix<3, 3
   next_ee(5) = 2. * next_ee3x3(0, 2);
 
   *Ee = next_ee;
-
-  return;
 }
 
 /*---------------------------------------------------------------------*
@@ -692,7 +698,7 @@ void Mat::PlasticElastHyperVCU::evaluate_rhs(const int gp, const Core::LinAlg::M
 
   Core::LinAlg::Matrix<6, 1> se;
   Core::LinAlg::Matrix<6, 6> dummy;
-  ElastHyper::evaluate(nullptr, &eeOut, params, &se, &dummy, gp, eleGID);
+  FourC::Mat::PlasticElastHyper::evaluate(nullptr, &eeOut, params, &se, &dummy, gp, eleGID);
 
   eval_dce_dlp(last_plastic_defgrd_inverse_[gp], &defgrd, dexpOut_mat, cetrial, expOut, dcedlp,
       dFpiDdeltaDp);
@@ -736,8 +742,6 @@ void Mat::PlasticElastHyperVCU::evaluate_rhs(const int gp, const Core::LinAlg::M
   // Outputs
   rhs.multiply_tn(1., dAlphadBeta, rhs6, 0.);
   rhsElast.multiply_tn(1., dAlphadBeta, rhs6Elast, 0.);
-
-  return;
 }
 void Mat::PlasticElastHyperVCU::evaluate_plast(Core::LinAlg::Matrix<6, 9>& dPK2dFpinvIsoprinc,
     const Core::LinAlg::Matrix<3, 1>& gamma, const Core::LinAlg::Matrix<8, 1>& delta,
@@ -791,10 +795,12 @@ void Mat::PlasticElastHyperVCU::evaluate_kin_quant_plast(const int gp, const int
 
   Core::LinAlg::Matrix<6, 1> ce_stresslike;
   for (int i = 0; i < 6; i++)
+  {
     if (i < 3)
       ce_stresslike(i) = ce(i);
     else
       ce_stresslike(i) = 0.5 * ce(i);
+  }
 
   Core::LinAlg::Matrix<3, 1> prinv;
   Core::LinAlg::Voigt::Strains::invariants_principal(prinv, ce);
@@ -928,9 +934,13 @@ void Mat::PlasticElastHyperVCU::ce2nd_deriv(const Core::LinAlg::Matrix<3, 3>* de
   exp_dLp_cetrial.multiply(exp_dLp, cetrial);
 
   for (int a = 0; a < 3; a++)
+  {
     for (int d = a; d < 3; d++)
+    {
       for (int b = 0; b < 3; b++)
+      {
         for (int C = 0; C < 6; C++)
+        {
           for (int D = 0; D < 6; D++)
           {
             DDceDdLpDdLpVoigt[vmap::non_symmetric_tensor_to_voigt9_index(a, d)](C, D) +=
@@ -940,6 +950,7 @@ void Mat::PlasticElastHyperVCU::ce2nd_deriv(const Core::LinAlg::Matrix<3, 3>* de
                     D2exp_VOIGT[vmap::symmetric_tensor_to_voigt6_index(a, b)](C, D) *
                         exp_dLp_cetrial(d, b));
             for (int c = 0; c < 3; c++)
+            {
               DDceDdLpDdLpVoigt[vmap::non_symmetric_tensor_to_voigt9_index(a, d)](C, D) +=
                   (1. + (C > 2)) * (1. + (D > 2)) *
                   (Dexp_dLp_mat(vmap::symmetric_tensor_to_voigt6_index(a, b), C) * cetrial(b, c) *
@@ -947,7 +958,12 @@ void Mat::PlasticElastHyperVCU::ce2nd_deriv(const Core::LinAlg::Matrix<3, 3>* de
                       Dexp_dLp_mat(vmap::symmetric_tensor_to_voigt6_index(a, b), D) *
                           cetrial(b, c) *
                           Dexp_dLp_mat(vmap::symmetric_tensor_to_voigt6_index(c, d), C));
+            }
           }
+        }
+      }
+    }
+  }
 }
 
 FOUR_C_NAMESPACE_CLOSE

@@ -113,6 +113,7 @@ void Mat::BeamElastHyperMaterial<T>::unpack(Core::Communication::UnpackBuffer& b
   params_ = nullptr;
 
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -134,6 +135,7 @@ void Mat::BeamElastHyperMaterial<T>::unpack(Core::Communication::UnpackBuffer& b
         FOUR_C_THROW("Type of material parameter {} does not fit to type of material law {}",
             mat->type(), material_type());
     }
+  }
 }
 
 /*-----------------------------------------------------------------------------------------------*

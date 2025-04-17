@@ -35,19 +35,25 @@ Mat::PAR::CrosslinkerMat::CrosslinkerMat(const Core::Mat::PAR::Parameter::Data& 
           (matdata.parameters.get<std::string>("TYPE"))))
 {
   if (link_element_matnum_ < 0)
+  {
     FOUR_C_THROW(
         "Material number for underlying linker element of this crosslinker"
         "must be greater than zero");
+  }
   if (linkinglength_ < 1e-08)
+  {
     FOUR_C_THROW(
         "Linking length (distance of two binding spots of a linker) must be\n"
         "greater than zero (as you need to divide by it during crosslinker diffusion).");
+  }
   if (linkinglengthtol_ < 0.0 || linkinglengthtol_ > linkinglength_)
     FOUR_C_THROW(" Value for tolerance of linking does not make sense.");
   if ((linkinglength_ - linkinglengthtol_) < 1e-08)
+  {
     FOUR_C_THROW(
         "choose linkinglengthtol < linkinglength_, otherwise a linker with length 0.0 maybe be "
         "possible.");
+  }
 }
 
 std::shared_ptr<Core::Mat::Material> Mat::PAR::CrosslinkerMat::create_material()
@@ -61,7 +67,7 @@ Mat::CrosslinkerMatType Mat::CrosslinkerMatType::instance_;
 Core::Communication::ParObject* Mat::CrosslinkerMatType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::CrosslinkerMat* linkermat = new Mat::CrosslinkerMat();
+  auto* linkermat = new Mat::CrosslinkerMat();
   linkermat->unpack(buffer);
   return linkermat;
 }
@@ -107,6 +113,7 @@ void Mat::CrosslinkerMat::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -118,6 +125,7 @@ void Mat::CrosslinkerMat::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 }
 
 FOUR_C_NAMESPACE_CLOSE

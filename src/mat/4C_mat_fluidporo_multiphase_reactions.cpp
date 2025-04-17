@@ -48,9 +48,11 @@ Mat::PAR::FluidPoroMultiPhaseReactions::FluidPoroMultiPhaseReactions(
         FOUR_C_THROW("only MAT_FluidPoroSingleReaction material valid");
       Mat::FluidPoroSingleReaction singlereacmat = static_cast<Mat::FluidPoroSingleReaction&>(*mat);
       if (singlereacmat.total_num_dof() != this->nummat_)
+      {
         FOUR_C_THROW(
             "TOTALNUMDOF in MAT_FluidPoroSingleReaction does not correspond to NUMMAT in "
             "MAT_FluidPoroMultiPhaseReactions");
+      }
 
       material_map_write()->insert(
           std::pair<int, std::shared_ptr<Core::Mat::Material>>(reacid, mat));
@@ -70,8 +72,7 @@ Mat::FluidPoroMultiPhaseReactionsType Mat::FluidPoroMultiPhaseReactionsType::ins
 Core::Communication::ParObject* Mat::FluidPoroMultiPhaseReactionsType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::FluidPoroMultiPhaseReactions* FluidPoroMultiPhaseReactions =
-      new Mat::FluidPoroMultiPhaseReactions();
+  auto* FluidPoroMultiPhaseReactions = new Mat::FluidPoroMultiPhaseReactions();
   FluidPoroMultiPhaseReactions->unpack(buffer);
   return FluidPoroMultiPhaseReactions;
 }
@@ -116,17 +117,12 @@ void Mat::FluidPoroMultiPhaseReactions::setup_mat_map()
     if (mat == nullptr) FOUR_C_THROW("Failed to allocate this material");
     material_map_write()->insert(std::pair<int, std::shared_ptr<Core::Mat::Material>>(reacid, mat));
   }
-  return;
 }
 
 /*----------------------------------------------------------------------*
  | reset everything                                          vuong 08/16 |
  *----------------------------------------------------------------------*/
-void Mat::FluidPoroMultiPhaseReactions::clear()
-{
-  paramsreac_ = nullptr;
-  return;
-}
+void Mat::FluidPoroMultiPhaseReactions::clear() { paramsreac_ = nullptr; }
 
 /*----------------------------------------------------------------------*
  | Unpack data from a char vector into this class            vuong 08/16 |
@@ -164,6 +160,7 @@ void Mat::FluidPoroMultiPhaseReactions::unpack(Core::Communication::UnpackBuffer
   extract_from_pack(buffer, matid);
   paramsreac_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -179,6 +176,7 @@ void Mat::FluidPoroMultiPhaseReactions::unpack(Core::Communication::UnpackBuffer
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   // extract base class material
   Mat::FluidPoroMultiPhase::unpack(buffer);

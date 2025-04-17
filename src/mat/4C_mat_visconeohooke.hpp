@@ -176,7 +176,7 @@ namespace Mat
     std::shared_ptr<std::vector<Core::LinAlg::Matrix<NUM_STRESS_3D, 1>>>
         artstresslast_;  ///< artificial stress in last converged state
 
-    bool isinit_;  ///< indicates if #Initialized routine has been called
+    bool isinit_{};  ///< indicates if #Initialized routine has been called
   };
 }  // namespace Mat
 

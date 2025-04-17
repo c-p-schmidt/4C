@@ -266,9 +266,9 @@ namespace Mat
         backstresscurr_;  //!< \f${\beta}_{n+1}\f$
 
     //! indicator if #Initialize routine has been called
-    bool isinit_;
+    bool isinit_{};
     //! indicator if material has started to be plastic
-    bool plastic_step_;
+    bool plastic_step_{};
 
   };  // class PlasticLinElast : public Core::Mat::Material
 }  // namespace Mat

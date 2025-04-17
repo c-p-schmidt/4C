@@ -158,10 +158,12 @@ Mat::PAR::BeamReissnerElastHyperMaterialParams::BeamReissnerElastHyperMaterialPa
   /* the radius of an assumed circular cross-section is only used for the evaluation
    * of all kinds of interactions. it can hence be ignored if no interaction are considered. */
   if (radius_interaction_ != -1.0 and radius_interaction_ <= 0.0)
+  {
     FOUR_C_THROW(
         "if specified (only required if any kind of beam interactions are considered and you "
         "don't want to use the default radius computed from the area moment of inertia), the "
         "given interaction radius must be a positive value");
+  }
 }
 
 
@@ -206,9 +208,11 @@ Mat::PAR::BeamReissnerElastHyperMaterialParamsByMode::BeamReissnerElastHyperMate
   /* the radius of an assumed circular cross-section is only used for the evaluation
    * of all kinds of interactions. it can hence be ignored if no interaction are considered. */
   if (radius_interaction_ != -1.0 and radius_interaction_ <= 0.0)
+  {
     FOUR_C_THROW(
         "if specified (only required if any kind of beam interactions are considered), the "
         "given interaction radius must be a positive value");
+  }
 }
 
 
@@ -246,10 +250,12 @@ Mat::PAR::BeamKirchhoffElastHyperMaterialParams::BeamKirchhoffElastHyperMaterial
   /* the radius of an assumed circular cross-section is only used for the evaluation
    * of all kinds of interactions. it can hence be ignored if no interaction are considered. */
   if (radius_interaction_ != -1.0 and radius_interaction_ <= 0.0)
+  {
     FOUR_C_THROW(
         "if specified (only required if any kind of beam interactions are considered and you "
         "don't want to use the default radius computed from the area moment of inertia), the "
         "given interaction radius must be a positive value");
+  }
 }
 
 
@@ -289,9 +295,11 @@ Mat::PAR::BeamKirchhoffElastHyperMaterialParamsByMode::BeamKirchhoffElastHyperMa
   /* the radius of an assumed circular cross-section is only used for the evaluation
    * of all kinds of interactions. it can hence be ignored if no interaction are considered. */
   if (radius_interaction_ != -1.0 and radius_interaction_ <= 0.0)
+  {
     FOUR_C_THROW(
         "if specified (only required if any kind of beam interactions are considered), the "
         "given interaction radius must be a positive value");
+  }
 }
 
 
@@ -319,10 +327,12 @@ Mat::PAR::BeamKirchhoffTorsionFreeElastHyperMaterialParams::
   /* the radius of an assumed circular cross-section is only used for the evaluation
    * of all kinds of interactions. it can hence be ignored if no interaction are considered. */
   if (radius_interaction_ != -1.0 and radius_interaction_ <= 0.0)
+  {
     FOUR_C_THROW(
         "if specified (only required if any kind of beam interactions are considered and you "
         "don't want to use the default radius computed from the area moment of inertia), the "
         "given interaction radius must be a positive value");
+  }
 }
 
 
@@ -349,9 +359,11 @@ Mat::PAR::BeamKirchhoffTorsionFreeElastHyperMaterialParamsByMode::
   /* the radius of an assumed circular cross-section is only used for the evaluation
    * of all kinds of interactions. it can hence be ignored if no interaction are considered. */
   if (radius_interaction_ != -1.0 and radius_interaction_ <= 0.0)
+  {
     FOUR_C_THROW(
         "if specified (only required if any kind of beam interactions are considered), the "
         "given interaction radius must be a positive value");
+  }
 }
 
 FOUR_C_NAMESPACE_CLOSE

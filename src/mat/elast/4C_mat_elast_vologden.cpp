@@ -64,9 +64,13 @@ void Mat::Elastic::VolOgden::add3rd_vol_deriv(
   const double beta = params_->beta_;
   const double J = modinv(2);
   if (beta != 0.)
+  {
     d3PsiVolDJ3 +=
         kappa / (beta * J * J * J) * (2. - pow(J, -beta) * (beta * beta + 3. * beta + 2.));
+  }
   else
+  {
     d3PsiVolDJ3 += kappa * (-3. + 2. * std::log(modinv(2))) / (modinv(2) * modinv(2) * modinv(2));
+  }
 }
 FOUR_C_NAMESPACE_CLOSE

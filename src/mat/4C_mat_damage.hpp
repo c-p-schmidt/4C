@@ -264,8 +264,8 @@ namespace Mat
         int gp,               // current Gauss point
         double qbar_tilde,    // effective relative eta^{~}
         double y,             // (-Y / r)^s
-        Core::LinAlg::Matrix<NUM_STRESS_3D, 1> dy_dsigma_tilde,  // dy/dsigma_tilde
-        Core::LinAlg::Matrix<NUM_STRESS_3D, 1>
+        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& dy_dsigma_tilde,  // dy/dsigma_tilde
+        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>&
             b_NbetaoldN  // beta_n - 2/3 . (N_tilde : beta_n) . N_tilde
     );
 
@@ -358,7 +358,7 @@ namespace Mat
     std::vector<bool> failedcurr_;
 
     //! indicator if #Initialize routine has been called
-    bool isinit_;
+    bool isinit_{};
     //! indicator if material has started to be plastic
     bool plastic_step_;
 

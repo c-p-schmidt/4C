@@ -53,9 +53,11 @@ Mat::PAR::PlasticGTN::PlasticGTN(const Core::Mat::PAR::Parameter::Data& matdata)
       k3_(matdata.parameters.get<double>("K3"))
 {
   if (yield_ == 0 && functionID_hardening_ == 0)
+  {
     FOUR_C_THROW(
         "You have to provide either a parameter for "
         "HARDENING_FUNC or YIELD in MAT_Struct_PlasticGTN");
+  }
 }
 
 std::shared_ptr<Core::Mat::Material> Mat::PAR::PlasticGTN::create_material()
@@ -67,7 +69,7 @@ Mat::PlasticGTNType Mat::PlasticGTNType::instance_;
 Core::Communication::ParObject* Mat::PlasticGTNType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::PlasticGTN* plastic = new Mat::PlasticGTN();
+  auto* plastic = new Mat::PlasticGTN();
   plastic->unpack(buffer);
   return plastic;
 }
@@ -264,10 +266,7 @@ void Mat::PlasticGTN::evaluate(const Core::LinAlg::Matrix<3, 3>* defgrd,
   if (R_n != 0.0) yield_cond = Phi / std::abs(R_n);
 
   bool is_yielded;
-  if (yield_cond > TOL)
-    is_yielded = true;
-  else
-    is_yielded = false;
+  is_yielded = yield_cond > TOL;
 
   /** plastic integration **/
   auto& stress_n1 = stress_n1_.at(gp);

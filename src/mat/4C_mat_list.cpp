@@ -51,7 +51,7 @@ std::shared_ptr<Core::Mat::Material> Mat::PAR::MatList::material_by_id(const int
 {
   if (not local_)
   {
-    std::map<int, std::shared_ptr<Core::Mat::Material>>::const_iterator m = mat_.find(id);
+    auto m = mat_.find(id);
 
     if (m == mat_.end())
     {
@@ -73,7 +73,7 @@ Mat::MatListType Mat::MatListType::instance_;
 
 Core::Communication::ParObject* Mat::MatListType::create(Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::MatList* matlist = new Mat::MatList();
+  auto* matlist = new Mat::MatList();
   matlist->unpack(buffer);
   return matlist;
 }
@@ -115,7 +115,6 @@ void Mat::MatList::setup_mat_map()
     if (mat == nullptr) FOUR_C_THROW("Failed to allocate this material");
     mat_.insert(std::pair<int, std::shared_ptr<Core::Mat::Material>>(matid, mat));
   }
-  return;
 }
 
 
@@ -125,7 +124,6 @@ void Mat::MatList::clear()
 {
   params_ = nullptr;
   mat_.clear();
-  return;
 }
 
 /*----------------------------------------------------------------------*/
@@ -141,6 +139,7 @@ void Mat::MatList::pack(Core::Communication::PackBuffer& data) const
   add_to_pack(data, matid);
 
   if (params_ != nullptr)
+  {
     if (params_->local_)
     {
       // loop map of associated local materials
@@ -154,6 +153,7 @@ void Mat::MatList::pack(Core::Communication::PackBuffer& data) const
         }
       }
     }
+  }
 }
 
 
@@ -173,6 +173,7 @@ void Mat::MatList::unpack(Core::Communication::UnpackBuffer& buffer)
   extract_from_pack(buffer, matid);
   params_ = nullptr;
   if (Global::Problem::instance()->materials() != nullptr)
+  {
     if (Global::Problem::instance()->materials()->num() != 0)
     {
       const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
@@ -184,6 +185,7 @@ void Mat::MatList::unpack(Core::Communication::UnpackBuffer& buffer)
         FOUR_C_THROW("Type of parameter material {} does not fit to calling type {}", mat->type(),
             material_type());
     }
+  }
 
   if (params_ != nullptr)  // params_ are not accessible in postprocessing mode
   {
@@ -233,8 +235,7 @@ std::shared_ptr<Core::Mat::Material> Mat::MatList::material_by_id(const int id) 
 {
   if (params_->local_)
   {
-    std::map<int, std::shared_ptr<Core::Mat::Material>>::const_iterator m =
-        material_map_read()->find(id);
+    auto m = material_map_read()->find(id);
     if (m == mat_.end())
     {
       FOUR_C_THROW("Material {} could not be found", id);

@@ -23,7 +23,7 @@ Mat::Elastic::IsoVarga::IsoVarga(Mat::Elastic::PAR::IsoVarga* params) : params_(
 void Mat::Elastic::IsoVarga::add_shear_mod(bool& haveshearmod, double& shearmod) const
 {
   // indeed, a shear modulus is provided
-  haveshearmod = haveshearmod or true;
+  haveshearmod = true;
 
   // material parameters for isochoric part
   shearmod += params_->mue_;

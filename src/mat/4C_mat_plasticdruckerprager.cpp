@@ -50,7 +50,7 @@ Mat::PlasticDruckerPragerType Mat::PlasticDruckerPragerType::instance_;
 Core::Communication::ParObject* Mat::PlasticDruckerPragerType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::PlasticDruckerPrager* plastic = new Mat::PlasticDruckerPrager();
+  auto* plastic = new Mat::PlasticDruckerPrager();
   plastic->unpack(buffer);
   return plastic;
 }
@@ -174,7 +174,7 @@ void Mat::PlasticDruckerPrager::setup_cmat_elasto_plastic_cone(
       sqrt(devstrain(0) * devstrain(0) + devstrain(1) * devstrain(1) + devstrain(2) * devstrain(2) +
            2 * (devstrain(3) * devstrain(3) + devstrain(4) * devstrain(4) +
                    devstrain(5) * devstrain(5)));
-  const double epfac = 2 * G * (1 - (Dgamma / sqrt(2) / normdevstrain));
+  const double epfac = 2 * G * (1 - (Dgamma / std::numbers::sqrt2 / normdevstrain));
 
   cmat.update(epfac, id4sharp, 1.0);
 
@@ -189,7 +189,7 @@ void Mat::PlasticDruckerPrager::setup_cmat_elasto_plastic_cone(
   A = 1 / (G + Kappa * etabar * eta + xi * xi * Hiso);
   Core::LinAlg::Matrix<NUM_STRESS_3D, 1> D(Core::LinAlg::Initialization::zero);
   D.update(1 / normdevstrain, devstrain);
-  epfac2 = 2 * G * (Dgamma / (sqrt(2) * normdevstrain) - G * A);
+  epfac2 = 2 * G * (Dgamma / (std::numbers::sqrt2 * normdevstrain) - G * A);
 
   for (int k = 0; k < 6; ++k)
   {
@@ -199,7 +199,7 @@ void Mat::PlasticDruckerPrager::setup_cmat_elasto_plastic_cone(
     }
   }
 
-  epfac3 = -sqrt(2) * G * A * Kappa;
+  epfac3 = -std::numbers::sqrt2 * G * A * Kappa;
 
   for (int k = 0; k < 6; ++k)
   {

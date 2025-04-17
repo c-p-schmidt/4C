@@ -78,7 +78,7 @@ namespace Mat::FLUIDPORO
     virtual ~PoroAnisotropyStrategyBase() = default;
 
     //! Compute the reaction coefficient
-    virtual double compute_reaction_coeff() const = 0;
+    [[nodiscard]] virtual double compute_reaction_coeff() const = 0;
 
     /*!
      * @brief Compute the material reaction tensor for the fluid - 2D
@@ -189,7 +189,7 @@ namespace Mat::FLUIDPORO
     PoroIsotropyStrategy(const Mat::PAR::FluidPoro* params) : PoroAnisotropyStrategyBase(params) {};
 
     //! compute isotropy reaction coefficient
-    double compute_reaction_coeff() const override
+    [[nodiscard]] double compute_reaction_coeff() const override
     {
       const double viscosity = params_->viscosity_;
       const double permeability = params_->permeability_;
@@ -345,7 +345,7 @@ namespace Mat::FLUIDPORO
         : PoroAnisotropyStrategyBase(params) {};
 
     //! compute reaction coefficient for constant material transverse isotropy
-    double compute_reaction_coeff() const override
+    [[nodiscard]] double compute_reaction_coeff() const override
     {
       const double viscosity = params_->viscosity_;
       const double permeability = params_->permeability_;
@@ -446,7 +446,7 @@ namespace Mat::FLUIDPORO
         : PoroAnisotropyStrategyBase(params) {};
 
     //! compute reaction coefficient for constant material orthotropy
-    double compute_reaction_coeff() const override
+    [[nodiscard]] double compute_reaction_coeff() const override
     {
       const double viscosity = params_->viscosity_;
       const std::vector<double> orthotropic_permeabilities = params_->orthotropic_permeabilities_;
@@ -538,7 +538,7 @@ namespace Mat::FLUIDPORO
         : PoroAnisotropyStrategyBase(params) {};
 
     //! compute reaction coefficient for constant material nodal orthotropy
-    double compute_reaction_coeff() const override
+    [[nodiscard]] double compute_reaction_coeff() const override
     {
       const double viscosity = params_->viscosity_;
       const double permeability = params_->permeability_;

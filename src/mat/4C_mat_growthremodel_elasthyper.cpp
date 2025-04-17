@@ -54,41 +54,53 @@ Mat::PAR::GrowthRemodelElastHyper::GrowthRemodelElastHyper(
 {
   // check if sizes fit
   if (nummat_remodelfiber_ != (int)matids_remodelfiber_.size())
+  {
     FOUR_C_THROW(
         "number of remodelfiber materials {} does not fit to size of remodelfiber material vector "
         "{}",
         nummat_remodelfiber_, matids_remodelfiber_.size());
+  }
 
   if (nummat_elastinmem_ != (int)matids_elastinmem_.size())
+  {
     FOUR_C_THROW(
         "number of elastin materials {} does not fit to size of elastin material vector {}",
         nummat_elastinmem_, matids_elastinmem_.size());
+  }
 
   if (membrane_ == 1)
   {
     if ((growthtype_ != 1) || (loctimeint_ != 0))
+    {
       FOUR_C_THROW(
           "using membrane elements you can only simulate anisotropic growth in thickness direction"
           "and solve the local evolution equations with a Forward Euler Method");
+    }
   }
   else
   {
     if (nummat_elastiniso_ != (int)matids_elastiniso_.size())
+    {
       FOUR_C_THROW(
           "number of elastin materials {} does not fit to size of elastin material vector {}",
           nummat_elastiniso_, matids_elastiniso_.size());
+    }
     if (nummat_elastiniso_ == 0) FOUR_C_THROW("you have to set a 3D elastin material");
     if (matid_penalty_ == -1) FOUR_C_THROW("you have to set a volumetric penalty material");
     if ((p_mean_ == -1) || (ri_ == -1) || (t_ref_ == -1))
+    {
       FOUR_C_THROW(
           "you have to set the mean blood pressure, the inner radius of the vessel and thickness "
           "of the vessel wall");
+    }
   }
 
   if (cylinder_ != -1 && cylinder_ != 1 && cylinder_ != 2 && cylinder_ != 3)
+  {
     FOUR_C_THROW(
         "The parameter CYLINDER has to be either 1, 2 or 3. If you have defined a fiber direction "
         "in your input file then just skip this parameter");
+  }
 }
 
 /*----------------------------------------------------------------------*/
@@ -105,7 +117,7 @@ Mat::GrowthRemodelElastHyperType Mat::GrowthRemodelElastHyperType::instance_;
 Core::Communication::ParObject* Mat::GrowthRemodelElastHyperType::create(
     Core::Communication::UnpackBuffer& buffer)
 {
-  Mat::GrowthRemodelElastHyper* gr_elhy = new Mat::GrowthRemodelElastHyper();
+  auto* gr_elhy = new Mat::GrowthRemodelElastHyper();
   gr_elhy->unpack(buffer);
 
   return gr_elhy;
@@ -160,10 +172,12 @@ Mat::GrowthRemodelElastHyper::GrowthRemodelElastHyper(Mat::PAR::GrowthRemodelEla
     std::shared_ptr<Mat::Elastic::Summand> sum = Mat::Elastic::Summand::factory(matid);
     if (sum == nullptr) FOUR_C_THROW("Failed to allocate");
     if (sum->material_type() != Core::Materials::mes_isoneohooke)
+    {
       FOUR_C_THROW(
           "2D Elastin Material: So far, you have to use a IsoNeoHooke material as the "
           "prestretching algorithm needs it. "
           "The prestretching algorithm can easily be expanded to other materials!");
+    }
     potsumelmem_.push_back(sum);
     sum->register_anisotropy_extensions(anisotropy_);
   }
@@ -177,10 +191,12 @@ Mat::GrowthRemodelElastHyper::GrowthRemodelElastHyper(Mat::PAR::GrowthRemodelEla
       std::shared_ptr<Mat::Elastic::Summand> sum = Mat::Elastic::Summand::factory(matid);
       if (sum == nullptr) FOUR_C_THROW("Failed to allocate");
       if (sum->material_type() != Core::Materials::mes_isoneohooke)
+      {
         FOUR_C_THROW(
             "3D Elastin Material: So far, you have to use an IsoNeoHooke material as the "
             "prestretching algorithm needs it"
             "The prestretching algorithm can easily be expanded to other materials!");
+      }
       potsumeliso_.push_back(sum);
       sum->register_anisotropy_extensions(anisotropy_);
     }
@@ -190,10 +206,12 @@ Mat::GrowthRemodelElastHyper::GrowthRemodelElastHyper(Mat::PAR::GrowthRemodelEla
         Mat::Elastic::Summand::factory(params_->matid_penalty_);
     if (sum == nullptr) FOUR_C_THROW("Failed to allocate");
     if (sum->material_type() != Core::Materials::mes_volsussmanbathe)
+    {
       FOUR_C_THROW(
           "Volumetric Penalty Material: So far, you have to use a CoupNeoHooke material as the "
           "prestretching algorithm needs it. "
           "This can easily be expanded to other materials!");
+    }
     potsumelpenalty_ = sum;
     sum->register_anisotropy_extensions(anisotropy_);
   }
@@ -341,10 +359,12 @@ void Mat::GrowthRemodelElastHyper::unpack(Core::Communication::UnpackBuffer& buf
       std::shared_ptr<Mat::Elastic::Summand> sum = Mat::Elastic::Summand::factory(matid);
       if (sum == nullptr) FOUR_C_THROW("Failed to allocate");
       if (sum->material_type() != Core::Materials::mes_isoneohooke)
+      {
         FOUR_C_THROW(
             "2D Elastin Material: So far, you have to use a IsoNeoHooke material as the "
             "prestretching algorithm needs it. "
             "This can easily be expanded to other materials!");
+      }
       potsumelmem_.push_back(sum);
     }
     // loop map of associated potential summands
@@ -363,10 +383,12 @@ void Mat::GrowthRemodelElastHyper::unpack(Core::Communication::UnpackBuffer& buf
         std::shared_ptr<Mat::Elastic::Summand> sum = Mat::Elastic::Summand::factory(matid);
         if (sum == nullptr) FOUR_C_THROW("Failed to allocate");
         if (sum->material_type() != Core::Materials::mes_isoneohooke)
+        {
           FOUR_C_THROW(
               "3D Elastin Material: So far, you have to use an IsoNeoHooke material as the "
               "prestretching algorithm needs it"
               "This can easily be expanded to other materials!");
+        }
         potsumeliso_.push_back(sum);
       }
       // loop map of associated potential summands
@@ -381,10 +403,12 @@ void Mat::GrowthRemodelElastHyper::unpack(Core::Communication::UnpackBuffer& buf
           Mat::Elastic::Summand::factory(params_->matid_penalty_);
       if (sum == nullptr) FOUR_C_THROW("Failed to allocate");
       if (sum->material_type() != Core::Materials::mes_volsussmanbathe)
+      {
         FOUR_C_THROW(
             "Volumetric Penalty Material: So far, you have to use a CoupNeoHooke material as the "
             "prestretching algorithm needs it. "
             "This can easily be expanded to other materials!");
+      }
       potsumelpenalty_ = sum;
       potsumelpenalty_->unpack_summand(buffer);
 
@@ -497,9 +521,11 @@ void Mat::GrowthRemodelElastHyper::setup_axi_cir_rad_structural_tensor(
   }
   // No AXI CIR RAD-direction defined in input file and additionally no cylinder flag was set
   else
+  {
     FOUR_C_THROW(
         "Homogenized Constrained Mixture Model can so far only be used by defining AXI-, CIR- and "
         "RAD-direction in the input file or by defining the Cylinder flag!");
+  }
 }
 
 
@@ -1009,14 +1035,14 @@ void Mat::GrowthRemodelElastHyper::solve_for_rho_lambr(Core::LinAlg::SerialDense
 
     if (iter > 95)
     {
-      std::cout << "iteration:  " << iter << std::endl
-                << std::endl
-                << "Vector of residuals: " << std::endl
-                << R << std::endl
-                << "Matrix of derivatives:" << std::endl
+      std::cout << "iteration:  " << iter << '\n'
+                << '\n'
+                << "Vector of residuals: " << '\n'
+                << R << '\n'
+                << "Matrix of derivatives:" << '\n'
                 << K_T;
-      std::cout << "=================================================================" << std::endl
-                << std::endl;
+      std::cout << "=================================================================" << '\n'
+                << '\n';
       if (iter > 100) FOUR_C_THROW("Internal Newton (at Gauss-Point) does not converge!");
     }
     ++iter;
@@ -1721,12 +1747,12 @@ void Mat::GrowthRemodelElastHyper::vis_names(std::map<std::string, int>& names) 
   for (unsigned int p = 0; p < potsumrf_.size(); ++p) potsumrf_[p]->vis_names(names, p);
 
   // 2D elastin matrix
-  for (auto& p : potsumelmem_) p->vis_names(names);
+  for (const auto& p : potsumelmem_) p->vis_names(names);
 
   if (params_->membrane_ != 1)
   {
     // 3D elastin matrix
-    for (auto& p : potsumeliso_) p->vis_names(names);
+    for (const auto& p : potsumeliso_) p->vis_names(names);
 
     // volpenalty
     potsumelpenalty_->vis_names(names);
@@ -1773,12 +1799,12 @@ bool Mat::GrowthRemodelElastHyper::vis_data(
     return_val += potsumrf_[1]->vis_data(name, data, numgp, eleID);
 
   // 2D elastin matrix
-  for (auto& p : potsumelmem_) return_val += p->vis_data(name, data, numgp, eleID);
+  for (const auto& p : potsumelmem_) return_val += p->vis_data(name, data, numgp, eleID);
 
   if (params_->membrane_ != 1)
   {
     // 3D elastin matrix
-    for (auto& p : potsumeliso_) return_val += p->vis_data(name, data, numgp, eleID);
+    for (const auto& p : potsumeliso_) return_val += p->vis_data(name, data, numgp, eleID);
 
     // volpenalty
     return_val += potsumelpenalty_->vis_data(name, data, numgp, eleID);

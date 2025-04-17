@@ -310,7 +310,7 @@ namespace Mat
     /// actual mass density in reference configuration for collagen fibers
     std::shared_ptr<std::vector<Core::LinAlg::Matrix<3, 1>>> visrefmassdens_;
     /// basal rate of mass production
-    double massprodbasal_;
+    double massprodbasal_{};
 
     /// first fiber vector per gp (reference), circumferential
     std::shared_ptr<std::vector<Core::LinAlg::Matrix<3, 1>>> a1_;
@@ -325,15 +325,15 @@ namespace Mat
     /// homeostatic stress for growth
     std::shared_ptr<std::vector<Core::LinAlg::Matrix<4, 1>>> localhomstress_;
     /// homeostatic radius
-    double homradius_;
+    double homradius_{};
     /// list of fibers which have been overstretched and are deleted at the end of the time step
     /// (gp, idpast, idfiber)
     std::shared_ptr<std::vector<Core::LinAlg::Matrix<3, 1>>> deletemass_;
     /// index of oldest fiber still alive, needed if the complete history is stored to avoid
     /// summation of zeros
-    int minindex_;
+    int minindex_{};
     /// indicates if material is initialized
-    bool isinit_;
+    bool isinit_{};
 
     /// history
     std::shared_ptr<std::vector<ConstraintMixtureHistory>> history_;
@@ -350,7 +350,7 @@ namespace Mat
     );
 
     /// elastic response for one collagen fiber family
-    void evaluate_fiber_family(const Core::LinAlg::Matrix<NUM_STRESS_3D, 1> C,  ///< Cauchy-Green
+    void evaluate_fiber_family(const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& C,  ///< Cauchy-Green
         const int gp,                                              ///< current Gauss point
         Core::LinAlg::Matrix<NUM_STRESS_3D, NUM_STRESS_3D>* cmat,  ///< material stiffness matrix
         Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* stress,            ///< 2nd PK-stress
@@ -370,7 +370,7 @@ namespace Mat
     );
 
     /// elastic response for Elastin
-    void evaluate_elastin(const Core::LinAlg::Matrix<NUM_STRESS_3D, 1> C,  ///< Cauchy-Green
+    void evaluate_elastin(const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& C,  ///< Cauchy-Green
         Core::LinAlg::Matrix<NUM_STRESS_3D, NUM_STRESS_3D>* cmat,  ///< material stiffness matrix
         Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* stress,            ///< 2nd PK-stress
         double time,                                               ///< time
@@ -379,7 +379,7 @@ namespace Mat
     );
 
     /// elastic response for smooth muscle cells
-    void evaluate_muscle(const Core::LinAlg::Matrix<NUM_STRESS_3D, 1> C,  ///< Cauchy-Green
+    void evaluate_muscle(const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& C,  ///< Cauchy-Green
         Core::LinAlg::Matrix<NUM_STRESS_3D, NUM_STRESS_3D>* cmat,  ///< material stiffness matrix
         Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* stress,            ///< 2nd PK-stress
         const int gp,                                              ///< current Gauss point
@@ -387,7 +387,7 @@ namespace Mat
     );
 
     /// volumetric part
-    void evaluate_volumetric(const Core::LinAlg::Matrix<NUM_STRESS_3D, 1> C,  ///< Cauchy-Green
+    void evaluate_volumetric(const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& C,  ///< Cauchy-Green
         Core::LinAlg::Matrix<NUM_STRESS_3D, NUM_STRESS_3D>* cmat,  ///< material stiffness matrix
         Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* stress,            ///< 2nd PK-stress
         double currMassDens,                                       ///< current mass density
@@ -396,7 +396,7 @@ namespace Mat
 
     /// computes mass production rates for all fiber families
     void mass_production(const int gp,             ///< current Gauss point
-        Core::LinAlg::Matrix<3, 3> defgrd,         ///< deformation gradient
+        const Core::LinAlg::Matrix<3, 3>& defgrd,  ///< deformation gradient
         Core::LinAlg::Matrix<NUM_STRESS_3D, 1> S,  ///< 2nd PK-stress
         Core::LinAlg::Matrix<4, 1>* massstress,    ///< growth stress measure
         double inner_radius,                       ///< inner radius
@@ -406,12 +406,12 @@ namespace Mat
 
     /// computes mass production rate for one fiber family
     void mass_production_single_fiber(const int gp,  ///< current Gauss point
-        Core::LinAlg::Matrix<3, 3> defgrd,           ///< deformation gradient
+        const Core::LinAlg::Matrix<3, 3>& defgrd,    ///< deformation gradient
         Core::LinAlg::Matrix<NUM_STRESS_3D, 1> S,    ///< 2nd PK-stress
         double* massstress,                          ///< growth stress measure
         double inner_radius,                         ///< inner radius
         double* massprodcomp,                        ///< mass production rate
-        Core::LinAlg::Matrix<3, 1> a,                ///< fiber vector
+        const Core::LinAlg::Matrix<3, 1>& a,         ///< fiber vector
         const int idfiber,                           ///< number of fiber family 0,1,2,3
         double growthfactor                          ///< growth factor for stress
     );
@@ -433,9 +433,9 @@ namespace Mat
     ) const;
 
     /// compute stress and cmat for implicit integration with whole stress as driving force
-    void evaluate_implicit_all(Core::LinAlg::Matrix<3, 3> defgrd,  ///< deformation gradient
-        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* glstrain,    ///< green lagrange strain
-        const int gp,                                              ///< current Gauss point
+    void evaluate_implicit_all(const Core::LinAlg::Matrix<3, 3>& defgrd,  ///< deformation gradient
+        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* glstrain,           ///< green lagrange strain
+        const int gp,                                                     ///< current Gauss point
         Core::LinAlg::Matrix<NUM_STRESS_3D, NUM_STRESS_3D>* cmat,  ///< material stiffness matrix
         Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* stress,            ///< 2nd PK-stress
         double dt,                                                 ///< delta time
@@ -447,13 +447,14 @@ namespace Mat
     );
 
     /// compute stress and cmat for implicit integration with fiber stress as driving force
-    void evaluate_implicit_single(Core::LinAlg::Matrix<3, 3> defgrd,  ///< deformation gradient
-        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* glstrain,       ///< green lagrange strain
-        const int gp,                                                 ///< current Gauss point
-        Core::LinAlg::Matrix<NUM_STRESS_3D, NUM_STRESS_3D>* cmat,     ///< material stiffness matrix
-        Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* stress,               ///< 2nd PK-stress
-        double dt,                                                    ///< delta time
-        double time,                                                  ///< time
+    void evaluate_implicit_single(
+        const Core::LinAlg::Matrix<3, 3>& defgrd,                  ///< deformation gradient
+        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* glstrain,    ///< green lagrange strain
+        const int gp,                                              ///< current Gauss point
+        Core::LinAlg::Matrix<NUM_STRESS_3D, NUM_STRESS_3D>* cmat,  ///< material stiffness matrix
+        Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* stress,            ///< 2nd PK-stress
+        double dt,                                                 ///< delta time
+        double time,                                               ///< time
         double elastin_survival,  ///< amount of elastin which is still there
         double growthfactor       ///< growth factor for stress
     );
@@ -462,7 +463,7 @@ namespace Mat
     void grad_stress_d_mass(
         const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* glstrain,  ///< green lagrange strain
         Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* derivative,      ///< result
-        Core::LinAlg::Matrix<NUM_STRESS_3D, 1> Cinv,             ///< inverse cauchy green strain
+        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& Cinv,      ///< inverse cauchy green strain
         Core::LinAlg::Matrix<3, 1> a,                            ///< fiber vector
         double stretch,  ///< prestretch / stretch at deposition time
         double J,        ///< determinant of F
@@ -472,21 +473,21 @@ namespace Mat
 
     /// derivative of massproduction of a single fiber family with respect to stress
     void grad_mass_d_stress(Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* derivative,  ///< result
-        Core::LinAlg::Matrix<3, 3> defgrd,   ///< deformation gradient
-        Core::LinAlg::Matrix<3, 3> Smatrix,  ///< 2nd PK-stress in matrix notation
-        Core::LinAlg::Matrix<3, 1> a,        ///< fiber vector
-        double J,                            ///< determinant of F
-        double massstress,                   ///< growth stress measure
-        double homstress,                    ///< homeostatic stress
-        double actcollstretch,               ///< actual collagen stretch
-        double growthfactor                  ///< growth factor for stress
+        const Core::LinAlg::Matrix<3, 3>& defgrd,   ///< deformation gradient
+        const Core::LinAlg::Matrix<3, 3>& Smatrix,  ///< 2nd PK-stress in matrix notation
+        const Core::LinAlg::Matrix<3, 1>& a,        ///< fiber vector
+        double J,                                   ///< determinant of F
+        double massstress,                          ///< growth stress measure
+        double homstress,                           ///< homeostatic stress
+        double actcollstretch,                      ///< actual collagen stretch
+        double growthfactor                         ///< growth factor for stress
     );
 
     /// derivative of massproduction of a single fiber family with respect to stretch
     void grad_mass_d_stretch(Core::LinAlg::Matrix<NUM_STRESS_3D, 1>* derivative,  ///< result
-        Core::LinAlg::Matrix<3, 3> defgrd,   ///< deformation gradient
-        Core::LinAlg::Matrix<3, 3> Smatrix,  ///< 2nd PK-stress in matrix notation
-        Core::LinAlg::Matrix<NUM_STRESS_3D, 1> Cinv,
+        const Core::LinAlg::Matrix<3, 3>& defgrd,   ///< deformation gradient
+        const Core::LinAlg::Matrix<3, 3>& Smatrix,  ///< 2nd PK-stress in matrix notation
+        const Core::LinAlg::Matrix<NUM_STRESS_3D, 1>& Cinv,
         Core::LinAlg::Matrix<3, 1> a,  ///< fiber vector
         double J,                      ///< determinant of F
         double massstress,             ///< growth stress measure
