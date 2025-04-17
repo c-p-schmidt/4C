@@ -1146,7 +1146,7 @@ void ScaTra::ScaTraTimIntImpl::prepare_time_step()
   // -------------------------------------------------------------------
   //     update velocity field if given by function (it might depend on time)
   // -------------------------------------------------------------------
-  if (velocity_field_type_ == Inpar::ScaTra::velocity_function) set_velocity_field();
+  if (velocity_field_type_ == Inpar::ScaTra::velocity_function) set_velocity_field_from_function();
 
   // -------------------------------------------------------------------
   //     update external force given by function (it might depend on time)
@@ -1225,7 +1225,7 @@ void ScaTra::ScaTraTimIntImpl::prepare_linear_solve()
 
 /*----------------------------------------------------------------------*
  *----------------------------------------------------------------------*/
-void ScaTra::ScaTraTimIntImpl::set_velocity_field()
+void ScaTra::ScaTraTimIntImpl::set_velocity_field_from_function()
 {
   // safety check
   if (nds_vel() >= discret_->num_dof_sets())
@@ -1233,9 +1233,9 @@ void ScaTra::ScaTraTimIntImpl::set_velocity_field()
 
   // initialize velocity vectors
   std::shared_ptr<Core::LinAlg::Vector<double>> convel =
-      Core::LinAlg::create_vector(*discret_->dof_row_map(nds_vel()), true);
+      create_vector(*discret_->dof_row_map(nds_vel()), true);
   std::shared_ptr<Core::LinAlg::Vector<double>> vel =
-      Core::LinAlg::create_vector(*discret_->dof_row_map(nds_vel()), true);
+      create_vector(*discret_->dof_row_map(nds_vel()), true);
 
   switch (velocity_field_type_)
   {
@@ -1254,7 +1254,7 @@ void ScaTra::ScaTraTimIntImpl::set_velocity_field()
       for (int lnodeid = 0; lnodeid < discret_->num_my_row_nodes(); lnodeid++)
       {
         // get the processor local node
-        Core::Nodes::Node* lnode = discret_->l_row_node(lnodeid);
+        const Core::Nodes::Node* lnode = discret_->l_row_node(lnodeid);
 
         // get dofs associated with current node
         std::vector<int> nodedofs = discret_->dof(nds_vel(), lnode);
@@ -1463,26 +1463,36 @@ void ScaTra::ScaTraTimIntImpl::set_mean_concentration(
 
 /*----------------------------------------------------------------------*
  *----------------------------------------------------------------------*/
-void ScaTra::ScaTraTimIntImpl::set_velocity_field(
-    std::shared_ptr<const Core::LinAlg::Vector<double>> convvel,
-    std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
-    std::shared_ptr<const Core::LinAlg::Vector<double>> vel,
-    std::shared_ptr<const Core::LinAlg::Vector<double>> fsvel, const bool setpressure)
+void ScaTra::ScaTraTimIntImpl::set_convective_velocity(
+    const Core::LinAlg::Vector<double>& convective_velocity) const
 {
   // time measurement
   TEUCHOS_FUNC_TIME_MONITOR("SCATRA: set convective velocity field");
 
-  //---------------------------------------------------------------------------
-  // preliminaries
-  //---------------------------------------------------------------------------
-  if (convvel == nullptr) FOUR_C_THROW("Velocity state is nullptr");
+  // checks
+  FOUR_C_ASSERT(velocity_field_type_ == Inpar::ScaTra::velocity_Navier_Stokes,
+      "Wrong set_velocity_field() called for velocity field type {}!", velocity_field_type_);
+  FOUR_C_ASSERT(nds_vel() < discret_->num_dof_sets(), "Too few dof sets on scatra discretization!");
 
-  if (velocity_field_type_ != Inpar::ScaTra::velocity_Navier_Stokes)
-    FOUR_C_THROW(
-        "Wrong set_velocity_field() called for velocity field type {}!", velocity_field_type_);
+  // provide scatra discretization with convective velocity
+  discret_->set_state(nds_vel(), "convective velocity field", convective_velocity);
+}
 
-  if (nds_vel() >= discret_->num_dof_sets())
-    FOUR_C_THROW("Too few dofsets on scatra discretization!");
+
+/*----------------------------------------------------------------------*
+ *----------------------------------------------------------------------*/
+void ScaTra::ScaTraTimIntImpl::set_velocity_field(
+    std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
+    std::shared_ptr<const Core::LinAlg::Vector<double>> vel,
+    std::shared_ptr<const Core::LinAlg::Vector<double>> fsvel)
+{
+  // time measurement
+  TEUCHOS_FUNC_TIME_MONITOR("SCATRA: set velocity fields");
+
+  // checks
+  FOUR_C_ASSERT(velocity_field_type_ == Inpar::ScaTra::velocity_Navier_Stokes,
+      "Wrong set_velocity_field() called for velocity field type {}!", velocity_field_type_);
+  FOUR_C_ASSERT(nds_vel() < discret_->num_dof_sets(), "Too few dof sets on scatra discretization!");
 
   // boolean indicating whether fine-scale velocity vector exists
   // -> if yes, multifractal subgrid-scale modeling is applied
@@ -1503,18 +1513,8 @@ void ScaTra::ScaTraTimIntImpl::set_velocity_field(
   if (turbmodel_ == Inpar::FLUID::no_model and fssgd_ == Inpar::ScaTra::fssugrdiff_no)
     fsvelswitch = false;
 
-  // provide scatra discretization with convective velocity
-  discret_->set_state(nds_vel(), "convective velocity field", *convvel);
-
   // provide scatra discretization with velocity
-  if (vel != nullptr)
-    discret_->set_state(nds_vel(), "velocity field", *vel);
-  else
-  {
-    // if velocity vector is not provided by the respective algorithm, we
-    // assume that it equals the given convective velocity:
-    discret_->set_state(nds_vel(), "velocity field", *convvel);
-  }
+  if (vel != nullptr) discret_->set_state(nds_vel(), "velocity field", *vel);
 
   // provide scatra discretization with acceleration field if required
   if (acc != nullptr) discret_->set_state(nds_vel(), "acceleration field", *acc);
@@ -1644,8 +1644,7 @@ void ScaTra::ScaTraTimIntImpl::update()
 
 /*----------------------------------------------------------------------*
  *----------------------------------------------------------------------*/
-void ScaTra::ScaTraTimIntImpl::apply_mesh_movement(
-    std::shared_ptr<const Core::LinAlg::Vector<double>> dispnp)
+void ScaTra::ScaTraTimIntImpl::apply_mesh_movement(const Core::LinAlg::Vector<double>& dispnp) const
 {
   //---------------------------------------------------------------------------
   // only required in ALE case
@@ -1654,12 +1653,9 @@ void ScaTra::ScaTraTimIntImpl::apply_mesh_movement(
   {
     TEUCHOS_FUNC_TIME_MONITOR("SCATRA: apply mesh movement");
 
-    // check existence of displacement vector
-    if (dispnp == nullptr) FOUR_C_THROW("Got null pointer for displacements!");
-
     // provide scatra discretization with displacement field
-    discret_->set_state(nds_disp(), "dispnp", *dispnp);
-  }  // if (isale_)
+    discret_->set_state(nds_disp(), "dispnp", dispnp);
+  }
 }
 
 /*----------------------------------------------------------------------*

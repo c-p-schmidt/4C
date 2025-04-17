@@ -227,7 +227,7 @@ namespace ScaTra
     virtual void explicit_predictor() const;
 
     //! set the velocity field (zero or field by function)
-    virtual void set_velocity_field();
+    void set_velocity_field_from_function();
 
     /*! Set external force field
 
@@ -244,16 +244,20 @@ namespace ScaTra
      */
     void set_external_force() const;
 
-    //! set convective velocity field (+ pressure and acceleration field as
-    //! well as fine-scale velocity field, if required)
-    virtual void set_velocity_field(std::shared_ptr<const Core::LinAlg::Vector<double>>
-                                        convvel,  //!< convective velocity/press. vector
-        std::shared_ptr<const Core::LinAlg::Vector<double>> acc,    //!< acceleration vector
-        std::shared_ptr<const Core::LinAlg::Vector<double>> vel,    //!< velocity vector
-        std::shared_ptr<const Core::LinAlg::Vector<double>> fsvel,  //!< fine-scale velocity vector
-        const bool setpressure =
-            false  //!< flag whether the fluid pressure needs to be known for the scatra
-    );
+
+    void set_convective_velocity(const Core::LinAlg::Vector<double>& convective_velocity) const;
+
+    /*!
+     * @brief set convective velocity field (+ pressure and acceleration field as well as fine-scale
+     * velocity field, if required)
+     *
+     * @param acc     acceleration vector
+     * @param vel     velocity vector
+     * @param fsvel   fine-scale velocity vector
+     */
+    virtual void set_velocity_field(std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
+        std::shared_ptr<const Core::LinAlg::Vector<double>> vel,
+        std::shared_ptr<const Core::LinAlg::Vector<double>> fsvel);
 
     void set_wall_shear_stresses(std::shared_ptr<const Core::LinAlg::Vector<double>> wss);
 
@@ -383,7 +387,7 @@ namespace ScaTra
      *
      * @param[in] dispnp  displacement vector
      */
-    void apply_mesh_movement(std::shared_ptr<const Core::LinAlg::Vector<double>> dispnp);
+    void apply_mesh_movement(const Core::LinAlg::Vector<double>& dispnp) const;
 
     //! calculate fluxes inside domain and/or on boundary
     void calc_flux(const bool writetofile  //!< flag for writing flux info to file
