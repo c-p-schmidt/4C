@@ -244,6 +244,7 @@ namespace ScaTra
      */
     void set_external_force() const;
 
+    void set_acceleration_field(const Core::LinAlg::Vector<double>& acceleration) const;
 
     void set_convective_velocity(const Core::LinAlg::Vector<double>& convective_velocity) const;
 
@@ -251,15 +252,8 @@ namespace ScaTra
 
     [[nodiscard]] bool fine_scale_velocity_field_required() const;
 
-    /*!
-     * @brief set convective velocity field (+ pressure and acceleration field as well as fine-scale
-     * velocity field, if required)
-     *
-     * @param acc     acceleration vector
-     * @param vel     velocity vector
-     */
-    virtual void set_velocity_field(std::shared_ptr<const Core::LinAlg::Vector<double>> acc,
-        std::shared_ptr<const Core::LinAlg::Vector<double>> vel);
+    //! set the @velocity vector to the scalar transport discretization
+    virtual void set_velocity_field(const Core::LinAlg::Vector<double>& velocity);
 
     void set_wall_shear_stresses(std::shared_ptr<const Core::LinAlg::Vector<double>> wss);
 

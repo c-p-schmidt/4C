@@ -234,8 +234,9 @@ void ScaTra::ScaTraAlgorithm::prepare_time_step_convection()
   //(fluid initial field was set inside the constructor of fluid base class)
   if (step() == 1)
   {
+    scatra_field()->set_acceleration_field(*fluid_field()->hist());
     scatra_field()->set_convective_velocity(*fluid_field()->velnp());
-    scatra_field()->set_velocity_field(fluid_field()->hist(), fluid_field()->velnp());
+    scatra_field()->set_velocity_field(*fluid_field()->velnp());
   }
 
   // prepare time step (+ initialize one-step-theta scheme correctly with
@@ -298,9 +299,9 @@ void ScaTra::ScaTraAlgorithm::set_velocity_field()
     case Inpar::FLUID::timeint_npgenalpha:
     case Inpar::FLUID::timeint_afgenalpha:
     {
+      scatra_field()->set_acceleration_field(*fluid_to_scatra(fluid_field()->accam()));
       scatra_field()->set_convective_velocity(*fluid_to_scatra(fluid_field()->velaf()));
-      scatra_field()->set_velocity_field(
-          fluid_to_scatra(fluid_field()->accam()), fluid_to_scatra(fluid_field()->velaf()));
+      scatra_field()->set_velocity_field(*fluid_to_scatra(fluid_field()->velaf()));
       // TODO here errors might arise as I have refactored a bit
       if (scatra_field()->fine_scale_velocity_field_required() and
           fluid_field()->fs_vel() != nullptr)
@@ -314,9 +315,9 @@ void ScaTra::ScaTraAlgorithm::set_velocity_field()
     case Inpar::FLUID::timeint_bdf2:
     case Inpar::FLUID::timeint_stationary:
     {
+      scatra_field()->set_acceleration_field(*fluid_to_scatra(fluid_field()->hist()));
       scatra_field()->set_convective_velocity(*fluid_to_scatra(fluid_field()->velnp()));
-      scatra_field()->set_velocity_field(
-          fluid_to_scatra(fluid_field()->hist()), fluid_to_scatra(fluid_field()->velnp()));
+      scatra_field()->set_velocity_field(*fluid_to_scatra(fluid_field()->velnp()));
       // TODO here errors might arise as I have refactored a bit
       if (scatra_field()->fine_scale_velocity_field_required() and
           fluid_field()->fs_vel() != nullptr)
