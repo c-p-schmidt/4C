@@ -264,10 +264,31 @@ namespace Core::IO
 
       enum class State : std::uint8_t
       {
+        /**
+         * Not a match at all.
+         */
         unmatched,
+        /**
+         * A perfect match.
+         */
         matched,
+        /**
+         * At least something matched. Depending on the type of spec, this can e.g. mean that
+         * the key of a group matched.
+         */
         partial,
+        /**
+         * The match was successfully defaulted.
+         */
         defaulted,
+        /**
+         * The node contains entries that were not used by the matched spec.
+         */
+        unused_entries,
+        /**
+         * The spec was not required and was not matched. This is OK.
+         */
+        not_required,
       };
 
       State state{State::unmatched};
@@ -916,6 +937,13 @@ namespace Core::IO
                    m, [&](const auto& val) { return this->operator()(val.second, size_info + 1); });
       }
     };
+
+    /**
+     * If the given @p spec is not already an all_of spec, this function wraps it into an
+     * all_of spec. This is useful for the match function of InputSpec to ensure a consistent
+     * starting point.
+     */
+    Core::IO::InputSpec wrap_with_all_of(Core::IO::InputSpec spec);
   }  // namespace Internal
 
   namespace InputSpecBuilders
