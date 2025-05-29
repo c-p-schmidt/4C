@@ -528,35 +528,6 @@ namespace
     return unmatched_node_ids;
   }
 
-  void markup_copy(ryml::ConstNodeRef src, ryml::NodeRef dst,
-      const std::unordered_set<ryml::id_type>& marked_ids)
-  {
-    dst.set_type(src.type());
-
-    if (src.has_key())
-    {
-      if (marked_ids.contains(src.id()))
-      {
-        std::string marked_up_key = "[!] " + std::string(src.key().data(), src.key().size());
-        dst << ryml::key(marked_up_key);
-        dst |= ryml::KEY_PLAIN;
-      }
-      else
-        dst.set_key(src.key());
-    }
-    if (src.has_val())
-    {
-      dst.set_val(src.val());
-    }
-    // Recursively copy children
-    for (size_t i = 0; i < src.num_children(); ++i)
-    {
-      c4::yml::ConstNodeRef src_child = src.child(i);
-      c4::yml::NodeRef dst_child = dst.append_child();
-      markup_copy(src_child, dst_child, marked_ids);
-    }
-  }
-
   // Match a vector of specs against a node. Returns true when all specs could be matched and
   // the node does not contain any unmatched entries.
   bool fully_match_specs(const std::vector<Core::IO::InputSpec>& specs,
