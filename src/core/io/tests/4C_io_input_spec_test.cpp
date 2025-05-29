@@ -2016,15 +2016,22 @@ parameters:
 
   TEST(InputSpecTest, ShouldNotMatchWhenUnusedParameters)
   {
-    const auto spec = one_of({parameter<int>("a"), all_of({
-                                                       parameter<int>("a"),
-                                                       parameter<int>("b"),
-                                                   })});
+    const auto spec = one_of({
+        all_of({
+            parameter<int>("a"),
+            parameter<int>("b"),
+        }),
+        all_of({
+            parameter<int>("a"),
+            parameter<int>("b"),
+            parameter<int>("c"),
+        }),
+    });
 
-    SCOPED_TRACE("Read in two values should only match the corresponding spec with two inputs");
     ryml::Tree tree = init_yaml_tree_with_exceptions();
     ryml::parse_in_arena(R"(a: 1
-b: 2)",
+b: 2
+c: 3)",
         &tree);
     const ConstYamlNodeRef node(tree.rootref(), "");
 

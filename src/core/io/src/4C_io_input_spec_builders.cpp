@@ -547,7 +547,10 @@ namespace
       auto unmatched_node_ids = unmatched_input_nodes(match_entry.children, node.node);
 
       if (unmatched_node_ids.empty())
+      {
         match_entry.state = Core::IO::Internal::MatchEntry::State::matched;
+        return true;
+      }
       else
       {
         match_entry.state = Core::IO::Internal::MatchEntry::State::unused_entries;
@@ -555,10 +558,12 @@ namespace
         {
           match_entry.additional_info += std::to_string(id) + " ";
         }
+        match_entry.additional_info.pop_back();  // Remove the last space.
+        return false;
       }
     }
 
-    return all_ok;
+    return false;
   }
 
 }  // namespace
@@ -1331,7 +1336,8 @@ Core::IO::InputSpec Internal::wrap_with_all_of(Core::IO::InputSpec spec)
 Core::IO::InputSpec Core::IO::InputSpecBuilders::group(
     std::string name, std::vector<InputSpec> specs, Core::IO::InputSpecBuilders::GroupData data)
 {
-  auto flattened_specs = flatten_nested<Internal::AllOfSpec>(std::move(specs));
+  auto all_of = make_all_of(std::move(specs), true);
+  auto flattened_specs = flatten_nested<Internal::AllOfSpec>({std::move(all_of)});
 
   assert_unique_or_empty_names(flattened_specs);
 
