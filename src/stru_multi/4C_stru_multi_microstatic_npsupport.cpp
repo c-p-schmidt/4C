@@ -50,8 +50,13 @@ void MultiScale::np_support_drt()
   // by HDF5; the macro procs call output->write_mesh(0, 0.0) in Adapter::Structure
   const int someUniqueNumber = Core::Communication::my_mpi_rank(
       Global::Problem::instance(0)->get_communicators()->global_comm());
+
+  std::cout << "someUniqueNumber: " << someUniqueNumber << std::endl;
+
   std::string uniqueDummyName = &"dummyHDF5file_p"[someUniqueNumber];
   H5Fcreate(uniqueDummyName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+  std::cout << "AFTER someUniqueNumber: " << someUniqueNumber << std::endl;
 
   // get sub communicator including the master proc
   MPI_Comm subcomm = Global::Problem::instance(0)->get_communicators()->sub_comm();
