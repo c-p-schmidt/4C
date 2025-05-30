@@ -2016,6 +2016,27 @@ parameters:
 
   TEST(InputSpecTest, ShouldNotMatchWhenUnusedParameters)
   {
+    // This is a tricky case, where one_of the choices is a single parameter
+    const auto spec = one_of({parameter<int>("a"), all_of({
+                                                       parameter<int>("a"),
+                                                       parameter<int>("b"),
+                                                   })});
+
+    SCOPED_TRACE("Read in two values should only match the corresponding spec with two inputs");
+    ryml::Tree tree = init_yaml_tree_with_exceptions();
+    ryml::parse_in_arena(R"(a: 1
+b: 2)",
+        &tree);
+    const ConstYamlNodeRef node(tree.rootref(), "");
+
+    InputParameterContainer container;
+    spec.match(node, container);
+    EXPECT_EQ(container.get<int>("a"), 1);
+    EXPECT_EQ(container.get<int>("b"), 2);
+  }
+
+  TEST(InputSpecTest, ShouldNotMatchWhenUnusedParametersDoubleAllOfs)
+  {
     const auto spec = one_of({
         all_of({
             parameter<int>("a"),

@@ -7,6 +7,7 @@
 
 #include "4C_io_input_spec_builders.hpp"
 
+#include "4C_utils_std23_unreachable.hpp"
 #include "4C_utils_string.hpp"
 
 #include <format>
@@ -530,7 +531,7 @@ namespace
 
   // Match a vector of specs against a node. Returns true when all specs could be matched and
   // the node does not contain any unmatched entries.
-  bool fully_match_specs(const std::vector<Core::IO::InputSpec>& specs,
+  bool fully_match_specs(std::span<const Core::IO::InputSpec> specs,
       Core::IO::ConstYamlNodeRef node, Core::IO::InputParameterContainer& container,
       Core::IO::Internal::MatchEntry& match_entry)
   {
@@ -564,6 +565,25 @@ namespace
     }
 
     return false;
+  }
+
+  // Check whether a spec can only match partial objects. This means that the spec can never judge
+  // whether parts of the input are unused or not.
+  bool spec_matches_partial_objects(const Core::IO::InputSpec& spec)
+  {
+    switch (spec.impl().data.type)
+    {
+      case InputSpecType::group:
+      case InputSpecType::all_of:
+      case InputSpecType::one_of:
+      case InputSpecType::list:
+        return false;
+      case InputSpecType::parameter:
+      case InputSpecType::selection:
+      case InputSpecType::deprecated_selection:
+        return true;
+    }
+    std23::unreachable();
   }
 
 }  // namespace
@@ -972,11 +992,22 @@ bool Core::IO::Internal::OneOfSpec::match(ConstYamlNodeRef node,
   std::size_t matched_index = 0;
   for (; matched_index < specs.size(); ++matched_index)
   {
-    auto& spec_match = match_entry.append_child(&specs[matched_index]);
     subcontainer.clear();
-    if (specs[matched_index].impl().match(node, subcontainer, spec_match))
+    const auto& spec = specs[matched_index];
+    if (spec_matches_partial_objects(spec))
     {
-      break;
+      if (fully_match_specs(std::span(&spec, 1), node, subcontainer, match_entry))
+      {
+        break;
+      }
+    }
+    else
+    {
+      auto& spec_match = match_entry.append_child(&spec);
+      if (spec.impl().match(node, subcontainer, spec_match))
+      {
+        break;
+      }
     }
   }
 
