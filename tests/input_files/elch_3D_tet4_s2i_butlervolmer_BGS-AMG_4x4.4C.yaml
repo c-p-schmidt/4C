@@ -40,6 +40,7 @@ SOLVER 1:
   SOLVER_XML_FILE: "xml/linear_solver/iterative_gmres_template.xml"
   AZPREC: Teko
   TEKO_XML_FILE: "xml/block_preconditioner/electrochemistry_BGS-AMG_4x4.xml"
+  #TEKO_XML_FILE: "xml/block_preconditioner/electrochemistry_1_BGS-AMG_4x4.xml" changing to direct solvers as block smoother makes it run but not converge
 MATERIALS:
   - MAT: 1
     MAT_electrode:

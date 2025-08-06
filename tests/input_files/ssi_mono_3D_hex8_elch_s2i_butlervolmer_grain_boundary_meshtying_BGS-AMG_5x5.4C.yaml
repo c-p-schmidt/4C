@@ -64,7 +64,13 @@ SOLVER 2:
   SOLVER: Belos
   SOLVER_XML_FILE: "xml/linear_solver/iterative_gmres_template.xml"
   AZPREC: Teko
-  TEKO_XML_FILE: "xml/block_preconditioner/solid_scatra_BGS-AMG_5x5.xml"
+  #TEKO_XML_FILE: "xml/block_preconditioner/solid_scatra_BGS-AMG_5x5.xml"
+  #TEKO_XML_FILE: "xml/block_preconditioner/solid_1_scatra_BGS-AMG_5x5.xml" # similar as in the Freising-tutorial for solid
+  #TEKO_XML_FILE: "xml/block_preconditioner/solid_2_scatra_BGS-AMG_5x5.xml" # with RILUK as smoother, overlap 0, lof: 1
+  #TEKO_XML_FILE: "xml/block_preconditioner/solid_3_scatra_BGS-AMG_5x5.xml" # with RILUK as smoother, overlap 1, lof 1
+  #TEKO_XML_FILE: "xml/block_preconditioner/solid_4_scatra_BGS-AMG_5x5.xml" # with RILUK as smoother, overlap 1, lof: 5
+  #TEKO_XML_FILE: "xml/block_preconditioner/solid_5_scatra_BGS-AMG_5x5.xml" # using Amesos for solid
+  TEKO_XML_FILE: "xml/block_preconditioner/solid_6_scatra_BGS-AMG_5x5.xml" # using Amesos for all blocks
 SOLVER 3:
   SOLVER: Belos
   SOLVER_XML_FILE: "xml/linear_solver/iterative_gmres_template.xml"
