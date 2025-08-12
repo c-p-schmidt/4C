@@ -123,7 +123,7 @@ void Core::LinAlg::Solver::set_tolerance(const double tolerance) const
   if (!have_saved_value)
   {
     solver_params.set<double>(
-        "Convergence Tolerance Saved", solver_params.get<double>("Convergence Tolerance", 1.0e-8));
+        "Convergence Tolerance Saved", solver_params.get<double>("Convergence Tolerance"));
   }
 
   solver_params.set<double>("Convergence Tolerance", tolerance);

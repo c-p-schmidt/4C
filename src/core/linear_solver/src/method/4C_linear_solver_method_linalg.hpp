@@ -148,9 +148,9 @@ namespace Core::LinAlg
     void reset();
 
     //! get tolerance from Belos solver
-    double get_tolerance() const
+    [[nodiscard]] double get_tolerance() const
     {
-      return params().sublist("Belos Parameters").get<double>("Convergence Tolerance", 1.0e-8);
+      return params().sublist("Belos Parameters").get<double>("Convergence Tolerance");
     }
 
     /*!
