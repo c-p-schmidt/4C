@@ -121,7 +121,7 @@ namespace SSTI
     std::shared_ptr<Core::LinAlg::Vector<double>> extract_sub_increment(Subproblem sub);
 
     // build and return vector of equilibration methods for each block of system matrix
-    std::vector<Core::LinAlg::EquilibrationMethod> get_block_equilibration();
+    std::vector<Core::LinAlg::EquilibrationMethod> get_block_equilibration() const;
 
     //! evaluate time step using Newton-Raphson iteration
     void newton_loop();
