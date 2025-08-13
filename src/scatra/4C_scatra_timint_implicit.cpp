@@ -3706,8 +3706,18 @@ void ScaTra::ScaTraTimIntImpl::build_block_null_spaces(
     std::ostringstream iblockstr;
     iblockstr << iblock + 1;
 
+    if (solver.params().isSublist("MueLu Parameters"))
+    {
+      solver.params()
+          .sublist("Inverse" + iblockstr.str())
+          .set("MueLu Parameters", solver.params().sublist("MueLu Parameters"));
+    }
+
     Teuchos::ParameterList& blocksmootherparams =
-        solver.params().sublist("Inverse" + iblockstr.str());
+        solver.params().isSublist("MueLu Parameters")
+            ? solver.params().sublist("Inverse" + iblockstr.str()).sublist("MueLu Parameters")
+            : solver.params().sublist("Inverse" + iblockstr.str());
+
     // add null space map to extract relevant coordinates of the current block
     auto node_block_map =
         std::make_shared<Core::LinAlg::Map>(*node_block_maps()->map(iblock - init_block_number));

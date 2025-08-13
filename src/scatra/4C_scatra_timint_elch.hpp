@@ -69,9 +69,6 @@ namespace ScaTra
         std::vector<std::shared_ptr<const Core::LinAlg::Map>>& dof_block_maps,
         std::vector<std::shared_ptr<const Core::LinAlg::Map>>& node_block_maps) const override;
 
-    void build_block_null_spaces(
-        const Core::LinAlg::Solver& solver, int init_block_number) const override;
-
     /*========================================================================*/
     //! @name general framework
     /*========================================================================*/
