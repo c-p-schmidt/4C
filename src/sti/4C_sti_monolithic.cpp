@@ -1195,8 +1195,18 @@ void STI::Monolithic::build_null_spaces() const
   std::stringstream iblockstr;
   iblockstr << blockmaps_->num_maps();
 
+  if (solver_->params().isSublist("MueLu Parameters"))
+  {
+    solver_->params()
+        .sublist("Inverse" + iblockstr.str())
+        .set("MueLu Parameters", solver_->params().sublist("MueLu Parameters"));
+  }
+
   Teuchos::ParameterList& blocksmootherparams =
-      solver_->params().sublist("Inverse" + iblockstr.str());
+      solver_->params().isSublist("MueLu Parameters")
+          ? solver_->params().sublist("Inverse" + iblockstr.str()).sublist("MueLu Parameters")
+          : solver_->params().sublist("Inverse" + iblockstr.str());
+
   Core::LinearSolver::Parameters::compute_solver_parameters(
       *thermo_field()->discretization(), blocksmootherparams);
 
