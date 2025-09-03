@@ -12,6 +12,7 @@
 #include "4C_fem_geometry_element_volume.hpp"
 #include "4C_global_data.hpp"
 #include "4C_io.hpp"
+#include "4C_io_control.hpp"
 #include "4C_io_pstream.hpp"
 #include "4C_io_runtime_csv_writer.hpp"
 #include "4C_linalg_utils_sparse_algebra_manipulation.hpp"
@@ -128,6 +129,9 @@ void Solid::MonitorDbc::setup()
     return;
   }
 
+  const Teuchos::ParameterList& sublist_IO_monitor_structure_dbc =
+      Global::Problem::instance()->io_params().sublist("MONITOR STRUCTURE DBC");
+
   std::vector<const Core::Conditions::Condition*> rconds;
   discret_ptr_->get_condition("ReactionForce", rconds);
   for (const auto& rcond_ptr : rconds)
@@ -149,6 +153,20 @@ void Solid::MonitorDbc::setup()
     dbc_monitor_csvwriter_.back()->register_data_vector("curr_area", 1, of_precision_);
     dbc_monitor_csvwriter_.back()->register_data_vector("f", DIM, of_precision_);
     dbc_monitor_csvwriter_.back()->register_data_vector("m", DIM, of_precision_);
+
+    if (sublist_IO_monitor_structure_dbc.get<bool>("WRITE_CONDITION_INFORMATION"))
+    {
+      // get output file path
+      const std::string full_path_output_prefix =
+          Global::Problem::instance()->output_control_file()->file_name();
+      const std::string full_path_out_file = full_path_output_prefix + "-" +
+                                             std::to_string(rcond.id() + 1) +
+                                             "_monitor_dbc_condition.txt";
+
+      std::ofstream of(full_path_out_file, std::ios_base::out);
+      write_condition_header(of, OS_WIDTH, rcond_ptr);
+      of.close();
+    }
   }
 
   issetup_ = true;

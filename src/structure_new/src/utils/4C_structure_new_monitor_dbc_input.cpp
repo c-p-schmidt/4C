@@ -35,7 +35,13 @@ namespace Solid::IOMonitorStructureDBC
 
             // precision for screen
             parameter<int>("PRECISION_SCREEN",
-                {.description = "precision for written screen output", .default_value = 5})},
+                {.description = "precision for written screen output", .default_value = 5}),
+
+            // whether to write information about monitored boundary condition to an output file
+            parameter<bool>("WRITE_CONDITION_INFORMATION",
+                {.description =
+                        "write information about monitored boundary condition to output file",
+                    .default_value = false})},
         {.required = false});
   }
 }  // namespace Solid::IOMonitorStructureDBC
