@@ -19,6 +19,7 @@ SOLVER 1:
   SOLVER: "Superlu"
   NAME: "Structure_Solver"
 STRUCTURAL DYNAMIC:
+  RESTARTEVERY: 5
   INT_STRATEGY: "Standard"
   DYNAMICTYPE: "Statics"
   TIMESTEP: 1
