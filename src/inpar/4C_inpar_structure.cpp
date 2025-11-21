@@ -124,13 +124,13 @@ namespace Inpar
               parameter<int>("RESULTSEVERY",
                   {.description = "Write old HDF5-based output every RESULTSEVERY steps. Used for "
                                   "old structure time integration and Contact quantities.",
-                      .default_value = 1}),
+                      .default_value = 0}),
               parameter<int>(
                   "RESEVERYERGY", {.description = "write system energies every requested step",
                                       .default_value = 0}),
               parameter<int>("RESTARTEVERY",
                   {.description = "write restart possibility every RESTARTEVERY steps",
-                      .default_value = 1}),
+                      .default_value = 0}),
               parameter<bool>("CALC_ACC_ON_RESTART",
                   {.description = "Compute the initial state for a restart dynamics analysis",
                       .default_value = false}),
