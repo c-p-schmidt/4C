@@ -105,7 +105,10 @@ MultiScale::MicroStatic::MicroStatic(const int microdisnum, const double V0)
   restart_every_ = sdyn_macro.get<int>("RESTARTEVERY");
 
   // i/o options should be read from the corresponding micro-file
-  results_every_ = sdyn_micro.get<int>("RESULTSEVERY");
+  results_every_ = Global::Problem::instance(microdisnum_)
+                       ->io_params()
+                       .sublist("RUNTIME VTK OUTPUT")
+                       .get<int>("INTERVAL_STEPS");
 
   const Teuchos::ParameterList& ioflags = Global::Problem::instance(microdisnum_)->io_params();
   printscreen_ = (ioflags.get<int>("STDOUTEVERY"));

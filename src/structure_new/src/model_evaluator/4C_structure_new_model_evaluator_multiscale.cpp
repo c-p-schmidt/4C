@@ -41,7 +41,7 @@ void Solid::ModelEvaluator::Multiscale::write_restart(
     std::shared_ptr<Core::Mat::Material> mat = actele.user_element()->material();
     if (mat->material_type() == Core::Materials::m_struct_multiscale)
     {
-      Mat::MicroMaterial* micro = static_cast<Mat::MicroMaterial*>(mat.get());
+      const auto* const micro = static_cast<Mat::MicroMaterial*>(mat.get());
       micro->write_restart();
     }
   }
@@ -65,8 +65,7 @@ void Solid::ModelEvaluator::Multiscale::read_restart(Core::IO::DiscretizationRea
       const int eleID = ele.global_id();
       const bool eleowner = my_pid == ele.owner();
 
-      const Discret::Elements::Solid* solidele =
-          dynamic_cast<const Discret::Elements::Solid*>(actele);
+      const auto* solidele = dynamic_cast<const Discret::Elements::Solid*>(actele);
       const int numGaussPoints = solidele->get_gauss_rule().num_points();
 
       for (int gp = 0; gp < numGaussPoints; ++gp) micro->read_restart(gp, eleID, eleowner);
@@ -83,7 +82,7 @@ void Solid::ModelEvaluator::Multiscale::post_setup()
     std::shared_ptr<Core::Mat::Material> mat = actele.user_element()->material();
     if (mat->material_type() == Core::Materials::m_struct_multiscale)
     {
-      Mat::MicroMaterial* micro = static_cast<Mat::MicroMaterial*>(mat.get());
+      auto* micro = static_cast<Mat::MicroMaterial*>(mat.get());
       micro->post_setup();
     }
   }
@@ -109,7 +108,7 @@ void Solid::ModelEvaluator::Multiscale::runtime_pre_output_step_state()
 void Solid::ModelEvaluator::Multiscale::runtime_output_step_state() const
 {
   std::pair<double, int> output_macro_time_and_step;
-  if (macro_visualization_params_.every_iteration_ == true)
+  if (macro_visualization_params_.every_iteration_)
   {
     output_macro_time_and_step =
         Core::IO::get_time_and_time_step_index_for_output(macro_visualization_params_,
@@ -126,7 +125,7 @@ void Solid::ModelEvaluator::Multiscale::runtime_output_step_state() const
     std::shared_ptr<Core::Mat::Material> mat = actele.user_element()->material();
     if (mat->material_type() == Core::Materials::m_struct_multiscale)
     {
-      auto* micro_mat = static_cast<Mat::MicroMaterial*>(mat.get());
+      const auto* micro_mat = static_cast<Mat::MicroMaterial*>(mat.get());
       micro_mat->runtime_output_step_state(output_macro_time_and_step);
     }
   }
