@@ -74,7 +74,7 @@ namespace Inpar
                       {"Standard", int_standard},
                   },
                   {.description = "global type of the used integration strategy",
-                      .default_value = int_old}),
+                      .default_value = int_standard}),
 
               parameter<bool>("TIME_ADAPTIVITY",
                   {.description = "Enable adaptive time integration", .default_value = false}),
