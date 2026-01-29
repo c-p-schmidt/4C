@@ -91,7 +91,6 @@ STRUCT NOX/Status Test:
   XML File: "beam3r_herm2line3_beam_to_beam_penalty_point_coupling_elbow.xml"
 STRUCTURAL DYNAMIC:
   LINEAR_SOLVER: 1
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "Statics"
   PREDICT: "TangDis"
   PRESTRESS: "None"

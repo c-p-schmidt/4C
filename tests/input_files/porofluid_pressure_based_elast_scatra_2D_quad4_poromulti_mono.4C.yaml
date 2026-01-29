@@ -15,7 +15,6 @@ porofluid_elasticity_scatra_dynamic:
     restart_data_every: 4
   coupling_scheme: twoway_partitioned_nested
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   LINEAR_SOLVER: 1
 STRUCTURAL DYNAMIC/ONESTEPTHETA:

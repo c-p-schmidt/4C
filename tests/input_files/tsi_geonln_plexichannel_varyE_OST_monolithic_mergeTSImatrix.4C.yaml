@@ -30,7 +30,6 @@ IO:
 PROBLEM TYPE:
   PROBLEMTYPE: "Thermo_Structure_Interaction"
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   TIMESTEP: 0.5
   M_DAMP: 0.5

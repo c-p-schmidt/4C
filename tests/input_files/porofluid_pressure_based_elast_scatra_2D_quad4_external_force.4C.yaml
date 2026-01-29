@@ -24,7 +24,6 @@ porofluid_elasticity_scatra_dynamic/monolithic:
     increment:
       global_tolerance: 0.002
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   TOLDISP: 1e-08
   NEGLECTINERTIA: true

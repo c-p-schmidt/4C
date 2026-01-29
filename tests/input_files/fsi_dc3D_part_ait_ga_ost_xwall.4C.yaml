@@ -3,7 +3,6 @@ TITLE:
 PROBLEM TYPE:
   PROBLEMTYPE: "Fluid_Structure_Interaction"
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   DIVERCONT: "continue"
   PREDICT: "ConstVel"

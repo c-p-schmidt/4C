@@ -21,7 +21,6 @@ IO:
 PROBLEM TYPE:
   PROBLEMTYPE: "Thermo_Structure_Interaction"
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "Statics"
   TIMESTEP: 1
   MAXTIME: 1

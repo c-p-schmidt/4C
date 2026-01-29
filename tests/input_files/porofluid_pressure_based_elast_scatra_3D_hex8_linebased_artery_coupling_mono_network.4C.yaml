@@ -24,7 +24,6 @@ porofluid_elasticity_scatra_dynamic/monolithic:
     increment:
       global_tolerance: 1e-07
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   LINEAR_SOLVER: 1
 STRUCTURAL DYNAMIC/ONESTEPTHETA:

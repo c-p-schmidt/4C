@@ -15,7 +15,6 @@ porofluid_elasticity_scatra_dynamic:
   output:
     restart_data_every: 3
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   LINEAR_SOLVER: 1
 STRUCT NOX/Printing:

@@ -10,7 +10,6 @@ IO:
 STRUCT NOX/Status Test:
   XML File: "rough_contact_solver.xml"
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "Statics"
   TIMESTEP: 2
   NUMSTEP: 1

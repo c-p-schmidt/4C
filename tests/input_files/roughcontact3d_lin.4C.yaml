@@ -15,7 +15,6 @@ STRUCT NOX/Status Test:
   XML File: "rough_contact_solver.xml"
 STRUCTURAL DYNAMIC:
   RESTARTEVERY: 1
-  INT_STRATEGY: "Standard"
   TIMESTEP: 0.02
   NUMSTEP: 2
   MAXTIME: 0.04

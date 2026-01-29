@@ -17,7 +17,6 @@ STRUCT NOX/Printing:
   Inner Iteration: false
   Outer Iteration StatusTest: false
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   LINEAR_SOLVER: 1
 STRUCTURAL DYNAMIC/ONESTEPTHETA:

@@ -31,7 +31,6 @@ TITLE:
 PROBLEM TYPE:
   PROBLEMTYPE: "Structure_Scalar_Interaction"
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "Statics"
   TIMESTEP: 0.1
   TOLDISP: 1e-06

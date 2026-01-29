@@ -21,7 +21,6 @@ porofluid_elasticity_scatra_dynamic/monolithic:
     linear_solver_id: 2
     equilibration: rows_maindiag
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   TOLDISP: 1e-08
   TOLRES: 0.001

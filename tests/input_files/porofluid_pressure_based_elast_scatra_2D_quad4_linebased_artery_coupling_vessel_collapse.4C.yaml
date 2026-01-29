@@ -31,7 +31,6 @@ porofluid_elasticity_dynamic:
   solve_structure: false
   coupling_scheme: twoway_monolithic
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   LINEAR_SOLVER: 1
 STRUCTURAL DYNAMIC/ONESTEPTHETA:

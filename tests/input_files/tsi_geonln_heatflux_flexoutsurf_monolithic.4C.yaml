@@ -20,7 +20,6 @@ IO:
 PROBLEM TYPE:
   PROBLEMTYPE: "Thermo_Structure_Interaction"
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "Statics"
   M_DAMP: 0.5
   TOLDISP: 1e-09

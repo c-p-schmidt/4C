@@ -22,7 +22,6 @@ IO:
 PROBLEM TYPE:
   PROBLEMTYPE: "Thermo_Structure_Interaction"
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   TOLDISP: 1e-08
   TOLRES: 0.0002

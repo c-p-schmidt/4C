@@ -18,7 +18,6 @@ SOLVER 1:
   NAME: "Structure_Solver"
 STRUCTURAL DYNAMIC:
   DYNAMICTYPE: "Statics"
-  INT_STRATEGY: Standard
   TIMESTEP: 0.25
   NUMSTEP: 10
   MAXTIME: 1

@@ -5,7 +5,6 @@ IO:
   STRUCT_STRESS: "Cauchy"
   FLUID_STRESS: true
 STRUCTURAL DYNAMIC:
-  INT_STRATEGY: "Standard"
   DYNAMICTYPE: "OneStepTheta"
   TIMESTEP: 0.5
   DAMPING: "Material"
