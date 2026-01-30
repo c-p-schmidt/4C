@@ -18,6 +18,7 @@ PROBLEM TYPE:
 STRUCT NOX/Printing:
   Outer Iteration StatusTest: false
 STRUCTURAL DYNAMIC:
+  INT_STRATEGY: Old
   DYNAMICTYPE: "Statics"
   TIMESTEP: 1
   NUMSTEP: 1

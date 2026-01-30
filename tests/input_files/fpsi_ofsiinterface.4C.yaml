@@ -2,6 +2,7 @@ TITLE: []
 PROBLEM TYPE:
   PROBLEMTYPE: "Fluid_Porous_Structure_Interaction"
 STRUCTURAL DYNAMIC:
+  INT_STRATEGY: Old
   DYNAMICTYPE: "OneStepTheta"
   TIMESTEP: 0.01
   NUMSTEP: 600

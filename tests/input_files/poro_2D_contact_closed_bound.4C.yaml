@@ -8,6 +8,7 @@ PROBLEM SIZE:
 PROBLEM TYPE:
   PROBLEMTYPE: "Poroelasticity"
 STRUCTURAL DYNAMIC:
+  INT_STRATEGY: Old
   DYNAMICTYPE: "OneStepTheta"
   DAMPING: "Material"
   PREDICT: "ConstVel"

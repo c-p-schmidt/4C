@@ -38,6 +38,7 @@ SOLVER 2:
   TEKO_XML_FILE: "xml/block_preconditioner/porofluid.xml"
   NAME: "Poro_Interaction_Solver"
 STRUCTURAL DYNAMIC:
+  INT_STRATEGY: Old
   DYNAMICTYPE: "OneStepTheta"
   DAMPING: "Material"
   LINEAR_SOLVER: 1

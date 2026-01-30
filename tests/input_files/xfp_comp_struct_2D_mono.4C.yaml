@@ -3,6 +3,7 @@ TITLE:
 PROBLEM TYPE:
   PROBLEMTYPE: "Fluid_Poro_Structure_Interaction_XFEM"
 STRUCTURAL DYNAMIC:
+  INT_STRATEGY: Old
   DYNAMICTYPE: "OneStepTheta"
   RESTARTEVERY: 0
   DAMPING: "Material"
