@@ -553,6 +553,15 @@ void Solid::ModelEvaluator::Contact::runtime_output_step_state() const
         tangentialstressesexp, Core::IO::OutputEntity::dof, context);
   }
 
+  if (auto gaps = strategy().contact_wgap(); gaps != nullptr)
+  {
+    auto gapnodes = strategy().problem_nodes();
+    auto gapsexp = Core::LinAlg::Vector<double>(*problemnodes, true);
+    Core::LinAlg::export_to(*gaps, gapsexp);
+    contact_vtu_writer_ptr_->append_result_data_vector_with_context(
+        gapsexp, Core::IO::OutputEntity::node, {"gap"});
+  }
+
   // wear with internal state variable approach
   if (strategy().weighted_wear())
   {
