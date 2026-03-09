@@ -16,15 +16,11 @@
 #include "4C_fluid_turbulence_input.hpp"
 #include "4C_inpar_fluid.hpp"
 #include "4C_linalg_blocksparsematrix.hpp"
-#include "4C_linalg_utils_sparse_algebra_assemble.hpp"
-#include "4C_linalg_utils_sparse_algebra_create.hpp"
 #include "4C_linalg_vector.hpp"
-#include "4C_utils_parameter_list.fwd.hpp"
 
 #include <Teuchos_TimeMonitor.hpp>
 
 #include <ctime>
-#include <iostream>
 
 FOUR_C_NAMESPACE_OPEN
 
@@ -127,17 +123,13 @@ namespace FLD
     \brief Print information about current time step to screen
 
     */
-    virtual void print_time_step_info()
-    {
-      FOUR_C_THROW("you are in the base class");
-      return;
-    }
+    virtual void print_time_step_info() { FOUR_C_THROW("you are in the base class"); }
 
     /*!
     \brief Set theta_ to its value, dependent on integration method for GenAlpha and BDF2
 
     */
-    virtual void set_theta() { return; }
+    virtual void set_theta() {}
 
     /*!
     \brief Set the part of the righthandside belonging to the last
@@ -222,7 +214,6 @@ namespace FLD
         std::shared_ptr<Core::LinAlg::Vector<double>> vel,
         std::shared_ptr<Core::LinAlg::Vector<double>> res)
     {
-      return;
     }
 
     /*!
@@ -429,7 +420,7 @@ namespace FLD
     //@{
 
     //! access to time step size of previous time step
-    virtual double dt_previous() const { return dtp_; }
+    [[nodiscard]] virtual double dt_previous() const { return dtp_; }
 
     //! set time step size
     void set_dt(const double dtnew) override;
@@ -451,8 +442,6 @@ namespace FLD
       accnp_->update(1.0, *accn_, 0.0);
       velnp_->update(1.0, *veln_, 0.0);
       dispnp_->update(1.0, *dispn_, 0.0);
-
-      return;
     }
 
     /*! \brief Reset time and step in case that a time step has to be repeated
@@ -468,29 +457,26 @@ namespace FLD
     void reset_time(const double dtold) override { set_time_step(time() - dtold, step() - 1); }
 
     //! Give order of accuracy
-    virtual int method_order_of_accuracy() const
+    [[nodiscard]] virtual int method_order_of_accuracy() const
     {
       return std::min(method_order_of_accuracy_vel(), method_order_of_accuracy_pres());
     }
 
     //! Give local order of accuracy of velocity part
-    virtual int method_order_of_accuracy_vel() const
+    [[nodiscard]] virtual int method_order_of_accuracy_vel() const
     {
       FOUR_C_THROW("Not implemented in base class. May be overwritten by derived class.");
-      return 0;
     }
 
     //! Give local order of accuracy of pressure part
-    virtual int method_order_of_accuracy_pres() const
+    [[nodiscard]] virtual int method_order_of_accuracy_pres() const
     {
       FOUR_C_THROW("Not implemented in base class. May be overwritten by derived class.");
-      return 0;
     }
     //! Return linear error coefficient of velocity
-    virtual double method_lin_err_coeff_vel() const
+    [[nodiscard]] virtual double method_lin_err_coeff_vel() const
     {
       FOUR_C_THROW("Not implemented in base class. May be overwritten by derived class.");
-      return 0;
     }
 
     //@}
@@ -514,6 +500,12 @@ namespace FLD
 
     */
     void output() override;
+
+    //! write output for each step as defined in the input file
+    void write_output();
+
+    //! write restart information for each step as defined in the input file
+    void write_restart();
 
     /*
      * \brief Write fluid runtime output
@@ -751,7 +743,7 @@ namespace FLD
     virtual std::shared_ptr<Core::LinAlg::MapExtractor> vel_pres_splitter()
     {
       return velpressplitter_;
-    };
+    }
     std::shared_ptr<const Core::LinAlg::Map> velocity_row_map() override;
     std::shared_ptr<const Core::LinAlg::Map> pressure_row_map() override;
     //  virtual void SetMeshMap(std::shared_ptr<const Core::LinAlg::Map> mm);
@@ -768,13 +760,13 @@ namespace FLD
      *  \sa trueresidual_
      *  \sa TrueResidual()
      */
-    double residual_scaling() const override = 0;
+    [[nodiscard]] double residual_scaling() const override = 0;
 
     /*!
     \brief return scheme-specific time integration parameter
 
     */
-    double tim_int_param() const override = 0;
+    [[nodiscard]] double tim_int_param() const override = 0;
 
     /*!
     \brief compute values at intermediate time steps for gen.-alpha
@@ -785,7 +777,6 @@ namespace FLD
     virtual void gen_alpha_intermediate_values(std::shared_ptr<Core::LinAlg::Vector<double>>& vecnp,
         std::shared_ptr<Core::LinAlg::Vector<double>>& vecn)
     {
-      return;
     }
 
     /// update velocity increment after Newton step
@@ -820,7 +811,6 @@ namespace FLD
     void set_velocity_field(std::shared_ptr<const Core::LinAlg::Vector<double>> setvelnp) override
     {
       velnp_->update(1.0, *setvelnp, 0.0);
-      return;
     }
 
     /// provide access to turbulence statistics manager
@@ -948,7 +938,7 @@ namespace FLD
     \brief evaluate and update problem-specific boundary conditions
 
     */
-    virtual void do_problem_specific_boundary_conditions() { return; }
+    virtual void do_problem_specific_boundary_conditions() {}
 
     ///< Print stabilization details to screen
     virtual void print_stabilization_details() const;
@@ -1030,13 +1020,13 @@ namespace FLD
     \brief update acceleration for generalized-alpha time integration
 
     */
-    virtual void gen_alpha_update_acceleration() { return; }
+    virtual void gen_alpha_update_acceleration() {}
 
     /*!
     \brief compute values at intermediate time steps for gen.-alpha
 
     */
-    virtual void gen_alpha_intermediate_values() { return; }
+    virtual void gen_alpha_intermediate_values() {}
 
     //! Predict velocities which satisfy exactly the Dirichlet BCs
     //! and the linearised system at the previously converged state.
@@ -1079,7 +1069,7 @@ namespace FLD
       \brief add problem dependent vectors
 
      */
-    virtual void add_problem_dependent_vectors() { return; };
+    virtual void add_problem_dependent_vectors() {}
 
     /*!
     \brief Initialize forcing

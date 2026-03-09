@@ -45,6 +45,8 @@
 #include "4C_io_discretization_visualization_writer_mesh.hpp"
 #include "4C_io_gmsh.hpp"
 #include "4C_linalg_krylov_projector.hpp"
+#include "4C_linalg_utils_sparse_algebra_assemble.hpp"
+#include "4C_linalg_utils_sparse_algebra_create.hpp"
 #include "4C_linear_solver_method_linalg.hpp"
 #include "4C_linear_solver_method_parameters.hpp"
 #include "4C_mat_newtonianfluid.hpp"
@@ -61,7 +63,6 @@
 FOUR_C_NAMESPACE_OPEN
 
 /*----------------------------------------------------------------------*
- |  Constructor (public)                                     gammi 04/07|
  *----------------------------------------------------------------------*/
 FLD::FluidImplicitTimeInt::FluidImplicitTimeInt(
     const std::shared_ptr<Core::FE::Discretization>& actdis,
@@ -104,7 +105,6 @@ FLD::FluidImplicitTimeInt::FluidImplicitTimeInt(
 
 
 /*----------------------------------------------------------------------*
- |  initialize algorithm                                rasthofer 04/14 |
  *----------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::init()
 {
@@ -370,7 +370,6 @@ void FLD::FluidImplicitTimeInt::init()
 }  // FluidImplicitTimeInt::init()
 
 /*----------------------------------------------------------------------*
- |  create internal faces for the case of EOS stab                      |
  *----------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::create_faces_extension()
 {
@@ -384,9 +383,9 @@ void FLD::FluidImplicitTimeInt::create_faces_extension()
   facediscret_ = std::dynamic_pointer_cast<Core::FE::DiscretizationFaces>(discret_);
   facediscret_->create_internal_faces_extension(true);
 }
-/*----------------------------------------------------------------------*
- |  initialize algorithm for nonlinear BCs                   thon 09/14 |
- *----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::init_nonlinear_bc()
 {
   // initialize flow-rate and flow-volume vectors (fixed to length of four,
@@ -456,14 +455,8 @@ void FLD::FluidImplicitTimeInt::init_nonlinear_bc()
   }
 }
 
-
-/*----------------------------------------------------------------------*
- | complete initialization                                              |
- |                                                                      |
- |  o is called at the end of the constructor of the time integrators   |
- |  o used for init functions that require the time integrators to exist|
- |                                                              bk 01/14|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::complete_general_init()
 {
   // -------------------------------------------------------------------
@@ -535,13 +528,8 @@ void FLD::FluidImplicitTimeInt::complete_general_init()
   }
 }
 
-/*----------------------------------------------------------------------*
- | Start the time integration. Allows                                   |
- |                                                                      |
- |  o starting steps with different algorithms                          |
- |  o the "standard" time integration                                   |
- |                                                           gammi 04/07|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::integrate()
 {
   print_stabilization_details();
@@ -550,15 +538,8 @@ void FLD::FluidImplicitTimeInt::integrate()
   time_loop();
 }  // FluidImplicitTimeInt::Integrate
 
-//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-/*----------------------------------------------------------------------*
- | contains the time loop                                    gammi 04/07|
- *----------------------------------------------------------------------*/
-//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::time_loop()
 {
   // time measurement: time loop
@@ -609,7 +590,8 @@ void FLD::FluidImplicitTimeInt::time_loop()
 
 }  // FluidImplicitTimeInt::TimeLoop
 
-
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::setup_locsys_dirichlet_bc(double time)
 {
   // Check how many locsys conditions exist
@@ -653,9 +635,8 @@ void FLD::FluidImplicitTimeInt::setup_locsys_dirichlet_bc(double time)
   discret_->clear_state();
 }
 
-/*----------------------------------------------------------------------*
- | setup the variables to do a new time step                 u.kue 06/07|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::prepare_time_step()
 {
   // -------------------------------------------------------------------
@@ -754,10 +735,8 @@ void FLD::FluidImplicitTimeInt::prepare_time_step()
     avm3_preparation();
 }
 
-/*----------------------------------------------------------------------*
- | nonlinear solve, i.e., (multiple) corrector                 vg 02/09 |
- |   																	|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::solve()
 {
   // -------------------------------------------------------------------
@@ -942,9 +921,8 @@ void FLD::FluidImplicitTimeInt::solve()
   }
 }  // FluidImplicitTimeInt::Solve
 
-/*----------------------------------------------------------------------*
- | preparatives for solver                                     vg 09/11 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::prepare_solve()
 {
   // call elements to calculate system matrix and rhs and assemble
@@ -969,10 +947,8 @@ void FLD::FluidImplicitTimeInt::prepare_solve()
 }  // FluidImplicitTimeInt::PrepareSolve
 
 
-/*----------------------------------------------------------------------*
- | call elements to calculate system matrix/rhs and assemble   vg 02/09 |
- | overloaded in TimIntRedModels                               bk 12/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::assemble_mat_and_rhs()
 {  // forcing_->PutScalar(0.0);
   dtele_ = 0.0;
@@ -1110,10 +1086,8 @@ void FLD::FluidImplicitTimeInt::assemble_mat_and_rhs()
   dtele_ = Teuchos::Time::wallTime() - tcpu;
 }  // FluidImplicitTimeInt::assemble_mat_and_rhs
 
-/*----------------------------------------------------------------------*
- | Call evaluate routine on elements                           bk 06/15 |
- | only for assemble_mat_and_rhs                                           |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::evaluate_mat_and_rhs(Teuchos::ParameterList& eleparams)
 {
   if (off_proc_assembly_)
@@ -1186,7 +1160,6 @@ void FLD::FluidImplicitTimeInt::evaluate_mat_and_rhs(Teuchos::ParameterList& ele
 }
 
 /*----------------------------------------------------------------------------*
- | Evaluate mass matrix                                       mayr.mt 05/2014 |
  *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::evaluate_mass_matrix()
 {
@@ -1207,9 +1180,8 @@ void FLD::FluidImplicitTimeInt::evaluate_mass_matrix()
   massmat_->complete();
 }
 
-/*----------------------------------------------------------------------*|
- | Set Eleparams for turbulence models                          bk 12/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::treat_turbulence_models(Teuchos::ParameterList& eleparams)
 {
   //----------------------------------------------------------------------
@@ -1239,17 +1211,8 @@ void FLD::FluidImplicitTimeInt::treat_turbulence_models(Teuchos::ParameterList& 
   if (xwall_ != nullptr) xwall_->set_x_wall_params(eleparams);
 }
 
-/*----------------------------------------------------------------------*
- | application of nonlinear boundary conditions to system, such as      |
- | 1) Impedance conditions                                              |
- | 2) Neumann inflow boundary conditions                                |
- | 3) flow-dependent pressure boundary conditions                       |
- | 4) weak Dirichlet boundary conditions                                |
- | 5) mixed/hybrid Dirichlet boundary conditions                        |
- | 6) Slip Supplemental Curved Boundary conditions                      |
- | 7) Navier-slip boundary conditions                                   |
- |                                                             vg 06/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::apply_nonlinear_boundary_conditions()
 {
   //----------------------------------------------------------------------
@@ -1854,9 +1817,8 @@ void FLD::FluidImplicitTimeInt::apply_nonlinear_boundary_conditions()
 }
 
 
-/*----------------------------------------------------------------------*
- | add potential edge-based stabilization terms         rasthofer 06/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::assemble_edge_based_matand_rhs()
 {
   // add edged-based stabilization, if selected
@@ -1884,7 +1846,8 @@ void FLD::FluidImplicitTimeInt::assemble_edge_based_matand_rhs()
   }
 }
 
-
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::evaluate_fluid_edge_based(
     std::shared_ptr<Core::LinAlg::SparseOperator> systemmatrix1,
     Core::LinAlg::Vector<double>& systemvector1, Teuchos::ParameterList edgebasedparams)
@@ -2004,10 +1967,8 @@ void FLD::FluidImplicitTimeInt::evaluate_fluid_edge_based(
   systemvector1.update(1.0, res_tmp, 1.0);
 }
 
-/*----------------------------------------------------------------------*
- | application of Dirichlet boundary conditions to system      vg 09/11 |
- | overloaded in TimIntRedModels                              bk 12/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::apply_dirichlet_to_system()
 {
   // -------------------------------------------------------------------
@@ -2035,7 +1996,8 @@ void FLD::FluidImplicitTimeInt::apply_dirichlet_to_system()
 
 }  // FluidImplicitTimeInt::apply_dirichlet_to_system
 
-
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::init_krylov_space_projection()
 {
   // get condition "KrylovSpaceProjection" from discretization
@@ -2071,9 +2033,8 @@ void FLD::FluidImplicitTimeInt::init_krylov_space_projection()
     FOUR_C_THROW("Received more than one KrylovSpaceCondition for fluid field");
 }
 
-/*--------------------------------------------------------------------------*
- | setup Krylov projector including first fill                    nis Feb13 |
- *--------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::setup_krylov_space_projection(
     const Core::Conditions::Condition* kspcond)
 {
@@ -2117,10 +2078,8 @@ void FLD::FluidImplicitTimeInt::setup_krylov_space_projection(
 
 }  // FLD::FluidImplicitTimeInt::setup_krylov_space_projection
 
-
-/*--------------------------------------------------------------------------*
- | update projection vectors w_ and c_ for Krylov projection      nis Feb13 |
- *--------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::update_krylov_space_projection()
 {
   // get std::shared_ptr to kernel vector of projector
@@ -2229,9 +2188,8 @@ void FLD::FluidImplicitTimeInt::update_krylov_space_projection()
 }  // FluidImplicitTimeInt::update_krylov_space_projection
 
 
-/*--------------------------------------------------------------------------*
- | check if constant pressure mode is in kernel of sysmat_     nissen Jan13 |
- *--------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::check_matrix_nullspace()
 {
   // Note: this check is expensive and should only be used in the debug mode
@@ -2272,9 +2230,8 @@ void FLD::FluidImplicitTimeInt::check_matrix_nullspace()
 }
 
 
-/*----------------------------------------------------------------------*
- | update within iteration                                     vg 09/11 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::iter_update(
     const std::shared_ptr<const Core::LinAlg::Vector<double>> increment)
 {
@@ -2300,9 +2257,8 @@ void FLD::FluidImplicitTimeInt::iter_update(
 
 }  // FluidImplicitTimeInt::IterUpdate
 
-/*----------------------------------------------------------------------*
- | convergence check                                           vg 09/11 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 bool FLD::FluidImplicitTimeInt::convergence_check(int itnum, int itmax, const double velrestol,
     const double velinctol, const double presrestol, const double presinctol)
 {
@@ -2430,9 +2386,8 @@ bool FLD::FluidImplicitTimeInt::convergence_check(int itnum, int itmax, const do
 
 }  // FluidImplicitTimeInt::convergence_check
 
-/*----------------------------------------------------------------------*
- | Update of an Ale field based on the fluid state           hahn 08/14 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::ale_update(std::string condName)
 {
   // Preparation: Check, if an Ale update needs to be done
@@ -2951,9 +2906,8 @@ void FLD::FluidImplicitTimeInt::ale_update(std::string condName)
   }
 }
 
-/*-------------------------------------------------------------------------------------------------*
- | For a given node, obtain local indices of dofs in a vector (like e.g. velnp)         hahn 08/14 |
- *-------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::get_dofs_vector_local_indicesfor_node(int nodeGid,
     Core::LinAlg::Vector<double>& vec, bool withPressure, std::vector<int>* dofsLocalInd)
 {
@@ -2983,11 +2937,8 @@ void FLD::FluidImplicitTimeInt::get_dofs_vector_local_indicesfor_node(int nodeGi
   }
 }
 
-/*----------------------------------------------------------------------*
- | Assemble Mat and RHS and apply Dirichlet Conditions          bk 12/13|
- | Call routine from outside of fluid,                                  |
- | e.g. FSI, FPSI, Poro, ...                                            |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::evaluate(
     std::shared_ptr<const Core::LinAlg::Vector<double>> stepinc)
 {
@@ -3036,39 +2987,8 @@ void FLD::FluidImplicitTimeInt::evaluate(
   prepare_solve();
 }
 
-/*----------------------------------------------------------------------*
- | current solution becomes most recent solution of next timestep       |
- |                                                                      |
- | One-step-Theta: (step>1)                                             |
- |                                                                      |
- |  accn_  = (velnp_-veln_) / (Theta * dt) - (1/Theta -1) * accn_"(n+1) |
- |                                                                      |
- |  velnm_ =veln_                                                       |
- |  veln_  =velnp_                                                      |
- |                                                                      |
- |  BDF2:           (step>1)                                            |
- |                                                                      |
- |               2*dt(n)+dt(n-1)              dt(n)+dt(n-1)             |
- |  accn_   = --------------------- velnp_ - --------------- veln_      |
- |            dt(n)*[dt(n)+dt(n-1)]           dt(n)*dt(n-1)             |
- |                                                                      |
- |                     dt(n)                                            |
- |           + ----------------------- velnm_                           |
- |             dt(n-1)*[dt(n)+dt(n-1)]                                  |
- |                                                                      |
- |  velnm_ =veln_                                                       |
- |  veln_  =velnp_                                                      |
- |                                                                      |
- |  BDF2 and  One-step-Theta: (step==1)                                 |
- |                                                                      |
- |  The given formulas are only valid from the second timestep. In the  |
- |  first step, the acceleration is calculated simply by                |
- |                                                                      |
- |  accn_  = (velnp_-veln_) / (dt)                                      |
- |                                                                      |
- |                                                           gammi 04/07|
- |  overloaded in TimIntRedModels                               bk 12/13|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::time_update()
 {
   Teuchos::ParameterList* stabparams;
@@ -3153,10 +3073,8 @@ void FLD::FluidImplicitTimeInt::time_update()
   discret_->clear_state();
 }  // FluidImplicitTimeInt::TimeUpdate
 
-
-/*----------------------------------------------------------------------*
- | Update of stresses                                        thon 03/15 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::time_update_stresses()
 {
   if (writestresses_) stressmanager_->get_stresses(*trueresidual_, dta_);
@@ -3164,9 +3082,8 @@ void FLD::FluidImplicitTimeInt::time_update_stresses()
   if (write_wall_shear_stresses_) stressmanager_->get_wall_shear_stresses(*trueresidual_, dta_);
 }
 
-/*----------------------------------------------------------------------*
- | Update NonlinearBCs                                       thon 09/14 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::time_update_nonlinear_bc()
 {
   std::vector<const Core::Conditions::Condition*> flowdeppressureline;
@@ -3206,17 +3123,12 @@ void FLD::FluidImplicitTimeInt::time_update_nonlinear_bc()
   }
 }
 
-
-/*----------------------------------------------------------------------*
- | Update of external forces                                ghamm 12/14 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::time_update_external_forces() {}
 
-
-/*----------------------------------------------------------------------*
- | Calculate Acceleration                                               |
- | overloaded in TimIntPoro                                    bk 12/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::tim_int_calculate_acceleration()
 {
   std::shared_ptr<Core::LinAlg::Vector<double>> onlyaccn = nullptr;
@@ -3248,9 +3160,8 @@ void FLD::FluidImplicitTimeInt::tim_int_calculate_acceleration()
   Core::LinAlg::export_to(*onlyaccnp, *accnp_);
 }
 
-/*----------------------------------------------------------------------*
- | calculate intermediate solution                       rasthofer 05/13|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::calc_intermediate_solution()
 {
   if ((special_flow_ == "forced_homogeneous_isotropic_turbulence" or
@@ -3327,11 +3238,8 @@ void FLD::FluidImplicitTimeInt::calc_intermediate_solution()
   }
 }
 
-
-/*----------------------------------------------------------------------*
- | lift'n'drag forces, statistics time sample and output of solution    |
- | and statistics                                              vg 11/08 |
- -----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::statistics_and_output()
 {
   // time measurement: output and statistics
@@ -3370,9 +3278,8 @@ void FLD::FluidImplicitTimeInt::statistics_and_output()
   evaluate_div_u();
 }  // FluidImplicitTimeInt::StatisticsAndOutput
 
-/*----------------------------------------------------------------------*
- | statistics time sample, overloaded in TimIntLoma            bk 12/13 |
- -----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::call_statistics_manager()
 {
   // -------------------------------------------------------------------
@@ -3381,9 +3288,8 @@ void FLD::FluidImplicitTimeInt::call_statistics_manager()
   statisticsmanager_->do_time_sample(step_, 0.0, 0.0, 0.0, 0.0, 0.0);
 }
 
-/*----------------------------------------------------------------------*
- | statistics time sample and output of statistics      rasthofer 06/11 |
- -----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::statistics_output()
 {
   // -------------------------------------------------------------------
@@ -3399,6 +3305,8 @@ void FLD::FluidImplicitTimeInt::statistics_output()
   if (params_->get<bool>("GMSH_OUTPUT")) output_to_gmsh(step_, time_, true);
 }  // FluidImplicitTimeInt::StatisticsOutput
 
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::write_runtime_output()
 {
   runtime_output_writer_->reset();
@@ -3455,183 +3363,160 @@ void FLD::FluidImplicitTimeInt::write_runtime_output()
   runtime_output_writer_->write_to_disk(time_, step_);
 }
 /*----------------------------------------------------------------------*
- | output of solution vector to binio                        gammi 04/07|
- | overloaded in TimIntPoro                                             |
- | overloaded in TimIntRedModels                               bk 12/13|
  *----------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::output()
 {
-  // output of solution
+  // output of the solution
   if (upres_ > 0 and step_ % upres_ == 0)
   {
-    if (runtime_output_writer_ != nullptr) write_runtime_output();
-    // step number and time
-    output_->new_step(step_, time_);
-
-    // time step, especially necessary for adaptive dt
-    output_->write_double("timestep", dta_);
-
-    // velocity/pressure vector
-    output_->write_vector("velnp", velnp_);
-
-    // (hydrodynamic) pressure
-    std::shared_ptr<Core::LinAlg::Vector<double>> pressure =
-        velpressplitter_->extract_cond_vector(*velnp_);
-    output_->write_vector("pressure", pressure);
-
-    if (xwall_ != nullptr)
-    {
-      output_->write_vector("xwall_enrvelnp", xwall_->get_output_vector(*velnp_));
-      output_->write_vector("xwall_tauw", xwall_->get_tauw_vector());
-    }
-
-    if (params_->get<bool>("GMSH_OUTPUT")) output_to_gmsh(step_, time_, false);
-
-    if (alefluid_) output_->write_vector("dispnp", dispnp_);
-
-    if (physicaltype_ == Inpar::FLUID::varying_density or
-        physicaltype_ == Inpar::FLUID::boussinesq or physicaltype_ == Inpar::FLUID::tempdepwater)
-    {
-      std::shared_ptr<Core::LinAlg::Vector<double>> scalar_field =
-          velpressplitter_->extract_cond_vector(*scaaf_);
-      output_->write_vector("scalar_field", scalar_field);
-    }
-
-    // only perform stress calculation when output is needed
-    if (writestresses_)
-    {
-      output_->write_vector("traction", stressmanager_->get_pre_calc_stresses(*trueresidual_));
-    }
-    // only perform wall shear stress calculation when output is needed
-    if (write_wall_shear_stresses_ && xwall_ == nullptr)
-    {
-      output_->write_vector(
-          "wss", stressmanager_->get_pre_calc_wall_shear_stresses(*trueresidual_));
-    }
-
-    // biofilm growth
-    if (fldgrdisp_ != nullptr)
-    {
-      output_->write_vector("fld_growth_displ", fldgrdisp_);
-    }
-
-    if (params_->get<bool>("COMPUTE_EKIN")) write_output_kinetic_energy();
-
-    // write domain decomposition for visualization (only once!)
-    output_->write_element_data(true);
-
-    if (step_ <= 1 and write_nodedata_first_step_) output_->write_node_data(true);
-
-    if (uprestart_ != 0 && step_ % uprestart_ == 0)  // add restart data
-    {
-      // acceleration vector at time n+1 and n, velocity/pressure vector at time n and n-1
-      output_->write_vector("accnp", accnp_);
-      output_->write_vector("accn", accn_);
-      output_->write_vector("veln", veln_);
-      output_->write_vector("velnm", velnm_);
-
-      if (alefluid_)
-      {
-        output_->write_vector("dispn", dispn_);
-        output_->write_vector("dispnm", dispnm_);
-        output_->write_vector("gridvn", gridvn_);
-      }
-
-      if (xwall_ != nullptr)
-        output_->write_vector("wss", stressmanager_->get_pre_calc_wall_shear_stresses(
-                                         *xwall_->fix_dirichlet_inflow(*trueresidual_)));
-
-      // flow rate, flow volume and impedance in case of flow-dependent pressure bc
-      if (nonlinearbc_) output_nonlinear_bc();
-
-      output_external_forces();
-
-      // write mesh in each restart step --- the elements are required since
-      // they contain history variables (the time dependent subscales)
-      // But never do this for step 0 (visualization of initial field) since
-      // it would lead to writing the mesh twice for step 0
-      // (FluidBaseAlgorithm already wrote the mesh) -> HDF5 writer will claim!
-      if ((step_ != 0) and (Teuchos::getIntegralValue<Inpar::FLUID::SubscalesTD>(
-                                params_->sublist("RESIDUAL-BASED STABILIZATION"), "TDS") !=
-                               Inpar::FLUID::SubscalesTD::subscales_quasistatic))
-        output_->write_mesh(step_, time_);
-
-      if (Core::Communication::my_mpi_rank(discret_->get_comm()) == 0)
-        std::cout << "====== Restart for field '" << discret_->name() << "' written in step "
-                  << step_ << std::endl;
-    }
+    write_output();
   }
-  // write restart also when uprestart_ is not a integer multiple of upres_
-  else if (uprestart_ > 0 && step_ % uprestart_ == 0)
+  // write restart information
+  if (uprestart_ > 0 && step_ % uprestart_ == 0)
   {
-    // step number and time
-    output_->new_step(step_, time_);
-
-    // time step, especially necessary for adaptive dt
-    output_->write_double("timestep", dta_);
-
-    // velocity/pressure vector
-    output_->write_vector("velnp", velnp_);
-
-    // output_->write_vector("residual", trueresidual_);
-    if (alefluid_)
-    {
-      output_->write_vector("dispnp", dispnp_);
-      output_->write_vector("dispn", dispn_);
-      output_->write_vector("dispnm", dispnm_);
-      output_->write_vector("gridvn", gridvn_);
-    }
-
-    // write mesh in each restart step --- the elements are required since
-    // they contain history variables (the time dependent subscales)
-    // But never do this for step 0 (visualization of initial field) since
-    // it would lead to writing the mesh twice for step 0
-    // (FluidBaseAlgorithm already wrote the mesh) -> HDF5 writer will claim!
-    if ((step_ != 0) and (Teuchos::getIntegralValue<Inpar::FLUID::SubscalesTD>(
-                              params_->sublist("RESIDUAL-BASED STABILIZATION"), "TDS") !=
-                             Inpar::FLUID::SubscalesTD::subscales_quasistatic))
-      output_->write_mesh(step_, time_);
-
-    // only perform stress calculation when output is needed
-    if (writestresses_)
-    {
-      output_->write_vector("traction", stressmanager_->get_pre_calc_stresses(*trueresidual_));
-    }
-    // only perform wall shear stress calculation when output is needed
-    if (write_wall_shear_stresses_ && xwall_ == nullptr)
-    {
-      output_->write_vector(
-          "wss", stressmanager_->get_pre_calc_wall_shear_stresses(*trueresidual_));
-    }
-    // acceleration vector at time n+1 and n, velocity/pressure vector at time n and n-1
-    output_->write_vector("accnp", accnp_);
-    output_->write_vector("accn", accn_);
-    output_->write_vector("veln", veln_);
-    output_->write_vector("velnm", velnm_);
-
-    if (xwall_ != nullptr)
-    {
-      output_->write_vector("xwall_tauw", xwall_->get_tauw_vector());
-      output_->write_vector("wss", stressmanager_->get_pre_calc_wall_shear_stresses(
-                                       *xwall_->fix_dirichlet_inflow(*trueresidual_)));
-    }
-
-    // flow rate, flow volume and impedance in case of flow-dependent pressure bc
-    if (nonlinearbc_) output_nonlinear_bc();
-
-    output_external_forces();
+    write_restart();
   }
 
   // -------------------------------------------------------------------
   // calculate and write lift'n'drag forces from the residual
   // -------------------------------------------------------------------
   lift_drag();
-}  // FluidImplicitTimeInt::Output
+}
 
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
+void FLD::FluidImplicitTimeInt::write_output()
+{
+  if (runtime_output_writer_ != nullptr)
+  {
+    write_runtime_output();
+    return;
+  }
+  // step number and time
+  output_->new_step(step_, time_);
 
-//*----------------------------------------------------------------------*
-// | output of solution vector for nonlinear BCs              thon  09/14|
-// *---------------------------------------------------------------------*/
+  // time step, especially necessary for adaptive dt
+  output_->write_double("timestep", dta_);
+
+  // velocity/pressure vector
+  output_->write_vector("velnp", velnp_);
+
+  // (hydrodynamic) pressure
+  const std::shared_ptr<Core::LinAlg::Vector<double>> pressure =
+      velpressplitter_->extract_cond_vector(*velnp_);
+  output_->write_vector("pressure", pressure);
+
+  if (xwall_ != nullptr)
+  {
+    output_->write_vector("xwall_enrvelnp", xwall_->get_output_vector(*velnp_));
+    output_->write_vector("xwall_tauw", xwall_->get_tauw_vector());
+  }
+
+  if (params_->get<bool>("GMSH_OUTPUT")) output_to_gmsh(step_, time_, false);
+
+  if (alefluid_) output_->write_vector("dispnp", dispnp_);
+
+  if (physicaltype_ == Inpar::FLUID::varying_density or physicaltype_ == Inpar::FLUID::boussinesq or
+      physicaltype_ == Inpar::FLUID::tempdepwater)
+  {
+    const std::shared_ptr<Core::LinAlg::Vector<double>> scalar_field =
+        velpressplitter_->extract_cond_vector(*scaaf_);
+    output_->write_vector("scalar_field", scalar_field);
+  }
+
+  // only perform stress calculation when output is needed
+  if (writestresses_)
+  {
+    output_->write_vector("traction", stressmanager_->get_pre_calc_stresses(*trueresidual_));
+  }
+  // only perform wall shear stress calculation when output is needed
+  if (write_wall_shear_stresses_ && xwall_ == nullptr)
+  {
+    output_->write_vector("wss", stressmanager_->get_pre_calc_wall_shear_stresses(*trueresidual_));
+  }
+
+  // biofilm growth
+  if (fldgrdisp_ != nullptr)
+  {
+    output_->write_vector("fld_growth_displ", fldgrdisp_);
+  }
+
+  if (params_->get<bool>("COMPUTE_EKIN")) write_output_kinetic_energy();
+
+  // write domain decomposition for visualization (only once!)
+  output_->write_element_data(true);
+
+  if (step_ <= 1 and write_nodedata_first_step_) output_->write_node_data(true);
+}
+
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
+void FLD::FluidImplicitTimeInt::write_restart()
+{
+  // step number and time
+  output_->new_step(step_, time_);
+
+  // acceleration and velocity/pressure vector
+  output_->write_vector("accnp", accnp_);
+  output_->write_vector("accn", accn_);
+  output_->write_vector("veln", veln_);
+  output_->write_vector("velnm", velnm_);
+  output_->write_vector("velnp", velnp_);
+
+  // write mesh in each restart step --- the elements are required since
+  // they contain history variables (the time dependent subscales)
+  // But never do this for step 0 (visualization of initial field) since
+  // it would lead to writing the mesh twice for step 0
+  // (FluidBaseAlgorithm already wrote the mesh) -> HDF5 writer will claim!
+  if ((step_ != 0) and (Teuchos::getIntegralValue<Inpar::FLUID::SubscalesTD>(
+                            params_->sublist("RESIDUAL-BASED STABILIZATION"), "TDS") !=
+                           Inpar::FLUID::SubscalesTD::subscales_quasistatic))
+    output_->write_mesh(step_, time_);
+
+  // time step, especially necessary for adaptive dt
+  output_->write_double("timestep", dta_);
+
+  if (alefluid_)
+  {
+    output_->write_vector("dispnp", dispnp_);
+    output_->write_vector("dispn", dispn_);
+    output_->write_vector("dispnm", dispnm_);
+    output_->write_vector("gridvn", gridvn_);
+  }
+
+  // only perform stress calculation when output is needed
+  if (writestresses_)
+  {
+    output_->write_vector("traction", stressmanager_->get_pre_calc_stresses(*trueresidual_));
+  }
+  // only perform wall shear stress calculation when output is needed
+  if (write_wall_shear_stresses_ && xwall_ == nullptr)
+  {
+    output_->write_vector("wss", stressmanager_->get_pre_calc_wall_shear_stresses(*trueresidual_));
+  }
+
+  if (xwall_ != nullptr)
+  {
+    output_->write_vector("xwall_tauw", xwall_->get_tauw_vector());
+    output_->write_vector("wss", stressmanager_->get_pre_calc_wall_shear_stresses(
+                                     *xwall_->fix_dirichlet_inflow(*trueresidual_)));
+  }
+
+  // flow rate, flow volume and impedance in case of flow-dependent pressure bc
+  if (nonlinearbc_) output_nonlinear_bc();
+
+  output_external_forces();
+
+  if (Core::Communication::my_mpi_rank(discret_->get_comm()) == 0)
+  {
+    std::cout << "====== Restart for field '" << discret_->name() << "' written in step " << step_
+              << '\n'
+              << std::flush;
+  }
+}
+
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::output_nonlinear_bc()
 {
   std::vector<const Core::Conditions::Condition*> flowdeppressureline;
@@ -3677,6 +3562,8 @@ void FLD::FluidImplicitTimeInt::output_nonlinear_bc()
   }
 }
 
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::output_to_gmsh(
     const int step, const double time, const bool inflow) const
 {
@@ -3724,9 +3611,8 @@ void FLD::FluidImplicitTimeInt::output_to_gmsh(
 }
 
 
-/*----------------------------------------------------------------------*
- | output of external forces for restart                     ghamm 12/14|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::output_external_forces()
 {
   if (external_loads_ != nullptr)
@@ -3740,10 +3626,8 @@ void FLD::FluidImplicitTimeInt::output_external_forces()
   }
 }
 
-
-/*----------------------------------------------------------------------*
- |                                                             kue 04/07|
- -----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::read_restart(int step)
 {
   Core::IO::DiscretizationReader reader(
@@ -3862,9 +3746,8 @@ void FLD::FluidImplicitTimeInt::read_restart(int step)
 }
 
 
-/*----------------------------------------------------------------------*
- |set restart values (turbulent inflow only)             rasthofer 06/11|
- -----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_restart(const int step, const double time,
     std::shared_ptr<const Core::LinAlg::Vector<double>> readvelnp,
     std::shared_ptr<const Core::LinAlg::Vector<double>> readveln,
@@ -3888,10 +3771,8 @@ void FLD::FluidImplicitTimeInt::set_restart(const int step, const double time,
   }
 }
 
-
-/*----------------------------------------------------------------------*
- |                                                           chfoe 01/08|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::update_gridv()
 {
   // get order of accuracy of grid velocity determination
@@ -3939,10 +3820,8 @@ void FLD::FluidImplicitTimeInt::update_gridv()
 }
 
 
-/*----------------------------------------------------------------------*
- | prepare AVM3-based scale separation                         vg 10/08 |
- | overloaded in TimIntRedModels and TimIntLoma               bk 12/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::avm3_preparation()
 {
   // AVM3 can't be used with locsys conditions cause it hasn't been implemented yet
@@ -3979,10 +3858,8 @@ void FLD::FluidImplicitTimeInt::avm3_preparation()
 }  // FluidImplicitTimeInt::avm3_preparation
 
 
-/*----------------------------------------------------------------------*
- | prepare AVM3-based scale separation:                        vg 10/08 |
- | assemble mat and rhs                                                 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::avm3_assemble_mat_and_rhs(Teuchos::ParameterList& eleparams)
 {
   // zero matrix
@@ -4065,10 +3942,8 @@ void FLD::FluidImplicitTimeInt::avm3_assemble_mat_and_rhs(Teuchos::ParameterList
 }
 
 
-/*----------------------------------------------------------------------*
-| prepare AVM3-based scale separation:                                  |
-| get scale separation matrix                                           |
-*----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::avm3_get_scale_separation_matrix()
 {
   Teuchos::ParameterList params;
@@ -4102,9 +3977,8 @@ void FLD::FluidImplicitTimeInt::avm3_get_scale_separation_matrix()
     FOUR_C_THROW("domainmap not equal");
 }
 
-/*----------------------------------------------------------------------*
- | AVM3-based scale separation                                          |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::avm3_separation()
 {
   // time measurement: avm3
@@ -4118,9 +3992,8 @@ void FLD::FluidImplicitTimeInt::avm3_separation()
 }  // FluidImplicitTimeInt::avm3_separation
 
 
-/*----------------------------------------------------------------------*
- |  set initial flow field for test cases                               |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_initial_flow_field(
     const Inpar::FLUID::InitialField initfield, const int startfuncno)
 {
@@ -4498,12 +4371,8 @@ void FLD::FluidImplicitTimeInt::set_initial_flow_field(
 }  // end SetInitialFlowField
 
 
-/*----------------------------------------------------------------------*
- | set fields for scatra - fluid coupling, esp.                         |
- | set fields for low-Mach-number flow within iteration loop   vg 09/09 |
- | overloaded in TimIntLoma                                    bk 12/13 |
- | overloaded in TimIntTwoPhase                                mw 07/14 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_iter_scalar_fields(
     std::shared_ptr<const Core::LinAlg::Vector<double>> scalaraf,
     std::shared_ptr<const Core::LinAlg::Vector<double>> scalaram,
@@ -4604,12 +4473,8 @@ void FLD::FluidImplicitTimeInt::set_iter_scalar_fields(
 
 }  // FluidImplicitTimeInt::SetIterScalarFields
 
-
-/*----------------------------------------------------------------------*
- | set fields for scatra - fluid coupling, esp.                         |
- | set scalar fields     vg 09/09 |
- | overloaded in TimIntLoma                                    bk 12/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_scalar_fields(
     std::shared_ptr<const Core::LinAlg::Vector<double>> scalarnp, const double thermpressnp,
     std::shared_ptr<const Core::LinAlg::Vector<double>> scatraresidual,
@@ -4687,9 +4552,8 @@ FLD::FluidImplicitTimeInt::extract_pressure_part(
   return vel_pres_splitter()->extract_cond_vector(*velpres);
 }
 
-/*----------------------------------------------------------------------*
- | evaluate error for test cases with analytical solutions   gammi 04/07|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<std::vector<double>>
 FLD::FluidImplicitTimeInt::evaluate_error_compared_to_analytical_sol()
 {
@@ -4849,9 +4713,8 @@ FLD::FluidImplicitTimeInt::evaluate_error_compared_to_analytical_sol()
 }  // end evaluate_error_compared_to_analytical_sol
 
 
-/*----------------------------------------------------------------------*
- | evaluate divergence u                                      ehrl 12/12|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<double> FLD::FluidImplicitTimeInt::evaluate_div_u()
 {
   // Evaluate div u only at the last step
@@ -4923,9 +4786,8 @@ std::shared_ptr<double> FLD::FluidImplicitTimeInt::evaluate_div_u()
     return nullptr;
 }  // end EvaluateDivU
 
-/*----------------------------------------------------------------------*
- | calculate adaptive time step with the CFL number             bk 08/14|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 double FLD::FluidImplicitTimeInt::evaluate_dt_via_cfl_if_applicable()
 {
   int stependadaptivedt =
@@ -4998,16 +4860,8 @@ double FLD::FluidImplicitTimeInt::evaluate_dt_via_cfl_if_applicable()
 }  // end EvaluateDtWithCFL
 
 
-/*----------------------------------------------------------------------*
- | calculate lift and drag forces as well as angular moment: chfoe 11/07|
- | Lift and drag forces are based upon the right-hand side              |
- | true-residual entities of the corresponding nodes.                   |
- | The contribution of the end node of a line is entirely               |
- | added to a present L&D force.                                        |
- | For computing the angular moment, potential displacements            |
- | are taken into account when calculating the distance to              |
- | the center of rotation.                                              |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::lift_drag() const
 {
   // initially check whether computation of lift and drag values is required
@@ -5045,9 +4899,8 @@ void FLD::FluidImplicitTimeInt::lift_drag() const
 }
 
 
-/*----------------------------------------------------------------------*
- | compute flow rates through desired boundary parts        u.may 01/10 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::compute_flow_rates() const
 {
   std::vector<const Core::Conditions::Condition*> flowratecond;
@@ -5342,8 +5195,8 @@ void FLD::FluidImplicitTimeInt::linear_relaxation_solve(
 }
 
 
-/*----------------------------------------------------------------------*
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::add_dirich_cond(
     const std::shared_ptr<const Core::LinAlg::Map> maptoadd)
 {
@@ -5411,9 +5264,8 @@ std::shared_ptr<const Core::LinAlg::Map> FLD::FluidImplicitTimeInt::pressure_row
 }
 
 
-// -------------------------------------------------------------------
-// set general fluid parameter (AE 01/2011)
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_element_general_fluid_parameter()
 {
   Teuchos::ParameterList eleparams;
@@ -5436,9 +5288,8 @@ void FLD::FluidImplicitTimeInt::set_element_general_fluid_parameter()
       eleparams, Core::Communication::my_mpi_rank(discret_->get_comm()));
 }
 
-// -------------------------------------------------------------------
-// set turbulence parameters for element level       rasthofer 11/2011
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_element_turbulence_parameters()
 {
   Teuchos::ParameterList eleparams;
@@ -5456,9 +5307,8 @@ void FLD::FluidImplicitTimeInt::set_element_turbulence_parameters()
   Discret::Elements::FluidEleParameterStd::instance()->set_element_turbulence_parameters(eleparams);
 }
 
-// -------------------------------------------------------------------
-// set general face fluid parameter for face/edge-oriented fluid stabilizations (BS 06/2014)
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_face_general_fluid_parameter()
 {
   Teuchos::ParameterList faceparams;
@@ -5482,9 +5332,8 @@ void FLD::FluidImplicitTimeInt::set_face_general_fluid_parameter()
       faceparams, Core::Communication::my_mpi_rank(discret_->get_comm()));
 }
 
-// -------------------------------------------------------------------
-// set turbulence parameters
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_general_turbulence_parameters()
 {
   turbmodel_ = Inpar::FLUID::no_model;
@@ -5617,9 +5466,8 @@ void FLD::FluidImplicitTimeInt::set_general_turbulence_parameters()
         std::make_shared<TransferTurbulentInflowConditionXW>(discret_, dbcmaps_);
 }
 
-/*----------------------------------------------------------------------*
- | update Newton step                                                   |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::update_newton(
     std::shared_ptr<const Core::LinAlg::Vector<double>> vel)
 {
@@ -5627,9 +5475,8 @@ void FLD::FluidImplicitTimeInt::update_newton(
 }
 
 
-// -------------------------------------------------------------------
-// provide access to turbulence statistics manager (gjb 06/2011)
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<FLD::TurbulenceStatisticManager>
 FLD::FluidImplicitTimeInt::turbulence_statistic_manager()
 {
@@ -5637,22 +5484,19 @@ FLD::FluidImplicitTimeInt::turbulence_statistic_manager()
 }
 
 
-// -------------------------------------------------------------------
-// provide access to box filter for dynamic Smagorinsk model     rasthofer/krank
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<FLD::DynSmagFilter> FLD::FluidImplicitTimeInt::dyn_smag_filter()
 {
   return DynSmag_;
 }
 
-// -------------------------------------------------------------------
-// provide access to box filter for dynamic Vreman model         rasthofer/krank
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<FLD::Vreman> FLD::FluidImplicitTimeInt::vreman() { return Vrem_; }
 
-/*----------------------------------------------------------------------*
- *----------------------------------------------------------------------*/
-// Overloaded in TimIntPoro and TimIntRedModels bk 12/13
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::update_iter_incrementally(
     std::shared_ptr<const Core::LinAlg::Vector<double>> vel)
 {
@@ -5786,9 +5630,8 @@ void FLD::FluidImplicitTimeInt::print_stabilization_details() const
   }
 }
 
-// -------------------------------------------------------------------
-// print information about turbulence model         rasthofer 04/2011
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::print_turbulence_model()
 {
   // a canonical flow with homogeneous directions would allow a
@@ -5887,9 +5730,8 @@ void FLD::FluidImplicitTimeInt::print_turbulence_model()
 }
 
 
-/*----------------------------------------------------------------------*
- | filtered quantities for classical LES models          rasthofer 02/11|
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::apply_scale_separation_for_les()
 {
   if (turbmodel_ == Inpar::FLUID::dynamic_smagorinsky)
@@ -5952,10 +5794,8 @@ void FLD::FluidImplicitTimeInt::apply_scale_separation_for_les()
 }
 
 
-//-------------------------------------------------------------------------
-// calculate mean CsgsB to estimate CsgsD
-// for multifractal subgrid-scale model                    rasthofer 08/12
-//-------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::recompute_mean_csgs_b()
 {
   // For loma, this function is required at the respective position to set up CsgsD of the scalar
@@ -6051,10 +5891,8 @@ void FLD::FluidImplicitTimeInt::recompute_mean_csgs_b()
   }
 }
 
-// -------------------------------------------------------------------
-// extrapolate from time mid-point to end-point         (mayr 12/2011)
-// overloaded in TimIntGenAlpha                            bk 12/13
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<Core::LinAlg::Vector<double>> FLD::FluidImplicitTimeInt::extrapolate_end_point(
     std::shared_ptr<Core::LinAlg::Vector<double>> vecn,
     std::shared_ptr<Core::LinAlg::Vector<double>> vecm)
@@ -6066,9 +5904,8 @@ std::shared_ptr<Core::LinAlg::Vector<double>> FLD::FluidImplicitTimeInt::extrapo
 }
 
 
-// -------------------------------------------------------------------
-// apply external forces to the fluid                    ghamm 03/2013
-// -------------------------------------------------------------------
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::apply_external_forces(
     std::shared_ptr<Core::LinAlg::MultiVector<double>> fext)
 {
@@ -6080,18 +5917,16 @@ void FLD::FluidImplicitTimeInt::apply_external_forces(
 }
 
 
-/*------------------------------------------------------------------------------------------------*
- | create field test
- *------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<Core::Utils::ResultTest> FLD::FluidImplicitTimeInt::create_field_test()
 {
   return std::make_shared<FLD::FluidResultTest>(*this);
 }
 
 
-/*------------------------------------------------------------------------------------------------*
- |
- *------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<const Core::LinAlg::Vector<double>> FLD::FluidImplicitTimeInt::convective_vel()
 {
   if (grid_vel() == nullptr)
@@ -6109,9 +5944,8 @@ std::shared_ptr<const Core::LinAlg::Vector<double>> FLD::FluidImplicitTimeInt::c
 }
 
 
-/*------------------------------------------------------------------------------------------------*
- | Calculate an integrated divergence operator                                    (mayr.mt 04/12) |
- *------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 std::shared_ptr<Core::LinAlg::Vector<double>> FLD::FluidImplicitTimeInt::calc_div_op()
 {
   // set action in order to calculate the integrated divergence operator
@@ -6139,9 +5973,8 @@ std::shared_ptr<Core::LinAlg::Vector<double>> FLD::FluidImplicitTimeInt::calc_di
 }
 
 
-/*------------------------------------------------------------------------------------------------*
- |
- *------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::reset(int numsteps, int iter)
 {
   const Core::LinAlg::Map* dofrowmap = discret_->dof_row_map();
@@ -6188,9 +6021,8 @@ void FLD::FluidImplicitTimeInt::reset(int numsteps, int iter)
 }
 
 
-/*------------------------------------------------------------------------------------------------*
- |
- *------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::predict_tang_vel_consist_acc()
 {
   // message to screen
@@ -6276,15 +6108,16 @@ void FLD::FluidImplicitTimeInt::predict_tang_vel_consist_acc()
   incvel_->put_scalar(0.0);
 }
 
-/*----------------------------------------------------------------------*/
-/* set fluid displacement vector due to biofilm growth          */
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_fld_gr_disp(
     std::shared_ptr<Core::LinAlg::Vector<double>> fluid_growth_disp)
 {
   fldgrdisp_ = fluid_growth_disp;
 }
 
-// overloaded in TimIntRedModels bk 12/13
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::setup_meshtying()
 {
   msht_ = Teuchos::getIntegralValue<Inpar::FLUID::MeshTying>(*params_, "MESHTYING");
@@ -6321,12 +6154,9 @@ void FLD::FluidImplicitTimeInt::setup_meshtying()
     if (myrank_ == 0)
       FOUR_C_THROW("The meshtying framework does only support a steady-state predictor");
   }
-
-  // meshtying_->OutputSetUp();
 }
 
 /*----------------------------------------------------------------------------*
- | Compute kinetic energy and write it to file                mayr.mt 05/2014 |
  *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::write_output_kinetic_energy()
 {
@@ -6349,12 +6179,10 @@ void FLD::FluidImplicitTimeInt::write_output_kinetic_energy()
 }
 
 /*----------------------------------------------------------------------------*
- | Set time step size                                         mayr.mt 09/2013 |
  *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_dt(const double dtnew) { dta_ = dtnew; }
 
 /*----------------------------------------------------------------------------*
- | Set time and step                                          mayr.mt 09/2013 |
  *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_time_step(const double time, const int step)
 {
@@ -6409,14 +6237,12 @@ void FLD::FluidImplicitTimeInt::set_dirichlet_neumann_bc()
   discret_->clear_state();
 }
 
-/*---------------------------------------------------------------*/
-/* Apply Dirichlet boundary conditions on provided state vectors */
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::apply_dirichlet_bc(Teuchos::ParameterList& params,
-    std::shared_ptr<Core::LinAlg::Vector<double>> systemvector,    //!< (may be nullptr)
-    std::shared_ptr<Core::LinAlg::Vector<double>> systemvectord,   //!< (may be nullptr)
-    std::shared_ptr<Core::LinAlg::Vector<double>> systemvectordd,  //!< (may be nullptr)
-    bool recreatemap  //!< recreate mapextractor/toggle-vector
-)
+    std::shared_ptr<Core::LinAlg::Vector<double>> systemvector,
+    std::shared_ptr<Core::LinAlg::Vector<double>> systemvectord,
+    std::shared_ptr<Core::LinAlg::Vector<double>> systemvectordd, bool recreatemap)
 {
   // In the case of local coordinate systems, we have to rotate forward ...
   // --------------------------------------------------------------------------------
@@ -6459,9 +6285,8 @@ void FLD::FluidImplicitTimeInt::apply_dirichlet_bc(Teuchos::ParameterList& param
   }
 }
 
-/*----------------------------------------------------------------------*
- * Explicit predictor                                   rasthofer 12/13 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::explicit_predictor()
 {
   if (Core::Communication::my_mpi_rank(discret_->get_comm()) == 0)
@@ -6599,10 +6424,6 @@ void FLD::FluidImplicitTimeInt::explicit_predictor()
 }
 
 /*----------------------------------------------------------------------------*
- * Add vector to external loads being applied to rhs before solve  rauch 12/14 |
- *                                                                             |
- * external_loads_ may have been built before by method ApplyExternalForces()  |
- * Be careful here, because the external loads are not reset after a timestep!|
  *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::add_contribution_to_external_loads(
     const std::shared_ptr<const Core::LinAlg::Vector<double>> contributing_vector)
@@ -6618,8 +6439,6 @@ void FLD::FluidImplicitTimeInt::add_contribution_to_external_loads(
 }
 
 /*----------------------------------------------------------------------------*
- * Set external contributions to the system matrix as they appear in meshtying |
- * problems                                                                    |
  *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::set_coupling_contributions(
     std::shared_ptr<const Core::LinAlg::SparseOperator> contributing_matrix)
@@ -6655,7 +6474,6 @@ void FLD::FluidImplicitTimeInt::set_coupling_contributions(
 }
 
 /*----------------------------------------------------------------------------*
- * Assemble coupling contributions into the system matrix                     |
  *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::assemble_coupling_contributions()
 {
@@ -6672,9 +6490,9 @@ void FLD::FluidImplicitTimeInt::assemble_coupling_contributions()
     residual_->update(-1.0 / residual_scaling(), *tmp, 1.0);
   }
 }
-/*----------------------------------------------------------------------*
- | Initialize forcing for HIT and periodic hill                  bk 04/15|
- *----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::init_forcing()
 {
   // -------------------------------------------------------------------
@@ -6700,10 +6518,8 @@ void FLD::FluidImplicitTimeInt::init_forcing()
   }
 }
 
-/*----------------------------------------------------------------------*
- * Update slave dofs for multifield simulations with fluid mesh tying   |
- *                                                          wirtz 01/16 |
- *----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::update_slave_dof(Core::LinAlg::Vector<double>& f)
 {
   if (msht_ != Inpar::FLUID::no_meshtying)
@@ -6711,8 +6527,9 @@ void FLD::FluidImplicitTimeInt::update_slave_dof(Core::LinAlg::Vector<double>& f
     meshtying_->update_slave_dof(f, *velnp_);
   }
 }
-/*----------------------------------------------------------------------*|
- *----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------*
+ *----------------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::reset_external_forces()
 {
   if (external_loads_ == nullptr)
