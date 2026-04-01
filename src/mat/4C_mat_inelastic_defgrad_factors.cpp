@@ -13,7 +13,6 @@
 #include "4C_linalg_fixedsizematrix_solver.hpp"
 #include "4C_linalg_fixedsizematrix_tensor_products.hpp"
 #include "4C_linalg_fixedsizematrix_voigt_notation.hpp"
-#include "4C_linalg_four_tensor_generators.hpp"
 #include "4C_linalg_symmetric_tensor.hpp"
 #include "4C_linalg_tensor.hpp"
 #include "4C_linalg_tensor_conversion.hpp"
@@ -35,10 +34,11 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_StandardParameterEntryValidators.hpp>
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <optional>
-#include <stdexcept>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -56,21 +56,20 @@ namespace
   Core::IO::InputParameterContainer get_parameters_of_parent_material(const int mat_id,
       const std::map<int, Core::Utils::LazyPtr<Core::Mat::PAR::Parameter>>& material_map)
   {
-    std::map<int, Core::Utils::LazyPtr<Core::Mat::PAR::Parameter>>::const_iterator m;
     // go over material map
-    for (m = material_map.begin(); m != material_map.end(); ++m)
+    for (const auto& material_parameters : material_map | std::views::values)
     {
       // check type of parent material
-      if (m->second->type() == Core::Materials::m_multiplicative_split_defgrad_elasthyper)
+      if (material_parameters->type() == Core::Materials::m_multiplicative_split_defgrad_elasthyper)
       {
-        std::vector<int> inel_defgrad_facids_ =
-            m->second->raw_parameters().get<std::vector<int>>("INELDEFGRADFACIDS");
+        auto inel_defgrad_facids_ =
+            material_parameters->raw_parameters().get<std::vector<int>>("INELDEFGRADFACIDS");
         // check if the inelastic defgrad factor ids of the found multiplicative split material
         // contain the id of the considered factor
-        if (std::find((inel_defgrad_facids_).begin(), (inel_defgrad_facids_).end(), mat_id) !=
-            (inel_defgrad_facids_).end())
+        if (std::ranges::find(inel_defgrad_facids_.begin(), inel_defgrad_facids_.end(), mat_id) !=
+            inel_defgrad_facids_.end())
         {
-          return m->second->raw_parameters();
+          return material_parameters->raw_parameters();
         }
       }
     }
@@ -468,14 +467,15 @@ Mat::PAR::InelasticDefgradIntercalFrac::InelasticDefgradIntercalFrac(
     // retrieve problem instance to read from
     const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
     // retrieve validated input line of material ID in question
-    auto* curmat = Global::Problem::instance(probinst)->materials()->parameter_by_id(matid);
-    switch (curmat->type())
+    const auto* current_material =
+        Global::Problem::instance(probinst)->materials()->parameter_by_id(matid);
+    switch (current_material->type())
     {
       case Core::Materials::m_electrode:
       {
         // Get C_max and Chi_max of electrode material
-        c_max_ = curmat->raw_parameters().get<double>("C_MAX");
-        chi_max_ = curmat->raw_parameters().get<double>("CHI_MAX");
+        c_max_ = current_material->raw_parameters().get<double>("C_MAX");
+        chi_max_ = current_material->raw_parameters().get<double>("CHI_MAX");
         break;
       }
       default:
@@ -512,7 +512,7 @@ Mat::PAR::InelasticDefgradPolyIntercalFrac::InelasticDefgradPolyIntercalFrac(
 Mat::PAR::InelasticDefgradLinScalarAniso::InelasticDefgradLinScalarAniso(
     const Core::Mat::PAR::Parameter::Data& matdata)
     : InelasticDefgradLinScalar(matdata),
-      growth_dir_(std::make_shared<InelasticDeformationDirection>(
+      growth_dir_(std::make_unique<InelasticDeformationDirection>(
           matdata.parameters.get<std::vector<double>>("GrowthDirection")))
 {
 }
@@ -522,7 +522,7 @@ Mat::PAR::InelasticDefgradLinScalarAniso::InelasticDefgradLinScalarAniso(
 Mat::PAR::InelasticDefgradPolyIntercalFracAniso::InelasticDefgradPolyIntercalFracAniso(
     const Core::Mat::PAR::Parameter::Data& matdata)
     : InelasticDefgradPolyIntercalFrac(matdata),
-      growth_dir_(std::make_shared<InelasticDeformationDirection>(
+      growth_dir_(std::make_unique<InelasticDeformationDirection>(
           matdata.parameters.get<std::vector<double>>("GrowthDirection")))
 {
 }
@@ -530,8 +530,7 @@ Mat::PAR::InelasticDefgradPolyIntercalFracAniso::InelasticDefgradPolyIntercalFra
 /*--------------------------------------------------------------------*
  *--------------------------------------------------------------------*/
 Mat::PAR::InelasticDeformationDirection::InelasticDeformationDirection(
-    std::vector<double> growthdirection)
-    : growth_dir_mat_()
+    const std::vector<double>& growthdirection)
 {
   if (growthdirection.size() != 3)
   {
@@ -541,17 +540,21 @@ Mat::PAR::InelasticDeformationDirection::InelasticDeformationDirection(
   }
 
   // fill matrix that determines the growth direction
-  const double growthdirvecnorm =
+  const double growthdir_vec_norm =
       std::sqrt(std::pow(growthdirection[0], 2.0) + std::pow(growthdirection[1], 2.0) +
                 std::pow(growthdirection[2], 2.0));
-  const double invquadrgrowthdirvecnorm = 1.0 / (growthdirvecnorm * growthdirvecnorm);
+  FOUR_C_ASSERT_ALWAYS(
+      growthdir_vec_norm > 0.0, "Growth direction vector must not be the zero vector!");
+
+  const double inv_quadr_growthdir_vec_norm = 1.0 / (growthdir_vec_norm * growthdir_vec_norm);
 
   // loop over all rows and columns to fill the matrix and scale it correctly on the fly
   for (unsigned i = 0; i < growthdirection.size(); ++i)
   {
     for (unsigned j = 0; j < growthdirection.size(); ++j)
     {
-      growth_dir_mat_(i, j) = invquadrgrowthdirvecnorm * growthdirection[i] * growthdirection[j];
+      growth_dir_tensor_(i, j) =
+          inv_quadr_growthdir_vec_norm * growthdirection[i] * growthdirection[j];
     }
   }
 }
@@ -606,9 +609,11 @@ Mat::PAR::InelasticDefgradTransvIsotropElastViscoplast::
 {
   // consistency check: number of substepping halving procedures
   if (max_substepping_halve_num_ < 0)
+  {
     FOUR_C_THROW(
         "Maximum number of times the global time step can be halved in the substepping procedure "
         "must be >= 0!");
+  }
 
   // consistency check: yield parameters in case of transversely-isotropic behavior
   const bool all_yield_cond_param_specified =
@@ -659,22 +664,22 @@ std::shared_ptr<Mat::InelasticDefgradFactors> Mat::InelasticDefgradFactors::fact
   // retrieve problem instance to read from
   const int probinst = Global::Problem::instance()->materials()->get_read_from_problem();
   // retrieve validated input line of material ID in question
-  auto* curmat = Global::Problem::instance(probinst)->materials()->parameter_by_id(matnum);
+  auto* current_material =
+      Global::Problem::instance(probinst)->materials()->parameter_by_id(matnum);
 
   // get material type and call corresponding constructors
-  const Core::Materials::MaterialType currentMaterialType = curmat->type();
-  switch (currentMaterialType)
+  switch (current_material->type())
   {
     case Core::Materials::mfi_no_growth:
     {
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradNoGrowth*>(curmat);
+      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradNoGrowth*>(current_material);
 
       return std::make_shared<InelasticDefgradNoGrowth>(params);
     }
     case Core::Materials::mfi_lin_scalar_aniso:
     {
       // get pointer to parameter class
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradLinScalarAniso*>(curmat);
+      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradLinScalarAniso*>(current_material);
 
       // return pointer to inelastic deformation gradient object
       return std::make_shared<InelasticDefgradLinScalarAniso>(params);
@@ -682,7 +687,7 @@ std::shared_ptr<Mat::InelasticDefgradFactors> Mat::InelasticDefgradFactors::fact
     case Core::Materials::mfi_lin_scalar_iso:
     {
       // get pointer to parameter class
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradScalar*>(curmat);
+      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradScalar*>(current_material);
 
       // return pointer to inelastic deformation gradient object
       return std::make_shared<InelasticDefgradLinScalarIso>(params);
@@ -690,7 +695,8 @@ std::shared_ptr<Mat::InelasticDefgradFactors> Mat::InelasticDefgradFactors::fact
     case Core::Materials::mfi_poly_intercal_frac_aniso:
     {
       // get pointer to parameter class
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradPolyIntercalFracAniso*>(curmat);
+      auto* params =
+          dynamic_cast<Mat::PAR::InelasticDefgradPolyIntercalFracAniso*>(current_material);
 
       // return pointer to inelastic deformation gradient object
       return std::make_shared<InelasticDefgradPolyIntercalFracAniso>(params);
@@ -698,7 +704,7 @@ std::shared_ptr<Mat::InelasticDefgradFactors> Mat::InelasticDefgradFactors::fact
     case Core::Materials::mfi_poly_intercal_frac_iso:
     {
       // get pointer to parameter class
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradPolyIntercalFrac*>(curmat);
+      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradPolyIntercalFrac*>(current_material);
 
       // return pointer to inelastic deformation gradient object
       return std::make_shared<InelasticDefgradPolyIntercalFracIso>(params);
@@ -706,17 +712,17 @@ std::shared_ptr<Mat::InelasticDefgradFactors> Mat::InelasticDefgradFactors::fact
 
     case Core::Materials::mfi_lin_temp_iso:
     {
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradLinTempIso*>(curmat);
+      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradLinTempIso*>(current_material);
       return std::make_shared<InelasticDefgradLinTempIso>(params);
     }
     case Core::Materials::mfi_time_funct_aniso:
     {
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradTimeFunctAniso*>(curmat);
+      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradTimeFunctAniso*>(current_material);
       return std::make_shared<InelasticDefgradTimeFunctAniso>(params);
     }
     case Core::Materials::mfi_time_funct_iso:
     {
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradTimeFunct*>(curmat);
+      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradTimeFunct*>(current_material);
       return std::make_shared<InelasticDefgradTimeFunctIso>(params);
     }
     case Core::Materials::mfi_transv_isotrop_elast_viscoplast:
@@ -730,7 +736,8 @@ std::shared_ptr<Mat::InelasticDefgradFactors> Mat::InelasticDefgradFactors::fact
           get_parameters_of_parent_material(matnum, material_map);
 
       // create parameter class
-      auto* params = dynamic_cast<Mat::PAR::InelasticDefgradTransvIsotropElastViscoplast*>(curmat);
+      auto* params =
+          dynamic_cast<Mat::PAR::InelasticDefgradTransvIsotropElastViscoplast*>(current_material);
 
       // create viscoplastic law
       auto viscoplastic_law = Mat::Viscoplastic::Law::factory(params->viscoplastic_law_id());
@@ -748,7 +755,7 @@ std::shared_ptr<Mat::InelasticDefgradFactors> Mat::InelasticDefgradFactors::fact
       // retrieve elastic materials
       std::vector<std::shared_ptr<Mat::Elastic::Summand>> potsumel;
       std::vector<std::shared_ptr<Mat::Elastic::CoupTransverselyIsotropic>> potsumel_transviso;
-      for (int matid_elastic : parentmat_input_params.get<std::vector<int>>("MATIDSEL"))
+      for (const int matid_elastic : parentmat_input_params.get<std::vector<int>>("MATIDSEL"))
       {
         // create elastic component
         auto elastic_summand = Mat::Elastic::Summand::factory(matid_elastic);
@@ -771,7 +778,7 @@ std::shared_ptr<Mat::InelasticDefgradFactors> Mat::InelasticDefgradFactors::fact
     }
 
     default:
-      FOUR_C_THROW("cannot deal with type {}", curmat->type());
+      FOUR_C_THROW("cannot deal with type {}", current_material->type());
   }
 }
 
@@ -819,7 +826,7 @@ Mat::InelasticDefgradPolyIntercalFrac::InelasticDefgradPolyIntercalFrac(
 /*--------------------------------------------------------------------*
  *--------------------------------------------------------------------*/
 double Mat::InelasticDefgradPolyIntercalFrac::evaluate_polynomial(
-    const double concentration, const double detjacobian)
+    const double concentration, const double detjacobian) const
 {
   // get intercalation fraction
   const double x = Mat::Electrode::compute_intercalation_fraction(
@@ -835,7 +842,7 @@ double Mat::InelasticDefgradPolyIntercalFrac::evaluate_polynomial(
 /*--------------------------------------------------------------------*
  *--------------------------------------------------------------------*/
 double Mat::InelasticDefgradPolyIntercalFrac::evaluate_polynomial_derivative(
-    const double concentration, const double detjacobian)
+    const double concentration, const double detjacobian) const
 {
   // get intercalation fraction
   const double x = Mat::Electrode::compute_intercalation_fraction(
@@ -856,7 +863,7 @@ Mat::PAR::InelasticSource Mat::InelasticDefgradPolyIntercalFrac::get_inelastic_s
 Mat::InelasticDefgradLinScalarIso::InelasticDefgradLinScalarIso(Core::Mat::PAR::Parameter* params)
     : InelasticDefgradScalar(params)
 {
-  linear_growth_ = std::make_shared<InelasticDefgradLinearShape>(
+  linear_growth_ = std::make_unique<InelasticDefgradLinearShape>(
       parameter()->scalar1_molar_growth_fac(), parameter()->scalar1_ref_conc());
 }
 
@@ -972,7 +979,7 @@ Mat::InelasticDefgradLinScalarAniso::InelasticDefgradLinScalarAniso(
     Core::Mat::PAR::Parameter* params)
     : InelasticDefgradScalar(params)
 {
-  linear_growth_ = std::make_shared<InelasticDefgradLinearShape>(
+  linear_growth_ = std::make_unique<InelasticDefgradLinearShape>(
       parameter()->scalar1_molar_growth_fac(), parameter()->scalar1_ref_conc());
 }
 
@@ -1006,7 +1013,7 @@ void Mat::InelasticDefgradLinScalarAniso::evaluate_inverse_inelastic_def_grad(
 
   // finalize inelastic deformation gradient matrix (FinM is calculated, such that the volume
   // change is a linear function of the scalar (mapped to reference frame) that causes it)
-  Fin += growth_factor * Core::LinAlg::get_full(parameter()->growth_dir_mat());
+  Fin += growth_factor * Core::LinAlg::get_full(parameter()->growth_dir_tensor());
 
   // calculate inverse of inelastic deformation gradient matrix
   iFinM.invert(FinM);
@@ -1035,7 +1042,7 @@ void Mat::InelasticDefgradLinScalarAniso::evaluate_additional_cmat(
 
   // calculate F_{in,j}^{-1} . G . F_{in,j}^{-1} with F_{in,j}, the j-th factor of F_{in}
   temp.multiply_nn(1.0, iFinjM,
-      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_mat())), 0.0);
+      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_tensor())), 0.0);
   iFinjGiFinj.multiply_nn(1.0, temp, iFinjM, 0.0);
   Core::LinAlg::Voigt::matrix_3x3_to_9x1(iFinjGiFinj, iFinjGiFinj9x1);
 
@@ -1066,7 +1073,7 @@ void Mat::InelasticDefgradLinScalarAniso::evaluate_od_stiff_mat(
 
   // calculate diFinjdc
   tmp.multiply_nn(1.0, iFinjM,
-      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_mat())), 0.0);
+      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_tensor())), 0.0);
   diFinjdcM.multiply_nn(scalefac, tmp, iFinjM, 0.0);
   Core::LinAlg::Voigt::matrix_3x3_to_9x1(diFinjdcM, diFinjdc9x1);
 
@@ -1081,7 +1088,7 @@ void Mat::InelasticDefgradLinScalarAniso::evaluate_inelastic_def_grad_derivative
 {
   const double scalefac = linear_growth_->growth_fac() * detjacobian;
 
-  dFindx = Core::LinAlg::get_full(parameter()->growth_dir_mat());
+  dFindx = Core::LinAlg::get_full(parameter()->growth_dir_tensor());
   dFindx *= scalefac;
 }
 
@@ -1245,7 +1252,7 @@ void Mat::InelasticDefgradPolyIntercalFracAniso::evaluate_inverse_inelastic_def_
 
   // add the growth part
   FinM.update(growth_factor,
-      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_mat())), 1.0);
+      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_tensor())), 1.0);
 
   // calculate inverse of inelastic deformation gradient matrix
   iFinM.invert(FinM);
@@ -1280,7 +1287,7 @@ void Mat::InelasticDefgradPolyIntercalFracAniso::evaluate_additional_cmat(
 
   // calculate F_{in,j}^{-1} . G . F_{in,j}^{-1} with F_{in,j}, the j-th factor of F_{in}
   temp.multiply_nn(1.0, iFinjM,
-      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_mat())), 0.0);
+      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_tensor())), 0.0);
   iFinjGiFinj.multiply_nn(1.0, temp, iFinjM, 0.0);
   Core::LinAlg::Voigt::matrix_3x3_to_9x1(iFinjGiFinj, iFinjGiFinj9x1);
 
@@ -1318,7 +1325,7 @@ void Mat::InelasticDefgradPolyIntercalFracAniso::evaluate_od_stiff_mat(
 
   // calculate diFinjdc
   tmp.multiply_nn(1.0, iFinjM,
-      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_mat())), 0.0);
+      Core::LinAlg::make_matrix(Core::LinAlg::get_full(parameter()->growth_dir_tensor())), 0.0);
   diFinjdcM.multiply_nn(scalefac, tmp, iFinjM, 0.0);
   Core::LinAlg::Voigt::matrix_3x3_to_9x1(diFinjdcM, diFinjdc9x1);
 
@@ -1344,7 +1351,7 @@ void Mat::InelasticDefgradPolyIntercalFracAniso::evaluate_inelastic_def_grad_der
   const double scalefac = polynomDerivativeValue / (polynomReferenceValue + 1.0) * dChidc;
 
   // here dFindc is zeroed out and filled with the current value
-  dFindx = Core::LinAlg::get_full(scalefac * parameter()->growth_dir_mat());
+  dFindx = Core::LinAlg::get_full(scalefac * parameter()->growth_dir_tensor());
 }
 
 /*--------------------------------------------------------------------*
@@ -1354,14 +1361,12 @@ Mat::InelasticDefgradLinearShape::InelasticDefgradLinearShape(
     : growth_fac_(growth_fac), reference_value_(reference_value)
 {
   // safety checks
-  if (growth_fac < 0.0)
-    FOUR_C_THROW("Growth factor can not be negative, please check your input file!");
-  if (growth_fac == 0.0)
-  {
-    FOUR_C_THROW(
-        "Do not use linear growth laws with a growth factor of 0.0. Use "
-        "'MAT_InelasticDefgradNoGrowth' instead!");
-  }
+  FOUR_C_ASSERT_ALWAYS(
+      growth_fac >= 0.0, "Growth factor can not be negative, please check your input file!");
+
+  FOUR_C_ASSERT_ALWAYS(growth_fac != 0.0,
+      "Do not use linear growth laws with a growth factor of 0.0. Use "
+      "'MAT_InelasticDefgradNoGrowth' instead!");
 }
 
 /*--------------------------------------------------------------------*
@@ -1382,7 +1387,7 @@ Mat::InelasticDefgradPolynomialShape::InelasticDefgradPolynomialShape(
 
 /*--------------------------------------------------------------------*
  *--------------------------------------------------------------------*/
-double Mat::InelasticDefgradPolynomialShape::compute_polynomial(const double x)
+double Mat::InelasticDefgradPolynomialShape::compute_polynomial(const double x) const
 {
   // initialize the variable for the evaluation of the polynomial
   double polynom(0.0);
@@ -1395,7 +1400,7 @@ double Mat::InelasticDefgradPolynomialShape::compute_polynomial(const double x)
 
 /*--------------------------------------------------------------------*
  *--------------------------------------------------------------------*/
-double Mat::InelasticDefgradPolynomialShape::compute_polynomial_derivative(const double x)
+double Mat::InelasticDefgradPolynomialShape::compute_polynomial_derivative(const double x) const
 {
   // initialize the variable for the derivative of the polynomial
   double polynomDerivative(0.0);
@@ -1414,7 +1419,7 @@ void Mat::InelasticDefgradPolynomialShape::check_polynomial_bounds(const double 
   // safety check for validity of polynomial
   if ((x < x_min_) or (x > x_max_))
   {
-    std::cout << "WARNING: Polynomial is evaluated outside its range of validity!" << std::endl;
+    std::cout << "WARNING: Polynomial is evaluated outside its range of validity!\n";
     std::cout << "Evaluation at: " << x << " Lower bound is " << x_min_ << " Upper bound is "
               << x_max_ << std::endl;
   }
@@ -1446,8 +1451,10 @@ void Mat::InelasticDefgradLinTempIso::evaluate_inverse_inelastic_def_grad(
   const double reftemp = parameter()->ref_temp();
 
   const double growthfactor = 1.0 + tempgrowthfac * (temperature_ - reftemp);
-  if (growthfactor <= 0.0) FOUR_C_THROW("Determinante of growth must not become negative");
   const double isoinelasticdefo = std::pow(growthfactor, (1.0 / 3.0));
+
+  FOUR_C_ASSERT_ALWAYS(isoinelasticdefo > 0.0,
+      "Determinant of inelastic deformation must be positive, please check your input file!");
 
   // calculate inverse inelastic deformation gradient
   for (int i = 0; i < 3; ++i) iFinM(i, i) = 1.0 / isoinelasticdefo;
@@ -1600,7 +1607,7 @@ void Mat::InelasticDefgradTimeFunct::pre_evaluate(const Teuchos::ParameterList& 
 Mat::PAR::InelasticDefgradTimeFunctAniso::InelasticDefgradTimeFunctAniso(
     const Core::Mat::PAR::Parameter::Data& matdata)
     : InelasticDefgradTimeFunct(matdata),
-      growth_dir_(std::make_shared<InelasticDeformationDirection>(
+      growth_dir_(std::make_unique<InelasticDeformationDirection>(
           matdata.parameters.get<std::vector<double>>("GrowthDirection")))
 {
 }
@@ -1676,7 +1683,10 @@ Mat::InelasticDefgradTransvIsotropElastViscoplast::InelasticDefgradTransvIsotrop
       potsumel_transviso_(std::move(pot_sum_el_transv_iso)),
       viscoplastic_law_(std::move(viscoplastic_law)),
       fiber_reader_(std::move(fiber_reader)),
-      tensor_interpolator_(init_tensor_interpolator())
+      state_quantities_(),
+      state_quantity_derivatives_(),
+      tensor_interpolator_(init_tensor_interpolator()),
+      local_substepping_utils_()
 {
   // set time step size to 0.0 (this is set to the correct and current value in the
   // preevaluate method)
@@ -1741,7 +1751,7 @@ void Mat::InelasticDefgradTransvIsotropElastViscoplast::calculate_gamma_delta(
 
   // loop over map of associated potential summands
   // derivatives of strain energy function w.r.t. principal invariants
-  for (auto& p : potsumel_)  // only isotropic
+  for (const auto& p : potsumel_)  // only isotropic
   {
     p->add_derivatives_principal(dPIe, ddPIIe, prinv, gp_, ele_gid_);
   }
@@ -1790,7 +1800,7 @@ Mat::InelasticDefgradTransvIsotropElastViscoplast::evaluate_state_quantities(
     Core::LinAlg::SymmetricTensor<double, 3, 3> SeV{};
 
     Core::LinAlg::SymmetricTensor<double, 3, 3, 3, 3> dSedCe{};
-    for (auto& p : potsumel_transviso_)
+    for (const auto& p : potsumel_transviso_)
     {
       p->add_stress_aniso_principal(CeV, dSedCe, SeV, param_list, gp_, ele_gid_);
     }
@@ -1967,8 +1977,7 @@ Mat::InelasticDefgradTransvIsotropElastViscoplast::evaluate_state_quantities(
   if (parameter()->timint_type() == ViscoplastUtils::TimIntType::standard)
   {
     temp3x3.update(-dt, state_quantities.curr_lpM, 0.0);
-    Core::LinAlg::MatrixFunctErrorType exp_err_status =
-        Core::LinAlg::MatrixFunctErrorType::no_errors;
+    auto exp_err_status = Core::LinAlg::MatrixFunctErrorType::no_errors;
     state_quantities.curr_EpM =
         Core::LinAlg::matrix_exp(temp3x3, exp_err_status, parameter()->mat_exp_calc_method());
     if (exp_err_status != Core::LinAlg::MatrixFunctErrorType::no_errors)
@@ -2259,8 +2268,7 @@ Mat::InelasticDefgradTransvIsotropElastViscoplast::evaluate_state_quantity_deriv
     dNpdMe_sym_dev.multiply_nt(-1.0 / equiv_stress, NpV, NpV, 0.0);
     dNpdMe_sym_dev.update(-1.0 / 2.0 * 1.0 / equiv_stress * 4.0 / 3.0 * (F - A - 2.0 * B),
         const_mat_tensors_.id_dyad_mm, 1.0);
-    dNpdMe_sym_dev.update(
-        1.0 / 1.0 * 1.0 / equiv_stress * (A + 2 * B), const_non_mat_tensors.id4_6x6, 1.0);
+    dNpdMe_sym_dev.update(1.0 / equiv_stress * (A + 2 * B), const_non_mat_tensors.id4_6x6, 1.0);
     Core::LinAlg::FourTensorOperations::add_kronecker_tensor_product(dNpdMe_sym_dev,
         1.0 / equiv_stress * (F - A - 2 * B), const_mat_tensors_.mm, const_non_mat_tensors.id3x3,
         1.0);
@@ -2390,8 +2398,7 @@ Mat::InelasticDefgradTransvIsotropElastViscoplast::evaluate_state_quantity_deriv
     // compute derivative of exponential ...
 
     // ... w.r.t. its argument
-    Core::LinAlg::MatrixFunctErrorType exp_err_status =
-        Core::LinAlg::MatrixFunctErrorType::no_errors;
+    auto exp_err_status = Core::LinAlg::MatrixFunctErrorType::no_errors;
     Core::LinAlg::Matrix<9, 9> expderivV = Core::LinAlg::matrix_3x3_exp_1st_deriv(
         min_dt_lpM, exp_err_status, parameter()->mat_exp_deriv_calc_method());
     if (exp_err_status != Core::LinAlg::MatrixFunctErrorType::no_errors)
@@ -2548,8 +2555,8 @@ void Mat::InelasticDefgradTransvIsotropElastViscoplast::evaluate_additional_cmat
     solver.set_matrix(jacMat);     // set A = jacM
     solver.set_vectors(SOL, RHS);  // set X=SOL, B=RHS
     solver.factor_with_equilibration(true);
-    int err = solver.solve();  // X = A^-1 B
-    int err2 = solver.factor();
+    const int err = solver.solve();  // X = A^-1 B
+    const int err2 = solver.factor();
     if ((err != 0) || (err2 != 0))
     {
       err_status = ViscoplastUtils::ErrorType::failed_solution_analytic_linearization;
@@ -2558,7 +2565,7 @@ void Mat::InelasticDefgradTransvIsotropElastViscoplast::evaluate_additional_cmat
     }
 
     // disassemble the solution vector
-    Core::LinAlg::Matrix<9, 6> diFinjdCV = extract_derivative_of_inv_inelastic_defgrad(SOL);
+    const Core::LinAlg::Matrix<9, 6> diFinjdCV = extract_derivative_of_inv_inelastic_defgrad(SOL);
 
     // compute additional term to stiffness matrix additional_cmat
     cmatadd.multiply_nn(2.0, dSdiFinj, diFinjdCV, 1.0);
@@ -2678,7 +2685,6 @@ void Mat::InelasticDefgradTransvIsotropElastViscoplast::setup(const int numgp,
     const std::optional<Discret::Elements::CoordinateSystem>& coord_system)
 {
   // auxiliaries
-  std::vector<Core::LinAlg::Tensor<double, 3>> temp_vec;
   Core::LinAlg::Matrix<6, 1> temp_6x1(Core::LinAlg::Initialization::zero);
 
   // resize time step quantities according to the number of Gauss points
@@ -2690,6 +2696,7 @@ void Mat::InelasticDefgradTransvIsotropElastViscoplast::setup(const int numgp,
   // read fiber and structural tensor in the case of transverse isotropy
   if (parameter()->mat_behavior() == ViscoplastUtils::MatBehavior::transv_isotropic)
   {
+    std::vector<Core::LinAlg::Tensor<double, 3>> temp_vec;
     // read fiber via the fiber reader (hyperelastic transversely isotropic material)
     fiber_reader_.setup(numgp, fibers, coord_system);
     fiber_reader_.get_fiber_vecs(temp_vec);
@@ -2760,8 +2767,8 @@ Mat::InelasticDefgradTransvIsotropElastViscoplast::calculate_local_newton_loop_r
   Core::LinAlg::Matrix<3, 3> temp3x3(Core::LinAlg::Initialization::zero);
 
   // extract inverse inelastic defgrad and plastic strain from input vector
-  Core::LinAlg::Matrix<3, 3> iFinM = extract_inverse_inelastic_defgrad(x);
-  double plastic_strain = x(9);
+  const Core::LinAlg::Matrix<3, 3> iFinM = extract_inverse_inelastic_defgrad(x);
+  const double plastic_strain = x(9);
 
   // evaluate state variables
   state_quantities_ = evaluate_state_quantities(
@@ -2790,8 +2797,7 @@ Mat::InelasticDefgradTransvIsotropElastViscoplast::calculate_local_newton_loop_r
     last_FinM.invert(last_iFinM);
     Core::LinAlg::Matrix<3, 3> T(Core::LinAlg::Initialization::zero);
     T.multiply_nn(1.0, last_FinM, iFinM, 0.0);
-    Core::LinAlg::MatrixFunctErrorType log_err_status =
-        Core::LinAlg::MatrixFunctErrorType::no_errors;
+    auto log_err_status = Core::LinAlg::MatrixFunctErrorType::no_errors;
     Core::LinAlg::Matrix<3, 3> logT{Core::LinAlg::Initialization::zero};
     if (parameter()->mat_log_calc_method() ==
         Core::LinAlg::MatrixLogCalcMethod::inv_scal_square)  // evaluation using the inverse
@@ -2859,8 +2865,8 @@ Core::LinAlg::Matrix<10, 10> Mat::InelasticDefgradTransvIsotropElastViscoplast::
   Core::LinAlg::Matrix<3, 3> temp3x3(Core::LinAlg::Initialization::zero);
 
   // extract inverse inelastic defgrad and plastic strain from input vector
-  Core::LinAlg::Matrix<3, 3> iFinM = extract_inverse_inelastic_defgrad(x);
-  double plastic_strain = x(9);
+  const Core::LinAlg::Matrix<3, 3> iFinM = extract_inverse_inelastic_defgrad(x);
+  const double plastic_strain = x(9);
 
   // evaluate state derivatives
   state_quantity_derivatives_ = evaluate_state_quantity_derivatives(CM, iFinM, plastic_strain,
@@ -2923,8 +2929,7 @@ Core::LinAlg::Matrix<10, 10> Mat::InelasticDefgradTransvIsotropElastViscoplast::
     last_FinM.invert(last_iFinM);
     Core::LinAlg::Matrix<3, 3> T(Core::LinAlg::Initialization::zero);
     T.multiply_nn(1.0, last_FinM, iFinM, 0.0);
-    Core::LinAlg::MatrixFunctErrorType log_err_status =
-        Core::LinAlg::MatrixFunctErrorType::no_errors;
+    auto log_err_status = Core::LinAlg::MatrixFunctErrorType::no_errors;
     Core::LinAlg::Matrix<9, 9> dlogTdT{Core::LinAlg::Initialization::zero};
     if ((parameter()->mat_log_deriv_calc_method() ==
             Core::LinAlg::GenMatrixLogFirstDerivCalcMethod::
@@ -2998,8 +3003,8 @@ Core::LinAlg::Matrix<10, 1> Mat::InelasticDefgradTransvIsotropElastViscoplast::l
   CM.multiply_tn(1.0, defgrad, defgrad, 0.0);
 
   // set convergence tolerance for LNL and declare LNL matrices, vectors
-  const double tolNR = 1.0e-12;
-  const unsigned max_iter = 100;
+  constexpr double tolNR = 1.0e-12;
+  constexpr unsigned max_iter = 100;
   // Jacobian matrix
   Core::LinAlg::Matrix<10, 10> jacMat(Core::LinAlg::Initialization::zero);
   // increment of the solution variables
@@ -3208,8 +3213,7 @@ bool Mat::InelasticDefgradTransvIsotropElastViscoplast::prepare_new_substep(
       time_step_quantities_.last_substep_plastic_strain[gp_]);
 
   // initialize the error status for the tensor interpolation
-  Core::LinAlg::TensorInterpolationErrorType tensor_interpolator_err_status{
-      Core::LinAlg::TensorInterpolationErrorType::NoErrors};
+  auto tensor_interpolator_err_status{Core::LinAlg::TensorInterpolationErrorType::NoErrors};
 
   // recompute the current right CG
   curr_CM = tensor_interpolator_.get_interpolated_matrix(ref_matrices_, ref_locs_,
@@ -3263,7 +3267,7 @@ void Mat::InelasticDefgradTransvIsotropElastViscoplast::evaluate_additional_cmat
   // define the delta perturbed deformation gradients
   std::vector<Core::LinAlg::Matrix<3, 3>> delta_perturbed_defgrads(6);
   const double pert_fact = 1.0e-9;  // perturbation factor \f$ \epsilon \f$
-  std::vector<std::tuple<int, int>> indices_array = {
+  const std::vector<std::tuple<int, int>> indices_array = {
       {0, 0}, {1, 1}, {2, 2}, {0, 1}, {1, 2}, {0, 2}};
 
   // vary deformation gradient (and therefore the right Cauchy-Green tensor), calculate
@@ -3308,7 +3312,7 @@ void Mat::InelasticDefgradTransvIsotropElastViscoplast::evaluate_additional_cmat
 /*--------------------------------------------------------------------*
  *--------------------------------------------------------------------*/
 std::string Mat::InelasticDefgradTransvIsotropElastViscoplast::get_error_info(
-    const std::string& base_error_string)
+    const std::string& base_error_string) const
 {
   // auxiliaries
   std::ostringstream temp_ostream;

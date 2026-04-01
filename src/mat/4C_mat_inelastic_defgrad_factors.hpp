@@ -23,14 +23,10 @@
 #include "4C_material_parameter_base.hpp"
 #include "4C_utils_enum.hpp"
 #include "4C_utils_exceptions.hpp"
-#include "4C_utils_parameter_list.fwd.hpp"
 
 #include <boost/graph/visitors.hpp>
-#include <Teuchos_Array.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include <array>
-#include <cmath>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -52,26 +48,27 @@ namespace Mat
     /*----------------------------------------------------------------------*/
     /*! \class InelasticDeformationDirection
      *
-     * Calculates and holds growth direction in matrix format for anisotropic growth
+     * Calculates and holds the growth direction in tensor format for anisotropic growth
      */
     class InelasticDeformationDirection
     {
      public:
       /*!
        * @brief standard constructor
+       *
        * @param[in] growthdirection  direction of anisotropic growth
        */
-      explicit InelasticDeformationDirection(std::vector<double> growthdirection);
+      explicit InelasticDeformationDirection(const std::vector<double>& growthdirection);
 
-      /// reference to matrix that determines growth direction
-      const Core::LinAlg::SymmetricTensor<double, 3, 3>& growth_dir_mat() const
+      /// reference to the tensor that determines growth direction
+      [[nodiscard]] const Core::LinAlg::SymmetricTensor<double, 3, 3>& growth_dir_tensor() const
       {
-        return growth_dir_mat_;
+        return growth_dir_tensor_;
       }
 
      private:
-      /// matrix that determines growth direction
-      Core::LinAlg::SymmetricTensor<double, 3, 3> growth_dir_mat_;
+      /// tensor that determines growth direction
+      Core::LinAlg::SymmetricTensor<double, 3, 3> growth_dir_tensor_;
     };
 
     /*----------------------------------------------------------------------
@@ -105,10 +102,10 @@ namespace Mat
       std::shared_ptr<Core::Mat::Material> create_material() override { return nullptr; }
 
       /// scalar that causes growth
-      int scalar1() const { return scalar1_; }
+      [[nodiscard]] int scalar1() const { return scalar1_; }
 
       //! concentration, at which no growth occurs
-      double scalar1_ref_conc() const { return scalar1_ref_conc_; }
+      [[nodiscard]] double scalar1_ref_conc() const { return scalar1_ref_conc_; }
 
      private:
       /// scalar that causes growth
@@ -133,7 +130,7 @@ namespace Mat
       std::shared_ptr<Core::Mat::Material> create_material() override { return nullptr; }
 
       /// function number that sets determinant of inelastic def. grad.
-      int funct_num() const { return funct_num_; }
+      [[nodiscard]] int funct_num() const { return funct_num_; }
 
      private:
       /// function number that sets determinant of inelastic def. grad.
@@ -156,12 +153,12 @@ namespace Mat
       /// reference to matrix that determines growth direction
       [[nodiscard]] const Core::LinAlg::SymmetricTensor<double, 3, 3>& growth_dir_tensor() const
       {
-        return growth_dir_->growth_dir_mat();
+        return growth_dir_->growth_dir_tensor();
       }
 
      private:
       /// calculation of direction of inelastic deformation
-      std::shared_ptr<const InelasticDeformationDirection> growth_dir_;
+      std::unique_ptr<const InelasticDeformationDirection> growth_dir_;
     };
 
     /*----------------------------------------------------------------------
@@ -177,7 +174,7 @@ namespace Mat
       explicit InelasticDefgradLinScalar(const Core::Mat::PAR::Parameter::Data& matdata);
 
       //! molar factor that causes growth
-      double scalar1_molar_growth_fac() { return scalar1_molar_growth_fac_; }
+      [[nodiscard]] double scalar1_molar_growth_fac() const { return scalar1_molar_growth_fac_; }
 
      private:
       //! molar factor that causes growth
@@ -197,15 +194,15 @@ namespace Mat
       /// standard constructor
       explicit InelasticDefgradLinScalarAniso(const Core::Mat::PAR::Parameter::Data& matdata);
 
-      /// reference to matrix that determines growth direction
-      const Core::LinAlg::SymmetricTensor<double, 3, 3>& growth_dir_mat()
+      /// reference to tensor that determines growth direction
+      [[nodiscard]] const Core::LinAlg::SymmetricTensor<double, 3, 3>& growth_dir_tensor() const
       {
-        return growth_dir_->growth_dir_mat();
+        return growth_dir_->growth_dir_tensor();
       }
 
      private:
       /// calculation of direction of inelastic deformation
-      std::shared_ptr<const InelasticDeformationDirection> growth_dir_;
+      std::unique_ptr<const InelasticDeformationDirection> growth_dir_;
     };
 
     /*----------------------------------------------------------------------
@@ -221,9 +218,9 @@ namespace Mat
       explicit InelasticDefgradIntercalFrac(const Core::Mat::PAR::Parameter::Data& matdata);
 
       /// saturation concentration of material
-      double cmax() const { return c_max_; }
+      [[nodiscard]] double cmax() const { return c_max_; }
       /// intercalation fraction at saturation concentration of material
-      double chimax() const { return chi_max_; }
+      [[nodiscard]] double chimax() const { return chi_max_; }
 
      private:
       /// saturation concentration of material
@@ -245,28 +242,28 @@ namespace Mat
       explicit InelasticDefgradPolyIntercalFrac(const Core::Mat::PAR::Parameter::Data& matdata);
 
       /// return value of polynomial at reference intercalation fraction
-      double get_polynom_reference_value() const { return polynom_reference_value_; }
+      [[nodiscard]] double get_polynom_reference_value() const { return polynom_reference_value_; }
 
       // set value of polynomial at reference intercalation fraction
-      void set_polynom_reference_value(double polynomReferenceValue)
+      void set_polynom_reference_value(const double polynomReferenceValue)
       {
         polynom_reference_value_ = polynomReferenceValue;
       }
 
       //! polynomial coefficients that describe the growth law
-      std::vector<double> poly_coeffs() const { return poly_coeffs_; }
+      [[nodiscard]] std::vector<double> poly_coeffs() const { return poly_coeffs_; }
 
       //! upper bound of polynomial
-      double x_max() const { return x_max_; }
+      [[nodiscard]] double x_max() const { return x_max_; }
 
       //! lower bound of polynomial
-      double x_min() const { return x_min_; }
+      [[nodiscard]] double x_min() const { return x_min_; }
 
      private:
       const std::vector<double> poly_coeffs_;
 
       /// value of polynomial at reference intercalation fraction
-      double polynom_reference_value_;
+      double polynom_reference_value_{0.0};
 
       //! upper bound of polynomial
       const double x_max_;
@@ -289,15 +286,15 @@ namespace Mat
       explicit InelasticDefgradPolyIntercalFracAniso(
           const Core::Mat::PAR::Parameter::Data& matdata);
 
-      /// return reference to matrix that determines growth direction
-      const Core::LinAlg::SymmetricTensor<double, 3, 3>& growth_dir_mat() const
+      /// return reference to tensor that determines growth direction
+      [[nodiscard]] const Core::LinAlg::SymmetricTensor<double, 3, 3>& growth_dir_tensor() const
       {
-        return growth_dir_->growth_dir_mat();
-      };
+        return growth_dir_->growth_dir_tensor();
+      }
 
      private:
       /// pointer to object, that calculates and holds direction of inelastic deformation
-      std::shared_ptr<InelasticDeformationDirection> growth_dir_;
+      std::unique_ptr<InelasticDeformationDirection> growth_dir_;
     };
 
     /*----------------------------------------------------------------------
@@ -311,13 +308,13 @@ namespace Mat
      public:
       explicit InelasticDefgradLinTempIso(const Core::Mat::PAR::Parameter::Data& matdata);
 
-      std::shared_ptr<Core::Mat::Material> create_material() override { return nullptr; };
+      std::shared_ptr<Core::Mat::Material> create_material() override { return nullptr; }
 
       /// return temperature related growth factor
-      double get_temp_growth_fac() const { return temp_growth_fac_; };
+      [[nodiscard]] double get_temp_growth_fac() const { return temp_growth_fac_; }
 
       /// return value of temperature that causes no growth
-      double ref_temp() const { return ref_temp_; };
+      [[nodiscard]] double ref_temp() const { return ref_temp_; }
 
      private:
       /// value of temperature that causes no growth
@@ -355,7 +352,7 @@ namespace Mat
           const
       {
         return mat_behavior_;
-      };
+      }
       //! get maximum number of times a time step can be halved into smaller and smaller
       //! substeps
       [[nodiscard]] unsigned int max_halve_number() const
@@ -368,15 +365,15 @@ namespace Mat
           const
       {
         return timint_type_;
-      };
+      }
       //! get the type of material linearization used
       [[nodiscard]] InelasticDefgradTransvIsotropElastViscoplastUtils::LinearizationType
       linearization_type() const
       {
         return linearization_type_;
-      };
+      }
       //! get maximum, numerically evaluable plastic strain increment
-      [[nodiscard]] double max_plastic_strain_incr() const { return max_plastic_strain_incr_; };
+      [[nodiscard]] double max_plastic_strain_incr() const { return max_plastic_strain_incr_; }
       //! get maximum, numerically evaluable value for the increment of
       //! the plastic strain derivatives (dt * derivative)
       [[nodiscard]] double max_plastic_strain_deriv_incr() const
@@ -476,10 +473,10 @@ namespace Mat
      * @param[in] value           value the linear relation shall be evaluated for
      * @return growth factor
      */
-    double evaluate_linear_growth(double value) const;
+    [[nodiscard]] double evaluate_linear_growth(double value) const;
 
     /// growth factor (needed for linearizations)
-    double growth_fac() const { return growth_fac_; }
+    [[nodiscard]] double growth_fac() const { return growth_fac_; }
 
    private:
     /// growth factor
@@ -521,7 +518,7 @@ namespace Mat
      * @param[in] x  value the polynomial is evaluated at
      * @return value of the polynomial evaluated at x
      */
-    double compute_polynomial(double x);
+    [[nodiscard]] double compute_polynomial(double x) const;
 
     /*!
      * @brief Evaluate the first derivative of the polynomial defined by #PolyCoeffs_ at the current
@@ -530,7 +527,7 @@ namespace Mat
      * @param[in] x  value the polynomial is evaluated at
      * @return value the first derivative of the polynomial evaluated at x
      */
-    double compute_polynomial_derivative(double x);
+    [[nodiscard]] double compute_polynomial_derivative(double x) const;
 
    private:
     /// coefficients of the polynomial to be evaluated
@@ -575,7 +572,7 @@ namespace Mat
     static std::shared_ptr<InelasticDefgradFactors> factory(int matnum);
 
     /// provide material type
-    virtual Core::Materials::MaterialType material_type() const = 0;
+    [[nodiscard]] virtual Core::Materials::MaterialType material_type() const = 0;
 
     /*!
      * @brief evaluate the inelastic deformation gradient and its inverse
@@ -637,6 +634,7 @@ namespace Mat
      *        evaluate()
      *
      * @param[in] params  parameter list as handed in from the element
+     * @param[in] context Evaluation context
      * @param[in] gp      Gauss point
      * @param[in] eleGID  Element ID
      */
@@ -654,10 +652,10 @@ namespace Mat
      * relevant since the method is only called for one gauss point anyways, we set it to a dummy
      * gauss point id of 0 here
      */
-    virtual void set_concentration_gp(double concentration) {};
+    virtual void set_concentration_gp(double concentration) {}
 
     /// return material parameters
-    virtual Core::Mat::PAR::Parameter* parameter() const { return params_; }
+    [[nodiscard]] virtual Core::Mat::PAR::Parameter* parameter() const { return params_; }
 
     /// Get type of scalar, that leads to deformation
     virtual PAR::InelasticSource get_inelastic_source() = 0;
@@ -666,7 +664,9 @@ namespace Mat
      * @brief Setup inelastic defgrad factor for the specific element
      *
      * @param[in] numgp Number of Gauss points
-     * @param[in] container Input parameter Container
+     * @param[in] fibers A struct containing fiber directions
+     * @param[in] coord_system A struct containing local coordinate system information (if
+     * available)
      */
     virtual void setup(const int numgp, const Discret::Elements::Fibers& fibers,
         const std::optional<Discret::Elements::CoordinateSystem>& coord_system) = 0;
@@ -681,7 +681,7 @@ namespace Mat
     /*!
      * @brief Register names of the internal data that should be saved during runtime output
      *
-     * @param[out] name_and_size Unordered map of names of the data with the respective vector size
+     * @param[out] names_and_size Unordered map of names of the data with the respective vector size
      */
     virtual void register_output_data_names(
         std::unordered_map<std::string, int>& names_and_size) const
@@ -743,7 +743,7 @@ namespace Mat
 
     PAR::InelasticSource get_inelastic_source() override;
 
-    Core::Materials::MaterialType material_type() const override
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override
     {
       return Core::Materials::mfi_no_growth;
     }
@@ -751,14 +751,16 @@ namespace Mat
     void pre_evaluate(const Teuchos::ParameterList& params, const EvaluationContext<3>& context,
         int gp, int eleGID) override;
 
-    void update() override {};
+    void update() override {}
 
     void setup(const int numgp, const Discret::Elements::Fibers& fibers,
-        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override {};
+        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override
+    {
+    }
 
-    void pack_inelastic(Core::Communication::PackBuffer& data) const override {};
+    void pack_inelastic(Core::Communication::PackBuffer& data) const override {}
 
-    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {};
+    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {}
 
    private:
     // identity tensor
@@ -795,9 +797,9 @@ namespace Mat
 
     PAR::InelasticSource get_inelastic_source() override = 0;
 
-    Core::Materials::MaterialType material_type() const override = 0;
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override = 0;
 
-    Mat::PAR::InelasticDefgradTimeFunct* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradTimeFunct* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradTimeFunct*>(
           Mat::InelasticDefgradFactors::parameter());
@@ -903,33 +905,47 @@ namespace Mat
     void evaluate_additional_cmat(const Core::LinAlg::Matrix<3, 3>* defgrad,
         const Core::LinAlg::Matrix<3, 3>& iFin_other, const Core::LinAlg::Matrix<3, 3>& iFinjM,
         const Core::LinAlg::Matrix<6, 1>& iCV, const Core::LinAlg::Matrix<6, 9>& dSdiFinj,
-        Core::LinAlg::Matrix<6, 6>& cmatadd) override {};
+        Core::LinAlg::Matrix<6, 6>& cmatadd) override
+    {
+    }
 
     void evaluate_inelastic_def_grad_derivative(
-        double detjacobian, Core::LinAlg::Tensor<double, 3, 3>& dFindx) override {};
+        double detjacobian, Core::LinAlg::Tensor<double, 3, 3>& dFindx) override
+    {
+    }
 
     void evaluate_inverse_inelastic_def_grad(const Core::LinAlg::Matrix<3, 3>* defgrad,
         const Core::LinAlg::Matrix<3, 3>& iFin_other, Core::LinAlg::Matrix<3, 3>& iFinM) override;
 
     void evaluate_od_stiff_mat(const Core::LinAlg::Matrix<3, 3>* defgrad,
         const Core::LinAlg::Matrix<3, 3>& iFinjM, const Core::LinAlg::Matrix<6, 9>& dSdiFinj,
-        Core::LinAlg::Matrix<6, 1>& dstressdx) override {};
+        Core::LinAlg::Matrix<6, 1>& dstressdx) override
+    {
+    }
 
     PAR::InelasticSource get_inelastic_source() override;
 
-    Core::Materials::MaterialType material_type() const override
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override
     {
       return Core::Materials::mfi_time_funct_iso;
     }
 
-    void update() override {};
+    [[nodiscard]] Mat::PAR::InelasticDefgradTimeFunct* parameter() const override
+    {
+      return dynamic_cast<Mat::PAR::InelasticDefgradTimeFunct*>(
+          Mat::InelasticDefgradTimeFunct::parameter());
+    }
+
+    void update() override {}
 
     void setup(const int numgp, const Discret::Elements::Fibers& fibers,
-        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override {};
+        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override
+    {
+    }
 
-    void pack_inelastic(Core::Communication::PackBuffer& data) const override {};
+    void pack_inelastic(Core::Communication::PackBuffer& data) const override {}
 
-    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {};
+    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {}
 
    private:
     //! identity tensor
@@ -961,14 +977,14 @@ namespace Mat
 
     PAR::InelasticSource get_inelastic_source() override = 0;
 
-    Core::Materials::MaterialType material_type() const override = 0;
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override = 0;
 
     void pre_evaluate(const Teuchos::ParameterList& params, const EvaluationContext<3>& context,
         int gp, int eleGID) override;
 
     void set_concentration_gp(double concentration) override;
 
-    Mat::PAR::InelasticDefgradScalar* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradScalar* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradScalar*>(
           Mat::InelasticDefgradFactors::parameter());
@@ -984,15 +1000,15 @@ namespace Mat
     void unpack_inelastic(Core::Communication::UnpackBuffer& data) override = 0;
 
    protected:
-    //! Get vector of concentration at current Gauss point
+    //! Get the vector of concentrations at the current Gauss point
     [[nodiscard]] const std::vector<double>& get_concentration_gp() const
     {
       FOUR_C_ASSERT_ALWAYS(concentrations_ != nullptr, "Concentrations are not set");
       return *concentrations_;
-    };
+    }
 
    private:
-    /// vector of concentations at the gauss points
+    /// vector of concentrations at the gauss points
     std::shared_ptr<std::vector<double>> concentrations_{};
   };
 
@@ -1011,8 +1027,6 @@ namespace Mat
      * @brief construct material with required inputs
      *
      * @param[in] params             pointer to material specific parameters
-     * @param[in] polynomial_growth  pointer to object that evaluates the polynomial as prescribed
-     *                               in the input file
      */
     explicit InelasticDefgradPolyIntercalFrac(Core::Mat::PAR::Parameter* params);
 
@@ -1024,7 +1038,7 @@ namespace Mat
      * @param[in] detjacobian   determinant of the deformation gradient
      * @return value of polynomial describing the growth according to current intercalation fraction
      */
-    double evaluate_polynomial(double concentration, double detjacobian);
+    [[nodiscard]] double evaluate_polynomial(double concentration, double detjacobian) const;
 
     /*!
      * @brief evaluate the first derivative of the polynomial describing the growth
@@ -1033,9 +1047,10 @@ namespace Mat
      * @param[in] detjacobian   determinant of the deformation gradient
      * @return first derivative of the polynomial describing the growth
      */
-    double evaluate_polynomial_derivative(double concentration, double detjacobian);
+    [[nodiscard]] double evaluate_polynomial_derivative(
+        double concentration, double detjacobian) const;
 
-    Core::Materials::MaterialType material_type() const override = 0;
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override = 0;
 
     void evaluate_inverse_inelastic_def_grad(const Core::LinAlg::Matrix<3, 3>* defgrad,
         const Core::LinAlg::Matrix<3, 3>& iFin_other,
@@ -1055,7 +1070,7 @@ namespace Mat
 
     Mat::PAR::InelasticSource get_inelastic_source() override;
 
-    Mat::PAR::InelasticDefgradPolyIntercalFrac* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradPolyIntercalFrac* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradPolyIntercalFrac*>(
           Mat::InelasticDefgradScalar::parameter());
@@ -1092,12 +1107,10 @@ namespace Mat
      * @brief construct material with required inputs
      *
      * @param[in] params          pointer to material specific parameters
-     * @param[in] linear_growth   pointer to object that evaluates the linear relation as prescribed
-     *                            in the input file
      */
     explicit InelasticDefgradLinScalarIso(Core::Mat::PAR::Parameter* params);
 
-    Core::Materials::MaterialType material_type() const override
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override
     {
       return Core::Materials::mfi_lin_scalar_iso;
     }
@@ -1119,24 +1132,26 @@ namespace Mat
 
     Mat::PAR::InelasticSource get_inelastic_source() override;
 
-    Mat::PAR::InelasticDefgradLinScalar* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradLinScalar* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradLinScalar*>(
           Mat::InelasticDefgradScalar::parameter());
     }
 
-    void update() override {};
+    void update() override {}
 
     void setup(const int numgp, const Discret::Elements::Fibers& fibers,
-        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override {};
+        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override
+    {
+    }
 
-    void pack_inelastic(Core::Communication::PackBuffer& data) const override {};
+    void pack_inelastic(Core::Communication::PackBuffer& data) const override {}
 
-    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {};
+    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {}
 
    private:
     /// pointer to class that evaluates the linear growth law
-    std::shared_ptr<InelasticDefgradLinearShape> linear_growth_;
+    std::unique_ptr<InelasticDefgradLinearShape> linear_growth_;
   };  // namespace Mat
 
   /*----------------------------------------------------------------------*/
@@ -1163,12 +1178,10 @@ namespace Mat
      * @brief construct material with required inputs
      *
      * @param[in] params          pointer to material specific parameters
-     * @param[in] linear_growth   pointer to object that evaluates the linear relation as prescribed
-     *                            in the input file
      */
     explicit InelasticDefgradLinScalarAniso(Core::Mat::PAR::Parameter* params);
 
-    Core::Materials::MaterialType material_type() const override
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override
     {
       return Core::Materials::mfi_lin_scalar_aniso;
     }
@@ -1190,24 +1203,26 @@ namespace Mat
 
     Mat::PAR::InelasticSource get_inelastic_source() override;
 
-    Mat::PAR::InelasticDefgradLinScalarAniso* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradLinScalarAniso* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradLinScalarAniso*>(
           Mat::InelasticDefgradScalar::parameter());
     }
 
-    void update() override {};
+    void update() override {}
 
     void setup(const int numgp, const Discret::Elements::Fibers& fibers,
-        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override {};
+        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override
+    {
+    }
 
-    void pack_inelastic(Core::Communication::PackBuffer& data) const override {};
+    void pack_inelastic(Core::Communication::PackBuffer& data) const override {}
 
-    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {};
+    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {}
 
    private:
     /// store pointer to class that evaluates the linear growth law
-    std::shared_ptr<InelasticDefgradLinearShape> linear_growth_;
+    std::unique_ptr<InelasticDefgradLinearShape> linear_growth_;
   };  // end of InelasticDefgradLinScalarAniso
 
   /*--------------------------------------------------------------------*/
@@ -1229,12 +1244,10 @@ namespace Mat
      * @brief construct material with required inputs
      *
      * @param[in] params             pointer to material specific parameters
-     * @param[in] polynomial_growth  pointer to object that evaluates the polynomial as prescribed
-     *                               in the input file
      */
     explicit InelasticDefgradPolyIntercalFracIso(Core::Mat::PAR::Parameter* params);
 
-    Core::Materials::MaterialType material_type() const override
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override
     {
       return Core::Materials::mfi_poly_intercal_frac_iso;
     }
@@ -1254,20 +1267,22 @@ namespace Mat
         const Core::LinAlg::Matrix<3, 3>& iFinjM, const Core::LinAlg::Matrix<6, 9>& dSdiFinj,
         Core::LinAlg::Matrix<6, 1>& dstressdc) override;
 
-    Mat::PAR::InelasticDefgradPolyIntercalFrac* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradPolyIntercalFrac* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradPolyIntercalFrac*>(
           Mat::InelasticDefgradPolyIntercalFrac::parameter());
     }
 
-    void update() override {};
+    void update() override {}
 
     void setup(const int numgp, const Discret::Elements::Fibers& fibers,
-        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override {};
+        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override
+    {
+    }
 
-    void pack_inelastic(Core::Communication::PackBuffer& data) const override {};
+    void pack_inelastic(Core::Communication::PackBuffer& data) const override {}
 
-    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {};
+    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {}
   };
 
   /*----------------------------------------------------------------------*/
@@ -1294,12 +1309,10 @@ namespace Mat
      * @brief construct material with required inputs
      *
      * @param[in] params             pointer to material specific parameters
-     * @param[in] polynomial_growth  pointer to object that evaluates the polynomial as prescribed
-     *                               in the input file
      */
     explicit InelasticDefgradPolyIntercalFracAniso(Core::Mat::PAR::Parameter* params);
 
-    Core::Materials::MaterialType material_type() const override
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override
     {
       return Core::Materials::mfi_poly_intercal_frac_aniso;
     }
@@ -1319,20 +1332,22 @@ namespace Mat
         const Core::LinAlg::Matrix<3, 3>& iFinjM, const Core::LinAlg::Matrix<6, 9>& dSdiFinj,
         Core::LinAlg::Matrix<6, 1>& dstressdc) override;
 
-    Mat::PAR::InelasticDefgradPolyIntercalFracAniso* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradPolyIntercalFracAniso* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradPolyIntercalFracAniso*>(
           Mat::InelasticDefgradPolyIntercalFrac::parameter());
     }
 
-    void update() override {};
+    void update() override {}
 
     void setup(const int numgp, const Discret::Elements::Fibers& fibers,
-        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override {};
+        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override
+    {
+    }
 
-    void pack_inelastic(Core::Communication::PackBuffer& data) const override {};
+    void pack_inelastic(Core::Communication::PackBuffer& data) const override {}
 
-    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {};
+    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {}
   };
 
   /*----------------------------------------------------------------------*/
@@ -1365,12 +1380,12 @@ namespace Mat
 
     Mat::PAR::InelasticSource get_inelastic_source() override;
 
-    Core::Materials::MaterialType material_type() const override
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override
     {
       return Core::Materials::mfi_lin_temp_iso;
     };
 
-    Mat::PAR::InelasticDefgradLinTempIso* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradLinTempIso* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradLinTempIso*>(
           Mat::InelasticDefgradFactors::parameter());
@@ -1379,14 +1394,16 @@ namespace Mat
     void pre_evaluate(const Teuchos::ParameterList& params, const EvaluationContext<3>& context,
         int gp, int eleGID) override;
 
-    void update() override {};
+    void update() override {}
 
     void setup(const int numgp, const Discret::Elements::Fibers& fibers,
-        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override {};
+        const std::optional<Discret::Elements::CoordinateSystem>& coord_system) override
+    {
+    }
 
-    void pack_inelastic(Core::Communication::PackBuffer& data) const override {};
+    void pack_inelastic(Core::Communication::PackBuffer& data) const override {}
 
-    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {};
+    void unpack_inelastic(Core::Communication::UnpackBuffer& data) override {}
 
    private:
     /// temperature at the gauss point
@@ -1447,7 +1464,7 @@ namespace Mat
         std::vector<std::shared_ptr<Mat::Elastic::CoupTransverselyIsotropic>>
             pot_sum_el_transv_iso);
 
-    Core::Materials::MaterialType material_type() const override
+    [[nodiscard]] Core::Materials::MaterialType material_type() const override
     {
       return Core::Materials::mfi_transv_isotrop_elast_viscoplast;
     }
@@ -1458,7 +1475,9 @@ namespace Mat
         Core::LinAlg::Matrix<6, 6>& cmatadd) override;
 
     void evaluate_inelastic_def_grad_derivative(
-        double detjacobian, Core::LinAlg::Tensor<double, 3, 3>& dFindx) override {};
+        double detjacobian, Core::LinAlg::Tensor<double, 3, 3>& dFindx) override
+    {
+    }
 
     void evaluate_inverse_inelastic_def_grad(const Core::LinAlg::Matrix<3, 3>* defgrad,
         const Core::LinAlg::Matrix<3, 3>& iFin_other, Core::LinAlg::Matrix<3, 3>& iFinM) override;
@@ -1469,7 +1488,7 @@ namespace Mat
 
     Mat::PAR::InelasticSource get_inelastic_source() override { return PAR::InelasticSource::none; }
 
-    Mat::PAR::InelasticDefgradTransvIsotropElastViscoplast* parameter() const override
+    [[nodiscard]] Mat::PAR::InelasticDefgradTransvIsotropElastViscoplast* parameter() const override
     {
       return dynamic_cast<Mat::PAR::InelasticDefgradTransvIsotropElastViscoplast*>(
           Mat::InelasticDefgradFactors::parameter());
@@ -1551,9 +1570,9 @@ namespace Mat
     InelasticDefgradTransvIsotropElastViscoplastUtils::ConstMatTensors const_mat_tensors_;
 
     //! current Gauss Point
-    int gp_;
+    int gp_{-1};
     //! current element ID
-    int ele_gid_;
+    int ele_gid_{-1};
 
     //! parameter list
     Teuchos::ParameterList params_;
@@ -1647,7 +1666,7 @@ namespace Mat
      * @param[in] x vector of Local Newton Loop unknowns, composed of the components of the
      * inverse inelastic deformation gradient \f$ \boldsymbol{F}_{\text{in}}^{-1} \f$ and plastic
      * strain \f$ \varepsilon_{\text{p}} \f$
-     * @param[in] last_iFpM last inverse plastic deformation gradient
+     * @param[in] last_iFinM last inverse inelastic deformation gradient modeling viscoplasticity
      *                      \f$ \boldsymbol{F}_{\text{in}, n}^{-1} \f$ in matrix form
      * @param[in] last_plastic_strain last plastic strain \f$ \varepsilon_{\text{p}, n}\f$
      * @param[in] dt time step (or substep) length used for time integration
@@ -1673,7 +1692,7 @@ namespace Mat
      * @param[in] x vector of Local Newton Loop unknowns, composed of the components of the
      * inverse inelastic deformation gradient \f$ \boldsymbol{F}_{\text{in}}^{-1} \f$ and plastic
      * strain \f$ \varepsilon_{\text{p}} \f$
-     * @param[in] last_iFpM last inverse plastic deformation gradient
+     * @param[in] last_iFinM last inverse plastic deformation gradient
      *                      \f$ \boldsymbol{F}_{\text{in}, n}^{-1} \f$ in matrix form
      * @param[in] last_plastic_strain last plastic strain \f$ \varepsilon_{\text{p}, n}\f$
      * @param[in] dt time step (or substep) length used for time integration
@@ -1753,7 +1772,7 @@ namespace Mat
      * @param[in] base_error_string base error message to be extended
      * with further information
      */
-    std::string get_error_info(const std::string& base_error_string);
+    [[nodiscard]] std::string get_error_info(const std::string& base_error_string) const;
   };
 }  // namespace Mat
 

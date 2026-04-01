@@ -9,7 +9,6 @@
 
 #include "4C_global_data.hpp"
 #include "4C_inpar_structure.hpp"
-#include "4C_io_file_reader.hpp"
 #include "4C_io_input_field.hpp"
 #include "4C_io_input_spec_builders.hpp"
 #include "4C_io_input_spec_validators.hpp"
@@ -20,7 +19,6 @@
 #include "4C_mat_fluidporo_singlephase.hpp"
 #include "4C_mat_inelastic_defgrad_factors_service.hpp"
 #include "4C_mat_micromaterial.hpp"
-#include "4C_mat_muscle_combo.hpp"
 #include "4C_mat_scatra_growth_remodel.hpp"
 #include "4C_porofluid_pressure_based_elast_scatra_input.hpp"
 
@@ -2671,13 +2669,17 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
   // simple isotropic, volumetric growth; growth is linearly dependent on scalar mapped to material
   // configuration, constant material density
   {
+    using namespace Core::IO::InputSpecBuilders::Validators;
     known_materials[Core::Materials::mfi_lin_scalar_iso] = group("MAT_InelasticDefgradLinScalarIso",
         {
-            parameter<int>("SCALAR1", {.description = "number of growth inducing scalar"}),
+            parameter<int>("SCALAR1",
+                {.description = "number of growth inducing scalar", .validator = positive<int>()}),
             parameter<double>("SCALAR1_MolarGrowthFac",
-                {.description = "isotropic molar growth factor due to scalar 1"}),
+                {.description = "isotropic molar growth factor due to scalar 1",
+                    .validator = positive<double>()}),
             parameter<double>("SCALAR1_RefConc",
-                {.description = "reference concentration of scalar 1 causing no strains"}),
+                {.description = "reference concentration of scalar 1 causing no strains",
+                    .validator = positive_or_zero<double>()}),
         },
         {.description = "scalar dependent isotropic growth law; volume change linearly dependent "
                         "on scalar (in material configuration)"});
@@ -2688,43 +2690,50 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
   // growth is linearly dependent on scalar mapped to material configuration, constant material
   // density
   {
-    known_materials[Core::Materials::mfi_lin_scalar_aniso] =
-        group("MAT_InelasticDefgradLinScalarAniso",
-            {
-                parameter<int>("SCALAR1", {.description = "number of growth inducing scalar"}),
-                parameter<double>("SCALAR1_MolarGrowthFac",
-                    {.description = "anisotropic molar growth factor due to scalar 1"}),
-                parameter<double>("SCALAR1_RefConc",
-                    {.description = "reference concentration of scalar 1 causing no strains"}),
-                parameter<int>(
-                    "NUMSPACEDIM", {.description = "Number of space dimension (only 3 valid)"}),
-                parameter<std::vector<double>>(
-                    "GrowthDirection", {.description = "vector that defines the growth direction",
-                                           .size = from_parameter<int>("NUMSPACEDIM")}),
-            },
-            {.description = "scalar dependent anisotropic growth law; growth in direction as given "
-                            "in input-file; volume change linearly dependent on scalar (in "
-                            "material configuration)"});
+    using namespace Core::IO::InputSpecBuilders::Validators;
+    known_materials[Core::Materials::mfi_lin_scalar_aniso] = group(
+        "MAT_InelasticDefgradLinScalarAniso",
+        {
+            parameter<int>("SCALAR1",
+                {.description = "number of growth inducing scalar", .validator = positive<int>()}),
+            parameter<double>("SCALAR1_MolarGrowthFac",
+                {.description = "anisotropic molar growth factor due to scalar 1",
+                    .validator = positive<double>()}),
+            parameter<double>("SCALAR1_RefConc",
+                {.description = "reference concentration of scalar 1 causing no strains",
+                    .validator = positive_or_zero<double>()}),
+            parameter<std::vector<double>>("GrowthDirection",
+                {.description = "vector that defines the growth direction", .size = 3}),
+        },
+        {.description = "scalar dependent anisotropic growth law; growth in direction as given "
+                        "in input-file; volume change linearly dependent on scalar (in "
+                        "material configuration)"});
   }
 
   /*----------------------------------------------------------------------*/
   // non-linear isotropic volumetric growth; growth is dependent on the degree of lithiation,
   // constant material density, nonlinear behavior prescribed by polynomial in input file
   {
+    using namespace Core::IO::InputSpecBuilders::Validators;
     known_materials[Core::Materials::mfi_poly_intercal_frac_iso] = group(
         "MAT_InelasticDefgradPolyIntercalFracIso",
         {
-            parameter<int>("SCALAR1", {.description = "number of growth inducing scalar"}),
+            parameter<int>("SCALAR1",
+                {.description = "number of growth inducing scalar", .validator = positive<int>()}),
             parameter<double>("SCALAR1_RefConc",
-                {.description = "reference concentration of scalar 1 causing no strains"}),
+                {.description = "reference concentration of scalar 1 causing no strains",
+                    .validator = positive_or_zero<double>()}),
             parameter<int>("POLY_PARA_NUM", {.description = "number of polynomial coefficients"}),
             parameter<std::vector<double>>(
                 "POLY_PARAMS", {.description = "coefficients of polynomial",
                                    .size = from_parameter<int>("POLY_PARA_NUM")}),
-            parameter<double>("X_min", {.description = "lower bound of validity of polynomial"}),
-            parameter<double>("X_max", {.description = "upper bound of validity of polynomial"}),
+            parameter<double>("X_min", {.description = "lower bound of validity of polynomial",
+                                           .validator = positive_or_zero<double>()}),
+            parameter<double>("X_max", {.description = "upper bound of validity of polynomial",
+                                           .validator = positive<double>()}),
             parameter<int>(
-                "MATID", {.description = "material ID of the corresponding scatra material"}),
+                "MATID", {.description = "material ID of the corresponding scatra material",
+                             .validator = positive<int>()}),
         },
         {.description = "scalar dependent isotropic growth law; volume change nonlinearly "
                         "dependent on the intercalation fraction, that is calculated using the "
@@ -2736,25 +2745,29 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
   // growth is dependent on the degree of lithiation, constant material density, nonlinear behavior
   // prescribed by polynomial in input file
   {
+    using namespace Core::IO::InputSpecBuilders::Validators;
     known_materials[Core::Materials::mfi_poly_intercal_frac_aniso] = group(
         "MAT_InelasticDefgradPolyIntercalFracAniso",
         {
-            parameter<int>("SCALAR1", {.description = "number of growth inducing scalar"}),
+            parameter<int>("SCALAR1",
+                {.description = "number of growth inducing scalar", .validator = positive<int>()}),
             parameter<double>("SCALAR1_RefConc",
-                {.description = "reference concentration of scalar 1 causing no strains"}),
-            parameter<int>(
-                "NUMSPACEDIM", {.description = "Number of space dimension (only 3 valid)"}),
-            parameter<std::vector<double>>(
-                "GrowthDirection", {.description = "vector that defines the growth direction",
-                                       .size = from_parameter<int>("NUMSPACEDIM")}),
-            parameter<int>("POLY_PARA_NUM", {.description = "number of polynomial coefficients"}),
+                {.description = "reference concentration of scalar 1 causing no strains",
+                    .validator = positive_or_zero<double>()}),
+            parameter<std::vector<double>>("GrowthDirection",
+                {.description = "vector that defines the growth direction", .size = 3}),
+            parameter<int>("POLY_PARA_NUM",
+                {.description = "number of polynomial coefficients", .validator = positive<int>()}),
             parameter<std::vector<double>>(
                 "POLY_PARAMS", {.description = "coefficients of polynomial",
                                    .size = from_parameter<int>("POLY_PARA_NUM")}),
-            parameter<double>("X_min", {.description = "lower bound of validity of polynomial"}),
-            parameter<double>("X_max", {.description = "upper bound of validity of polynomial"}),
+            parameter<double>("X_min", {.description = "lower bound of validity of polynomial",
+                                           .validator = positive_or_zero<double>()}),
+            parameter<double>("X_max", {.description = "upper bound of validity of polynomial",
+                                           .validator = positive<double>()}),
             parameter<int>(
-                "MATID", {.description = "material ID of the corresponding scatra material"}),
+                "MATID", {.description = "material ID of the corresponding scatra material",
+                             .validator = positive<int>()}),
         },
         {.description =
                 "scalar dependent anisotropic growth law; growth in direction as given in "
@@ -2764,12 +2777,13 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
 
   /*----------------------------------------------------------------------*/
   {
+    using namespace Core::IO::InputSpecBuilders::Validators;
     known_materials[Core::Materials::mfi_lin_temp_iso] = group("MAT_InelasticDefgradLinTempIso",
         {
             parameter<double>(
                 "Temp_GrowthFac", {.description = "isotropic growth factor due to temperature"}),
-            parameter<double>(
-                "RefTemp", {.description = "reference temperature causing no strains"}),
+            parameter<double>("RefTemp", {.description = "reference temperature causing no strains",
+                                             .validator = positive_or_zero<double>()}),
         },
         {.description = "Temperature dependent growth law. Volume change linearly dependent on "
                         "temperature"});
@@ -2778,18 +2792,14 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
   /*----------------------------------------------------------------------*/
   {
     using namespace Core::IO::InputSpecBuilders::Validators;
-
     known_materials[Core::Materials::mfi_time_funct_aniso] = group(
         "MAT_InelasticDefgradTimeFunctAniso",
         {
             parameter<int>("FUNCT_NUM", {.description = "Time-dependent function used to calculate "
-                                                        "the inelastic deformation gradient"}),
-            parameter<int>(
-                "NUMSPACEDIM", {.description = "Number of space dimension (only 3 valid)",
-                                   .validator = positive<int>()}),
-            parameter<std::vector<double>>(
-                "GrowthDirection", {.description = "vector that defines the growth direction",
-                                       .size = from_parameter<int>("NUMSPACEDIM")}),
+                                                        "the inelastic deformation gradient",
+                                            .validator = positive<int>()}),
+            parameter<std::vector<double>>("GrowthDirection",
+                {.description = "vector that defines the growth direction", .size = 3}),
         },
         {.description = "Time-dependent anisotropic growth law; growth in direction as given "
                         "in input-file. Determinant of volume change dependent on "
@@ -2798,10 +2808,12 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
 
   /*----------------------------------------------------------------------*/
   {
+    using namespace Core::IO::InputSpecBuilders::Validators;
     known_materials[Core::Materials::mfi_time_funct_iso] = group("MAT_InelasticDefgradTimeFunctIso",
         {
             parameter<int>("FUNCT_NUM", {.description = "Time-dependent function used to calculate "
-                                                        "the inelastic deformation gradient"}),
+                                                        "the inelastic deformation gradient",
+                                            .validator = positive<int>()}),
         },
         {.description = "Time-dependent isotropic growth law. Determinant of volume change "
                         "dependent on (1 + time function value) defined by 'FUNCT_NUM'"});
@@ -2809,31 +2821,31 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
 
   /*----------------------------------------------------------------------*/
   {
+    using namespace Core::IO::InputSpecBuilders::Validators;
     known_materials[Core::Materials::mfi_transv_isotrop_elast_viscoplast] = group(
         "MAT_InelasticDefgradTransvIsotropElastViscoplast",
         {
-            parameter<int>("VISCOPLAST_LAW_ID",
-                {.description = "MAT ID of the corresponding viscoplastic law"}),
+            parameter<int>(
+                "VISCOPLAST_LAW_ID", {.description = "MAT ID of the corresponding viscoplastic law",
+                                         .validator = positive<int>()}),
             parameter<int>(
                 "FIBER_READER_ID", {.description = "MAT ID of the used fiber direction reader for "
-                                                   "transversely isotropic behavior"}),
+                                                   "transversely isotropic behavior",
+                                       .validator = positive<int>()}),
             parameter<std::optional<double>>(
                 "YIELD_COND_A", {.description = "transversely isotropic version of the Hill(1948) "
-                                                "yield condition: parameter A, "
-                                                "following "
-                                                "the notation in Dafalias 1989, International "
+                                                "yield condition: parameter A, following the "
+                                                "notation in Dafalias 1989, International "
                                                 "Journal of Plasticity, Vol. 5"}),
             parameter<std::optional<double>>(
                 "YIELD_COND_B", {.description = "transversely isotropic version of the Hill(1948) "
-                                                "yield condition: parameter B, "
-                                                "following "
-                                                "the notation in Dafalias 1989, International "
+                                                "yield condition: parameter B, following the "
+                                                "notation in Dafalias 1989, International "
                                                 "Journal of Plasticity, Vol. 5"}),
             parameter<std::optional<double>>(
                 "YIELD_COND_F", {.description = "transversely isotropic version of the Hill(1948) "
-                                                "yield condition: parameter F, "
-                                                "following "
-                                                "the notation in Dafalias 1989, International "
+                                                "yield condition: parameter F, following the "
+                                                "notation in Dafalias 1989, International "
                                                 "Journal of Plasticity, Vol. 5"}),
             parameter<Mat::InelasticDefgradTransvIsotropElastViscoplastUtils::MatBehavior>(
                 "MAT_BEHAVIOR", {.description = "Material behavior / anisotropy type"}),
@@ -2841,8 +2853,7 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
                 "TIME_INTEGRATION_HIST_VARS",
                 {.description =
                         "time integration of internal variables: standard | logarithmic "
-                        "(logarithmic "
-                        "transformation of the "
+                        "(logarithmic transformation of the "
                         "evolution equation for the plastic deformation gradient -> default)",
                     .default_value = Mat::InelasticDefgradTransvIsotropElastViscoplastUtils::
                         TimIntType::logarithmic}),
@@ -2856,17 +2867,19 @@ std::unordered_map<Core::Materials::MaterialType, Core::IO::InputSpec> Global::v
             parameter<double>("MAX_PLASTIC_STRAIN_INCR",
                 {.description = "maximum evaluable plastic strain increment "
                                 "used for verifying overflow errors",
-                    .default_value = std::exp(30.0)}),
+                    .default_value = std::exp(30.0),
+                    .validator = positive<double>()}),
             parameter<double>("MAX_PLASTIC_STRAIN_DERIV_INCR",
                 {.description = "maximum evaluable increment of the plastic strain derivatives "
                                 "w.r.t. plastic strain and equivalent stress, used for verifying "
-                                "possible overflow "
-                                "errors",
-                    .default_value = std::exp(30.0)}),
+                                "possible overflow errors",
+                    .default_value = std::exp(30.0),
+                    .validator = positive<double>()}),
             parameter<int>("MAX_SUBSTEPPING_HALVE_NUM",
                 {.description = "maximum number of times the global time step can "
                                 "be halved in the substepping procedure (default: 10)",
-                    .default_value = 10}),
+                    .default_value = 10,
+                    .validator = positive_or_zero<int>()}),
             parameter<Core::LinAlg::MatrixExpCalcMethod>("MATRIX_EXP_CALC_METHOD",
                 {.description = "chosen computation method for matrix exponential (default: "
                                 "automatic method selection based on matrix characteristics)",

@@ -77,7 +77,6 @@ MATERIALS:
     MAT_InelasticDefgradPolyIntercalFracAniso:
       SCALAR1: 1
       SCALAR1_RefConc: 43584.9
-      NUMSPACEDIM: 3
       GrowthDirection: [1, 0, 0]
       POLY_PARA_NUM: 8
       POLY_PARAMS: [0.1051717305, -3.9012322937, 31.9658107225, -122.8624633232, 258.6769103514, -306.7800791732,
