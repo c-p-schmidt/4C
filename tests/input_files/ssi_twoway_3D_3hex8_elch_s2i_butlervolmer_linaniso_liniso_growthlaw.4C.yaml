@@ -158,7 +158,6 @@ MATERIALS:
       SCALAR1: 1
       SCALAR1_MolarGrowthFac: 1.3e-05
       SCALAR1_RefConc: 1e-10
-      NUMSPACEDIM: 3
       GrowthDirection: [1, 0, 0]
 CLONING MATERIAL MAP:
   - SRC_FIELD: "structure"

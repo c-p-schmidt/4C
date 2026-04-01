@@ -75,7 +75,6 @@ MATERIALS:
   - MAT: 4
     MAT_InelasticDefgradTimeFunctAniso:
       FUNCT_NUM: 2
-      NUMSPACEDIM: 3
       GrowthDirection: [1.0, 0.0, 0.0]
 CLONING MATERIAL MAP:
   - SRC_FIELD: "structure"

@@ -1290,7 +1290,8 @@ namespace
       // create object
       auto growth_direction = Mat::PAR::InelasticDeformationDirection(growth_directions[i]);
       // check the results
-      FOUR_C_EXPECT_NEAR(growth_direction.growth_dir_mat(), growth_direction_solutions[i], 1.0e-12);
+      FOUR_C_EXPECT_NEAR(
+          growth_direction.growth_dir_tensor(), growth_direction_solutions[i], 1.0e-12);
     }
   }
 
