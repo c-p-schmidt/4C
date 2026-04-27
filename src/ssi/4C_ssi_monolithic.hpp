@@ -259,9 +259,9 @@ namespace SSI
     //! all OD evaluation is in here
     std::shared_ptr<SSI::ScatraStructureOffDiagCoupling> scatrastructure_off_diagcoupling_;
 
-    //! algebraic solver for the global system of equations during calculation of the initial
-    //! potential field
-    std::shared_ptr<Core::LinAlg::Solver> init_pot_calc_solver_;
+    //! algebraic solver for the global system of equations during calculation of initial
+    //! quantities, here the initial potential field
+    std::shared_ptr<Core::LinAlg::Solver> init_calc_solver_;
 
     //! algebraic solver for global system of equations
     std::shared_ptr<Core::LinAlg::Solver> solver_;

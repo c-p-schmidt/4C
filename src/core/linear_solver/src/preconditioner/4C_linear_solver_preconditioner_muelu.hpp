@@ -62,7 +62,8 @@ namespace Core::LinearSolver
 
    private:
     //! system of equations used for preconditioning used by P_ only
-    Teuchos::RCP<const Thyra::LinearOpBase<double>> pmatrix_;
+    // TODO does not seem to be relevant as a member, thus temp comment
+    // Teuchos::RCP<const Thyra::LinearOpBase<double>> pmatrix_;
 
    protected:
     //! MueLu parameter list

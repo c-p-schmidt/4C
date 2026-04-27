@@ -25,9 +25,9 @@ SCALAR TRANSPORT DYNAMIC/NONLINEAR:
 SCALAR TRANSPORT DYNAMIC/S2I COUPLING:
   COUPLINGTYPE: "MatchingNodes"
 SOLVER 1:
-  SOLVER: "Belos"
-  AZPREC: "MueLu"
-  PRECONDITIONER_XML_FILE: "scatra_2D_quad4_s2i_constperm_AMG.xml"
+  SOLVER: Belos
+  AZPREC: MueLu
+  PRECONDITIONER_XML_FILE: "xml/multigrid/scatra_2D_quad4_s2i_constperm_AMG.xml"
 MATERIALS:
   - MAT: 1
     MAT_scatra:

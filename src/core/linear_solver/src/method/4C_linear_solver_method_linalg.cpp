@@ -381,15 +381,16 @@ Teuchos::ParameterList translate_four_c_to_belos(const Teuchos::ParameterList& i
   {
     Teuchos::ParameterList& tekolist = outparams.sublist("Teko Parameters");
     tekolist = translate_four_c_to_teko(inparams, &beloslist);
-  }
-  if (azprectype == Core::LinearSolver::PreconditionerType::multigrid_nxn)
-  {
-    Teuchos::ParameterList& amgnxnlist = outparams.sublist("AMGnxn Parameters");
-    auto amgnxn_xml = inparams.get<std::optional<std::filesystem::path>>("PRECONDITIONER_XML_FILE");
-    amgnxnlist.set("PRECONDITIONER_XML_FILE", amgnxn_xml);
-    std::string amgnxn_type = inparams.get<std::string>("AMGNXN_TYPE");
-    amgnxnlist.set<std::string>("AMGNXN_TYPE", amgnxn_type);
-  }
+  } /*
+   if (azprectype == Core::LinearSolver::PreconditionerType::multigrid_nxn)
+   {
+     Teuchos::ParameterList& amgnxnlist = outparams.sublist("AMGnxn Parameters");
+     auto amgnxn_xml =
+   inparams.get<std::optional<std::filesystem::path>>("PRECONDITIONER_XML_FILE");
+     amgnxnlist.set("PRECONDITIONER_XML_FILE", amgnxn_xml);
+     std::string amgnxn_type = inparams.get<std::string>("AMGNXN_TYPE");
+     amgnxnlist.set<std::string>("AMGNXN_TYPE", amgnxn_type);
+   }*/
 
   return outparams;
 }

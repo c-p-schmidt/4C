@@ -1169,13 +1169,13 @@ void STI::Monolithic::assemble_mat_and_rhs()
  *-------------------------------------------------------------------------------*/
 void STI::Monolithic::build_null_spaces() const
 {
-  switch (scatra_field()->matrix_type())
+  switch (const auto matrix_type = scatra_field()->matrix_type())
   {
     case Core::LinAlg::MatrixType::block_condition:
     {
-      Core::FE::compute_null_space_if_necessary(
-          *scatra_field()->discretization(), solver_->params(), true);
-      scatra_field()->build_block_null_spaces(*solver_, 0);
+      /*Core::FE::compute_null_space_if_necessary(
+       *scatra_field()->discretization(), solver_->params(), true);*/
+      scatra_field()->build_block_null_spaces(*solver_, matrix_type, 0);
       break;
     }
 
@@ -1199,17 +1199,18 @@ void STI::Monolithic::build_null_spaces() const
   std::stringstream iblockstr;
   iblockstr << blockmaps_->num_maps();
 
-  if (solver_->params().isSublist("MueLu Parameters"))
+  /*if (solver_->params().isSublist("MueLu Parameters"))
   {
     solver_->params()
         .sublist("Inverse" + iblockstr.str())
         .set("MueLu Parameters", solver_->params().sublist("MueLu Parameters"));
-  }
+  }*/
 
   Teuchos::ParameterList& blocksmootherparams =
-      solver_->params().isSublist("MueLu Parameters")
+      /*solver_->params().isSublist("MueLu Parameters")
           ? solver_->params().sublist("Inverse" + iblockstr.str()).sublist("MueLu Parameters")
-          : solver_->params().sublist("Inverse" + iblockstr.str());
+          :*/
+      solver_->params().sublist("Inverse" + iblockstr.str());
 
   Core::LinearSolver::Parameters::compute_solver_parameters(
       *thermo_field()->discretization(), blocksmootherparams);
@@ -1232,7 +1233,7 @@ void STI::Monolithic::compute_null_space_if_necessary(Teuchos::ParameterList& so
     Teuchos::ParameterList& mllist = solverparams.sublist("MueLu Parameters", true);
     mllist.set("PDE equations", 1);
 
-    std::shared_ptr<Core::LinAlg::MultiVector<double>> nullspace =
+    const auto nullspace =
         std::make_shared<Core::LinAlg::MultiVector<double>>(dof_row_map().operator*(), 1, true);
     nullspace->put_scalar(1.0);
 

@@ -64,8 +64,9 @@ namespace Core::LinearSolver
   {
     ilu,              ///< incomplete LU factorization with fill in levels (Ifpack package)
     multigrid_muelu,  ///< multigrid preconditioner (MueLu package, recommended!)
-    multigrid_nxn,  ///< multigrid preconditioner for a nxn block matrix (indirectly MueLu package)
-    block_teko      ///< block preconditioning (Teko package, recommended!)
+    // multigrid_nxn,  ///< multigrid preconditioner for a nxn block matrix (indirectly MueLu
+    // package)
+    block_teko  ///< block preconditioning (Teko package, recommended!)
   };
 
   /*!

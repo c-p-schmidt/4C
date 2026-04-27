@@ -16,14 +16,12 @@
 #include "4C_linear_solver_preconditioner_muelu.hpp"
 #include "4C_linear_solver_thyra_utils.hpp"
 
-#include <Stratimikos_DefaultLinearSolverBuilder.hpp>
 #include <Stratimikos_MueLuHelpers.hpp>
 #include <Teko_InverseLibrary.hpp>
 #include <Teko_LU2x2PreconditionerFactory.hpp>
 #include <Teko_StratimikosFactory.hpp>
 #include <Teuchos_RCPDecl.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
-#include <Xpetra_MultiVectorFactory.hpp>
 
 #include <filesystem>
 

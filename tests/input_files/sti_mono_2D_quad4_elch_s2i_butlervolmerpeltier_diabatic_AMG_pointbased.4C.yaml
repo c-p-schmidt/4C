@@ -42,10 +42,10 @@ STI DYNAMIC/MONOLITHIC:
 SCALAR TRANSPORT DYNAMIC/S2I COUPLING:
   COUPLINGTYPE: "MatchingNodes"
 SOLVER 1:
-  SOLVER: "Belos"
-  AZPREC: "MueLu"
+  SOLVER: Belos
   AZSUB: 100
-  PRECONDITIONER_XML_FILE: "sti_mono_2D_quad4_elch_s2i_butlervolmerpeltier_diabatic_AMG_pointbased.xml"
+  AZPREC: MueLu
+  PRECONDITIONER_XML_FILE: "xml/multigrid/sti_mono_2D_quad4_elch_s2i_butlervolmerpeltier_diabatic_AMG_pointbased.xml"
 SOLVER 2:
   SOLVER: MUMPS
 MATERIALS:

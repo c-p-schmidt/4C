@@ -130,15 +130,15 @@ void SSTI::SSTIMono::assemble_mat_and_rhs()
 void SSTI::SSTIMono::build_null_spaces() const
 {
   // build null spaces for scatra and thermo
-  switch (scatra_field()->matrix_type())
+  switch (const auto matrix_type = scatra_field()->matrix_type())
   {
     case Core::LinAlg::MatrixType::block_condition:
     case Core::LinAlg::MatrixType::block_condition_dof:
     {
       scatra_field()->build_block_null_spaces(
-          *solver_, get_block_positions(Subproblem::scalar_transport).at(0));
+          *solver_, matrix_type, get_block_positions(Subproblem::scalar_transport).at(0));
       thermo_field()->build_block_null_spaces(
-          *solver_, get_block_positions(Subproblem::thermo).at(0));
+          *solver_, matrix_type, get_block_positions(Subproblem::thermo).at(0));
       break;
     }
     case Core::LinAlg::MatrixType::sparse:

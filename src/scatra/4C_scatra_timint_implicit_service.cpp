@@ -643,7 +643,7 @@ void ScaTra::ScaTraTimIntImpl::calc_initial_time_derivative()
   Core::LinAlg::SolverParams solver_params;
   solver_params.refactor = true;
   solver_params.reset = true;
-  solver_->solve(sysmat_, phidtnp_, residual_, solver_params);
+  init_calc_solver_->solve(sysmat_, phidtnp_, residual_, solver_params);
 
   // ToDo: Impose initial time derivatives resulting from Dirichlet boundary conditions.
   // At the moment, the initial time derivatives do not take account of time-dependent
@@ -941,47 +941,88 @@ std::shared_ptr<Core::LinAlg::MultiVector<double>> ScaTra::ScaTraTimIntImpl::com
 
 /*-------------------------------------------------------------------------*
  *-------------------------------------------------------------------------*/
-void ScaTra::ScaTraTimIntImpl::compute_null_space_if_necessary() const
+void ScaTra::ScaTraTimIntImpl::compute_null_space() const
 {
-  // extract solver parameters
-  Teuchos::ParameterList& solverparams = solver_->params();
-
-  // compute point-based null space information if applicable
-  if (params_->get<bool>("NULLSPACE_POINTBASED"))
+  switch (matrix_type())
   {
-    // MueLu preconditioner
-    if (solverparams.isSublist("MueLu Parameters"))
+    case Core::LinAlg::MatrixType::sparse:
     {
-      // extract and fill parameter list for MueLu preconditioner
-      Teuchos::ParameterList& mllist = solverparams.sublist("MueLu Parameters", true);
-      mllist.set("PDE equations", 1);
+      // extract solver parameters
+      Teuchos::ParameterList& solverparams = solver_->params();
 
-      std::shared_ptr<Core::LinAlg::MultiVector<double>> nullspace =
-          std::make_shared<Core::LinAlg::MultiVector<double>>(*(discret_->dof_row_map()), 1, true);
-      nullspace->put_scalar(1.0);
+      // compute point-based null space information if applicable
+      if (params_->get<bool>("NULLSPACE_POINTBASED"))
+      {
+        // MueLu preconditioner
+        if (solverparams.isSublist("MueLu Parameters"))
+        {
+          // extract and fill parameter list for MueLu preconditioner
+          Teuchos::ParameterList& mllist = solverparams.sublist("MueLu Parameters", true);
+          mllist.set("PDE equations", 1);
 
-      mllist.set<std::shared_ptr<Core::LinAlg::MultiVector<double>>>("nullspace", nullspace);
+          const auto nullspace = std::make_shared<Core::LinAlg::MultiVector<double>>(
+              *(discret_->dof_row_map()), 1, true);
+          nullspace->put_scalar(1.0);
 
-      std::shared_ptr<Core::LinAlg::MultiVector<double>> coordinates =
-          extract_retained_node_coordinates(*discret_, *discret_->node_row_map());
+          mllist.set<std::shared_ptr<Core::LinAlg::MultiVector<double>>>("nullspace", nullspace);
 
-      mllist.set<std::shared_ptr<Core::LinAlg::MultiVector<double>>>("Coordinates", coordinates);
+          const std::shared_ptr<Core::LinAlg::MultiVector<double>> coordinates =
+              extract_retained_node_coordinates(*discret_, *discret_->node_row_map());
+
+          mllist.set<std::shared_ptr<Core::LinAlg::MultiVector<double>>>(
+              "Coordinates", coordinates);
+        }
+        else
+        {
+          FOUR_C_THROW(
+              "Point-based null space calculation currently only implemented for MueLu "
+              "preconditioner!");
+        }
+      }
+      else
+      {
+        // compute standard, vector-based null space information if applicable
+        Core::FE::compute_null_space_if_necessary(*discret_, solverparams, true);
+      }
+
+      break;
     }
 
-    else
+    case Core::LinAlg::MatrixType::block_condition:
+    case Core::LinAlg::MatrixType::block_condition_dof:
+    {
+      compute_null_space_block_system();
+      break;
+    }
+
+    default:
     {
       FOUR_C_THROW(
-          "Point-based null space calculation currently only implemented for MueLu "
-          "preconditioner!");
+          "Null space calculation currently only implemented for sparse, block_condition and "
+          "block_condition_dof matrix types!");
     }
   }
-
-  else
-  {
-    // compute standard, vector-based null space information if applicable
-    Core::FE::compute_null_space_if_necessary(*discret_, solverparams, true);
-  }
 }
+
+/*-------------------------------------------------------------------------*
+ *-------------------------------------------------------------------------*/
+void ScaTra::ScaTraTimIntImpl::compute_null_space_block_system() const
+{
+  // now build the null spaces
+  build_block_null_spaces(*solver(), matrix_type(), 0);
+
+  // in case no initial potential calculation solver is set the other one is just reused, and we
+  // do not need to additionally call build_block_null_spaces
+  if (init_calc_solver_ != solver_)
+  {
+    build_block_null_spaces(*init_calc_solver_, matrix_type(), 0);
+  }
+
+  // in case of an extended solver for scatra-scatra interface meshtying including interface growth
+  // we need to equip it with the null space information generated above
+  if (s2i_meshtying()) strategy_->equip_extended_solver_with_null_space_info();
+}
+
 
 /*-------------------------------------------------------------------------*
  *-------------------------------------------------------------------------*/

@@ -22,6 +22,7 @@ SCALAR TRANSPORT DYNAMIC:
   INITIALFIELD: "field_by_condition"
   CALCFLUX_BOUNDARY: "total"
   LINEAR_SOLVER: 1
+  INIT_CALC_LINEAR_SOLVER: 2
   EQUILIBRATION: rows_maindiag
   MATRIXTYPE: block_condition_dof
 SCALAR TRANSPORT DYNAMIC/STABILIZATION:
@@ -36,10 +37,12 @@ ELCH CONTROL:
 SCALAR TRANSPORT DYNAMIC/S2I COUPLING:
   COUPLINGTYPE: "MatchingNodes"
 SOLVER 1:
-  SOLVER: "Belos"
-  AZPREC: "AMGnxn"
-  AMGNXN_TYPE: "XML"
-  PRECONDITIONER_XML_FILE: "elch_3D_tet4_s2i_butlervolmer_BGS-AMG_4x4.xml"
+  SOLVER: Belos
+  SOLVER_XML_FILE: "xml/linear_solver/iterative_gmres_template_adaptive_tolerance.xml"
+  AZPREC: MueLu
+  PRECONDITIONER_XML_FILE: "xml/multigrid/elch_AMG-BGS_4x4.xml"
+SOLVER 2:
+  SOLVER: MUMPS
 MATERIALS:
   - MAT: 1
     MAT_electrode:

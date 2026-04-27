@@ -296,9 +296,9 @@ namespace ScaTra
     //! write integrated interface flux on slave side of s2i kintetics condition to csv file
     void output_interface_flux() const;
 
-   protected:
     void equip_extended_solver_with_null_space_info() const override;
 
+   protected:
     //! instantiate strategy for Newton-Raphson convergence check
     void init_conv_check_strategy() override;
 

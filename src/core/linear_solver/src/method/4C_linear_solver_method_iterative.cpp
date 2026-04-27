@@ -283,11 +283,11 @@ Core::LinearSolver::IterativeSolver::create_preconditioner(Teuchos::ParameterLis
   else if (params().isSublist("Teko Parameters"))
   {
     preconditioner = std::make_shared<Core::LinearSolver::TekoPreconditioner>(params());
-  }
-  else if (params().isSublist("AMGnxn Parameters"))
-  {
-    preconditioner = std::make_shared<Core::LinearSolver::AmGnxnPreconditioner>(params());
-  }
+  } /*
+   else if (params().isSublist("AMGnxn Parameters"))
+   {
+     preconditioner = std::make_shared<Core::LinearSolver::AmGnxnPreconditioner>(params());
+   }*/
   else
     FOUR_C_THROW("Unknown preconditioner chosen for iterative linear solver.");
 
