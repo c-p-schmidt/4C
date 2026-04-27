@@ -254,6 +254,11 @@ std::vector<Core::IO::InputSpec> ScaTra::valid_parameters()
               {.description = "Type of coupling strategy between fields",
                   .default_value = coupling_match}),
 
+          parameter<std::optional<int>>("INIT_CALC_LINEAR_SOLVER",
+              {.description = "ID of linear solver for global system of equations for calculation "
+                              "of the initial quantities like the initial potential field, or the "
+                              "calculation of the initial time derivatives."}),
+
           // linear solver id used for scalar transport/elch problems
           parameter<int>("LINEAR_SOLVER",
               {.description = "number of linear solver used for scalar transport/elch...",

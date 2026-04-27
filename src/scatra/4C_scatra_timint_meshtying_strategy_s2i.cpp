@@ -2704,12 +2704,10 @@ void ScaTra::MeshtyingStrategyS2I::setup_meshtying()
     {
       // safety check
       const bool allowed_block_system_solvers =
-          scatratimint_->solver()->params().isSublist("AMGnxn Parameters") or
           scatratimint_->solver()->params().isSublist("Teko Parameters") or
           scatratimint_->solver()->params().isSublist("MueLu Parameters");
       FOUR_C_ASSERT_ALWAYS(allowed_block_system_solvers,
-          "Global system matrix with block structure requires AMGnxn, MueLu or Teko block "
-          "preconditioner!");
+          "Global system matrix with block structure requires MueLu or Teko block preconditioner!");
 
       // initialize map extractors associated with blocks of global system matrix
       build_block_map_extractors();
@@ -3672,6 +3670,10 @@ void ScaTra::MeshtyingStrategyS2I::solve(const std::shared_ptr<Core::LinAlg::Sol
           // solve global system of equations
           solver_params.refactor = true;
           solver_params.reset = iteration == 1;
+          // TODO DEBUG
+          std::cout << "size res: " << residual->global_length()
+                    << " size mat: " << systemmatrix->domain_map().num_global_elements() << '\n';
+          // TODO DEBUG END
           solver->solve(systemmatrix, increment, residual, solver_params);
 
           // unequilibrate global increment vector if necessary

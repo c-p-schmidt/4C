@@ -106,9 +106,6 @@ std::vector<Core::IO::InputSpec> ElCh::valid_parameters()
           parameter<bool>("INITPOTCALC",
               {.description = "Automatically calculate initial field for electric potential",
                   .default_value = false}),
-          parameter<std::optional<int>>("INIT_POT_CALC_LINEAR_SOLVER",
-              {.description = "ID of linear solver for global system of equations for calculation "
-                              "of the initial potential field"}),
           parameter<bool>("ONLYPOTENTIAL",
               {.description = "Coupling of general ion transport equation with Laplace equation",
                   .default_value = false}),

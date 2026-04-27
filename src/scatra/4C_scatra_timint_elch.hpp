@@ -144,8 +144,6 @@ namespace ScaTra
         bool print, double& currentsum, double& currtangent, double& currresidual,
         double& electrodeint, double& electrodepot, double& meanoverpot);
 
-    void post_setup_matrix_block_maps() const override;
-
     //! output electrode interior status information to screen and files
     void output_electrode_info_interior();
 
@@ -408,9 +406,6 @@ namespace ScaTra
 
     //! time step number of last modification of time step size
     int last_dt_change_;
-
-    //! solver for the global system of equations during calculation of the initial potential field
-    std::shared_ptr<Core::LinAlg::Solver> init_pot_calc_solver_;
 
     //! map extractor for macro scale in multi-scale simulations
     std::shared_ptr<const Core::LinAlg::MultiMapExtractor> splitter_macro_;

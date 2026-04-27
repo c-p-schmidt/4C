@@ -63,22 +63,19 @@ SSI CONTROL/MANIFOLD:
 SSI CONTROL/ELCH:
   INITPOTCALC: true
 SOLVER 1:
-  SOLVER: "Belos"
-  AZPREC: "AMGnxn"
-  AMGNXN_TYPE: "XML"
-  PRECONDITIONER_XML_FILE: "ssi_mono_3D_tet4_elch_s2i_butlervolmer_manifold_BGS-AMG_11x11.xml"
+  SOLVER: Belos
+  AZPREC: MueLu
+  PRECONDITIONER_XML_FILE: "xml/multigrid/solid_scatra_AMG-BGS_11x11.xml" #"ssi_mono_3D_tet4_elch_s2i_butlervolmer_manifold_BGS-AMG_11x11.xml" #11x11
 SOLVER 2:
-  SOLVER: "Belos"
-  AZPREC: "AMGnxn"
-  AMGNXN_TYPE: "XML"
-  PRECONDITIONER_XML_FILE: "ssi_mono_3D_tet4_elch_s2i_butlervolmer_manifold_BGS-AMG_11x11_scatra.xml"
+  SOLVER: Belos
+  AZPREC: MueLu
+  PRECONDITIONER_XML_FILE: "xml/multigrid/solid_scatra_AMG-BGS_6x6.xml" #"ssi_mono_3D_tet4_elch_s2i_butlervolmer_manifold_BGS-AMG_11x11_scatra.xml" # 6x6
 SOLVER 3:
   SOLVER: MUMPS
 SOLVER 4:
-  SOLVER: "Belos"
-  AZPREC: "AMGnxn"
-  AMGNXN_TYPE: "XML"
-  PRECONDITIONER_XML_FILE: "ssi_mono_3D_tet4_elch_s2i_butlervolmer_manifold_BGS-AMG_11x11_manifold.xml"
+  SOLVER: Belos
+  AZPREC: MueLu
+  PRECONDITIONER_XML_FILE: "xml/multigrid/elch_AMG-BGS_4x4.xml" #"ssi_mono_3D_tet4_elch_s2i_butlervolmer_manifold_BGS-AMG_11x11_manifold.xml" #4x4
 MATERIALS:
   - MAT: 1
     MAT_MultiplicativeSplitDefgradElastHyper:

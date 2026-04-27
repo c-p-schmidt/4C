@@ -211,6 +211,22 @@ ScaTra::ScaTraTimIntImpl::ScaTraTimIntImpl(std::shared_ptr<Core::FE::Discretizat
                   Global::Problem::instance()->io_params().sublist("RUNTIME VTK OUTPUT"),
                   *Global::Problem::instance()->output_control_file(), time_));
 
+  if (const auto init_calc_linear_solver =
+          params->get<std::optional<int>>("INIT_CALC_LINEAR_SOLVER");
+      init_calc_linear_solver.has_value())
+  {
+    init_calc_solver_ = std::make_shared<Core::LinAlg::Solver>(
+        problem_->solver_params(init_calc_linear_solver.value()), discret_->get_comm(),
+        problem_->solver_params_callback(),
+        Teuchos::getIntegralValue<Core::IO::Verbositylevel>(problem_->io_params(), "VERBOSITY"));
+  }
+  else
+  {
+    // use the linear solver of the main algorithm if no dedicated solver for the initial potential
+    // calculation has been set
+    init_calc_solver_ = solver_;
+  }
+
   // DO NOT DEFINE ANY STATE VECTORS HERE (i.e., vectors based on row or column maps)
   // this is important since we have problems which require an extended ghosting
   // this has to be done before all state vectors are initialized
@@ -317,9 +333,6 @@ void ScaTra::ScaTraTimIntImpl::setup()
   // we have to call init() first
   check_is_init();
 
-  // compute Null Space
-  compute_null_space_if_necessary();
-
   // -------------------------------------------------------------------
   // get a vector layout from the discretization to construct matching
   // vectors and matrices: local <-> global dof numbering
@@ -329,14 +342,17 @@ void ScaTra::ScaTraTimIntImpl::setup()
   // initialize the scalar handler
   if (scalarhandler_ == nullptr)
     FOUR_C_THROW("Make sure you construct the scalarhandler_ in initialization.");
-  else
-    scalarhandler_->setup(this);
+
+  scalarhandler_->setup(this);
 
   // setup splitter (needed to solve initialization problems before setup_meshtying())
   setup_splitter();
 
   // setup the matrix block maps and the meshtying strategy
   setup_matrix_block_maps_and_meshtying();
+
+  // null space can only be calculated after the maps and block maps have been created
+  compute_null_space();
 
   // -------------------------------------------------------------------
   // create empty system matrix (27 adjacent nodes as 'good' guess)
@@ -348,7 +364,9 @@ void ScaTra::ScaTraTimIntImpl::setup()
     sysmat_ = std::make_shared<Core::LinAlg::SparseMatrix>(*(discret_->dof_row_map()), 27);
   }
   else
+  {
     sysmat_ = init_system_matrix();
+  }
 
   // for some special meshtying cases we need to override the information with the information from
   // the meshtying strategy, in such a case the meshtying strategy implements the method below
@@ -3612,20 +3630,8 @@ void ScaTra::ScaTraTimIntImpl::build_block_maps(
 
 /*-----------------------------------------------------------------------------*
  *-----------------------------------------------------------------------------*/
-void ScaTra::ScaTraTimIntImpl::post_setup_matrix_block_maps() const
-{
-  // now build the null spaces
-  build_block_null_spaces(*solver(), 0);
-
-  // in case of an extended solver for scatra-scatra interface meshtying including interface growth
-  // we need to equip it with the null space information generated above
-  if (s2i_meshtying()) strategy_->equip_extended_solver_with_null_space_info();
-}
-
-/*-----------------------------------------------------------------------------*
- *-----------------------------------------------------------------------------*/
-void ScaTra::ScaTraTimIntImpl::build_block_null_spaces(
-    const Core::LinAlg::Solver& solver, const int init_block_number) const
+void ScaTra::ScaTraTimIntImpl::build_block_null_spaces(const Core::LinAlg::Solver& solver,
+    const Core::LinAlg::MatrixType matrix_type, const int init_block_number) const
 {
   // loop over blocks of global system matrix
   for (int iblock = init_block_number; iblock < dof_block_maps()->num_maps() + init_block_number;
@@ -3637,24 +3643,10 @@ void ScaTra::ScaTraTimIntImpl::build_block_null_spaces(
     Teuchos::ParameterList& block_smoother_parameters =
         solver.params().sublist("Inverse" + std::to_string(block_id));
 
-    // Implementation for AMGnxn: needs to stay until dof split can be tackled differently
-    if (solver.params().isSublist("AMGnxn Parameters"))
     {
-      block_smoother_parameters.sublist("Belos Parameters");
-      block_smoother_parameters.sublist("MueLu Parameters");
-
-      // equip smoother for the current matrix block with null space associated with all degrees of
-      // freedom on discretization
-      Core::FE::compute_null_space_if_necessary(*discret_, block_smoother_parameters);
-    }
-    // Implementation for Teko and MueLu
-    else
-    {
-      if (solver.params().isSublist("MueLu Parameters"))
+      if (matrix_type == Core::LinAlg::MatrixType::block_condition_dof)
       {
-        solver.params()
-            .sublist("Inverse" + std::to_string(block_id))
-            .set("MueLu Parameters", solver.params().sublist("MueLu Parameters"));
+        block_smoother_parameters.set("PDE equations", 1);
       }
 
       // add the null space map to extract relevant coordinates of the current block
@@ -3696,22 +3688,16 @@ void ScaTra::ScaTraTimIntImpl::setup_matrix_block_maps_and_meshtying()
     case Core::LinAlg::MatrixType::block_condition_dof:
     {
       // safety check
-      const bool allowed_block_system_solvers = solver()->params().isSublist("AMGnxn Parameters") or
-                                                solver()->params().isSublist("Teko Parameters") or
+      const bool allowed_block_system_solvers = solver()->params().isSublist("Teko Parameters") or
                                                 solver()->params().isSublist("MueLu Parameters");
       FOUR_C_ASSERT_ALWAYS(allowed_block_system_solvers,
-          "Global system matrix with block structure requires AMGnxn, MueLu or Teko block "
-          "preconditioner!");
+          "Global system matrix with block structure requires MueLu or Teko block preconditioner!");
 
       // set up the matrix block maps
       setup_matrix_block_maps();
 
-      // setup the meshtying
+      // setup the mesh tying
       strategy_->setup_meshtying();
-
-      // do some post-setup matrix block map operations after the call to setup_meshtying, as they
-      // rely on the fact that the interface maps have already been built
-      post_setup_matrix_block_maps();
 
       break;
     }

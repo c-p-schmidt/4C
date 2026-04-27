@@ -86,7 +86,7 @@ namespace Core::LinearSolver
             {
                 {"ILU", Core::LinearSolver::PreconditionerType::ilu},
                 {"MueLu", Core::LinearSolver::PreconditionerType::multigrid_muelu},
-                {"AMGnxn", Core::LinearSolver::PreconditionerType::multigrid_nxn},
+                //{"AMGnxn", Core::LinearSolver::PreconditionerType::multigrid_nxn},
                 {"Teko", Core::LinearSolver::PreconditionerType::block_teko},
             },
             {.description =
@@ -105,10 +105,10 @@ namespace Core::LinearSolver
                     "on valid parameters."}),
 
         // Parameters for AMGnxn Preconditioner
-        parameter<std::string>("AMGNXN_TYPE",
+        /*parameter<std::string>("AMGNXN_TYPE",
             {.description = "Name of the pre-built preconditioner to be used. If set "
                             "to\"XML\" the preconditioner is defined using a xml file",
-                .default_value = "AMG(BGS)"}),
+                .default_value = "AMG(BGS)"}),*/
     });
   }
 

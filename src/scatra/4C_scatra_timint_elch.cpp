@@ -79,30 +79,6 @@ ScaTra::ScaTraTimIntElch::ScaTraTimIntElch(std::shared_ptr<Core::FE::Discretizat
 {
   // safety check
   if (fr_ <= 0.0) FOUR_C_THROW("Factor F/R is non-positive!");
-
-  const auto init_pot_calc_linear_solver =
-      elchparams_->get<std::optional<int>>("INIT_POT_CALC_LINEAR_SOLVER");
-
-  if (init_pot_calc_linear_solver.has_value())
-  {
-    const auto init_pot_calc = elchparams_->get<bool>("INITPOTCALC");
-    FOUR_C_ASSERT_ALWAYS(init_pot_calc,
-        "You set a linear solver for the initial potential calculation, but you did not activate "
-        "the initial potential calculation itself! Please set 'INITPOTCALC' to true if you want to "
-        "use a dedicated linear solver for the initial potential calculation or remove the "
-        "dedicated solver.");
-
-    init_pot_calc_solver_ = std::make_shared<Core::LinAlg::Solver>(
-        problem_->solver_params(init_pot_calc_linear_solver.value()), dis->get_comm(),
-        problem_->solver_params_callback(),
-        Teuchos::getIntegralValue<Core::IO::Verbositylevel>(problem_->io_params(), "VERBOSITY"));
-  }
-  else
-  {
-    // use the linear solver of the main algorithm if no dedicated solver for the initial potential
-    // calculation has been set
-    init_pot_calc_solver_ = solver_;
-  }
 }
 
 /*----------------------------------------------------------------------*
@@ -1304,21 +1280,6 @@ void ScaTra::ScaTraTimIntElch::output_electrode_info_domain()
 
 /*-------------------------------------------------------------------------------*
  *-------------------------------------------------------------------------------*/
-void ScaTra::ScaTraTimIntElch::post_setup_matrix_block_maps() const
-{
-  // call base class
-  ScaTraTimIntImpl::post_setup_matrix_block_maps();
-
-  // in case no initial potential calculation solver is set the other one is just reused, and we
-  // do not need to additionally call build_block_null_spaces
-  if (init_pot_calc_solver_ != solver_)
-  {
-    build_block_null_spaces(*init_pot_calc_solver_, 0);
-  }
-}
-
-/*-------------------------------------------------------------------------------*
- *-------------------------------------------------------------------------------*/
 void ScaTra::ScaTraTimIntElch::output_electrode_info_interior()
 {
   std::vector<const Core::Conditions::Condition*> conditions;
@@ -2120,8 +2081,7 @@ void ScaTra::ScaTraTimIntElch::calc_initial_potential_field()
     solver_params.projector = projector_;
 
     // solve final system of equations incrementally
-    strategy_->solve(
-        init_pot_calc_solver_, sysmat_, increment_, residual_, phinp_, 1, solver_params);
+    strategy_->solve(init_calc_solver_, sysmat_, increment_, residual_, phinp_, 1, solver_params);
 
     // determine time needed for solving global system of equations
     dtsolve_ = Teuchos::Time::wallTime() - time;
