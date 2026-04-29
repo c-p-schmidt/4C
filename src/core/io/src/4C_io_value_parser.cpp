@@ -60,10 +60,10 @@ namespace
 void Core::IO::ValueParser::read_internal(bool& value)
 {
   std::string token(advance_token());
-  std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-  if (token == "true" || token == "yes" || token == "on" || token == "1")
+  // std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+  if (token == "true" || token == "True")
     value = true;
-  else if (token == "false" || token == "no" || token == "off" || token == "0")
+  else if (token == "false" || token == "False")
     value = false;
   else
   {
