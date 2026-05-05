@@ -394,27 +394,25 @@ void SSI::SsiMono::evaluate_off_diag_contributions() const
  *-------------------------------------------------------------------------------*/
 void SSI::SsiMono::build_null_spaces(Core::LinAlg::Solver& solver) const
 {
-  // structure-related block
+  // store number of matrix block associated with structural field as string
+  std::stringstream iblockstr;
+  iblockstr << ssi_maps_->get_block_positions(Subproblem::structure).at(0) + 1;
+
+  Teuchos::ParameterList& blocksmootherparams =
+      solver.params().sublist("Inverse" + iblockstr.str());
+
+  if (solver.params().isSublist("AMGnxn Parameters"))
   {
-    std::stringstream iblockstr;
-    iblockstr << ssi_maps_->get_block_positions(Subproblem::structure).at(0) + 1;
+    blocksmootherparams.sublist("Belos Parameters");
+    blocksmootherparams.sublist("MueLu Parameters");
 
-    Teuchos::ParameterList& blocksmootherparams =
-        solver.params().sublist("Inverse" + iblockstr.str());
-
-    if (solver.params().isSublist("AMGnxn Parameters"))
-    {
-      blocksmootherparams.sublist("Belos Parameters");
-      blocksmootherparams.sublist("MueLu Parameters");
-
-      Core::FE::compute_null_space_if_necessary(
-          *structure_field()->discretization(), blocksmootherparams);
-    }
-    else
-    {
-      Core::LinearSolver::Parameters::compute_solver_parameters(
-          *structure_field()->discretization(), blocksmootherparams);
-    }
+    Core::FE::compute_null_space_if_necessary(
+        *structure_field()->discretization(), blocksmootherparams);
+  }
+  else
+  {
+    Core::LinearSolver::Parameters::compute_solver_parameters(
+        *structure_field()->discretization(), blocksmootherparams);
   }
 
   // all scalar transport-related blocks
