@@ -33,6 +33,7 @@ ELCH CONTROL:
   EQUPOT: "divi"
   DIFFCOND_FORMULATION: true
   INITPOTCALC: true
+  INIT_POT_CALC_LINEAR_SOLVER: 1
 SCALAR TRANSPORT DYNAMIC/S2I COUPLING:
   COUPLINGTYPE: "MatchingNodes"
 SOLVER 1:
@@ -40,6 +41,8 @@ SOLVER 1:
   SOLVER_XML_FILE: "xml/linear_solver/iterative_gmres_template.xml"
   AZPREC: Teko
   PRECONDITIONER_XML_FILE: "xml/block_preconditioner/electrochemistry_BGS-AMG_3x3.xml"
+SOLVER 2:
+  SOLVER: MUMPS
 MATERIALS:
   - MAT: 1
     MAT_electrode:

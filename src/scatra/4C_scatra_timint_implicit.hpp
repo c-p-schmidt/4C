@@ -678,7 +678,7 @@ namespace ScaTra
 
     //! some of the set up of the (block) maps of the scatra system matrix has to be done after
     //! setup_meshtying() has been called
-    void post_setup_matrix_block_maps() const;
+    virtual void post_setup_matrix_block_maps() const;
 
     /*!
      * @brief build maps associated with blocks of global system matrix
