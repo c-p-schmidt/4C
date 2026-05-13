@@ -18,7 +18,6 @@
 #include <MueLu_CreateXpetraPreconditioner.hpp>
 #include <MueLu_EpetraOperator.hpp>
 #include <MueLu_ParameterListInterpreter.hpp>
-#include <MueLu_UseDefaultTypes.hpp>
 #include <Stratimikos_MueLuHelpers.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCPStdSharedPtrConversions.hpp>
@@ -51,8 +50,9 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
 {
   using EpetraMultiVector = Xpetra::EpetraMultiVectorT<GO, NO>;
 
-  if (!muelulist_.sublist("MueLu Parameters").isParameter("PRECONDITIONER_XML_FILE"))
-    FOUR_C_THROW("PRECONDITIONER_XML_FILE parameter not set!");
+  FOUR_C_ASSERT_ALWAYS(
+      muelulist_.sublist("MueLu Parameters").isParameter("PRECONDITIONER_XML_FILE"),
+      "PRECONDITIONER_XML_FILE parameter not set!");
   auto xmlFileName =
       muelulist_.sublist("MueLu Parameters").get<std::string>("PRECONDITIONER_XML_FILE");
 
@@ -68,7 +68,7 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
   if (A.is_null())
   {
     auto A_crs = Teuchos::rcp_dynamic_cast<Core::LinAlg::SparseMatrix>(Teuchos::rcpFromRef(matrix));
-    pmatrix_ =
+    auto pmatrix =
         Core::LinearSolver::Utils::create_thyra_linear_op(*A_crs, Core::LinAlg::DataAccess::Copy);
 
     const Teuchos::ParameterList& inverseList = muelulist_.sublist("MueLu Parameters");
@@ -80,20 +80,22 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
 
     Teuchos::RCP<Xpetra::MultiVector<SC, LO, GO, NO>> nullspace =
         Core::LinearSolver::Parameters::extract_nullspace_from_parameterlist(*row_map, inverseList);
+    FOUR_C_ASSERT(nullspace != Teuchos::null, "Nullspace data is not available.");
 
     Teuchos::RCP<Xpetra::MultiVector<SC, LO, GO, NO>> coordinates =
         Teuchos::make_rcp<EpetraMultiVector>(Teuchos::rcpFromRef(
             inverseList.get<std::shared_ptr<Core::LinAlg::MultiVector<double>>>("Coordinates")
                 ->get_epetra_multi_vector()));
+    FOUR_C_ASSERT(coordinates != Teuchos::null, "Coordinates data is not available.");
 
     muelu_params.set("number of equations", number_of_equations);
     Teuchos::ParameterList& user_param_list = muelu_params.sublist("user data");
     user_param_list.set("Nullspace", nullspace);
     user_param_list.set("Coordinates", coordinates);
 
-    Teuchos::RCP<Xpetra::MultiVector<SC, LO, GO, NO>> material;
     if (muelulist_.isParameter("Material"))
     {
+      Teuchos::RCP<Xpetra::MultiVector<SC, LO, GO, NO>> material;
       material = Teuchos::make_rcp<EpetraMultiVector>(Teuchos::rcpFromRef(
           muelulist_.get<std::shared_ptr<Core::LinAlg::MultiVector<double>>>("Material")
               ->get_epetra_multi_vector()));
@@ -118,7 +120,7 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
     Teuchos::RCP<Thyra::PreconditionerFactoryBase<double>> precFactory =
         builder.createPreconditioningStrategy("MueLu");
     Teuchos::RCP<Thyra::PreconditionerBase<double>> prec =
-        Thyra::prec<double>(*precFactory, pmatrix_);
+        Thyra::prec<double>(*precFactory, pmatrix);
     auto inverseOp = prec->getUnspecifiedPrecOp();
 
     p_ = Utils::get_epetra_inverse_operator_from_thyra(inverseOp);
@@ -136,8 +138,7 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
           Teuchos::rcpFromRef(A->matrix(block, block).epetra_matrix()));
 
       const std::string inverse = "Inverse" + std::to_string(block + 1);
-      const Teuchos::ParameterList& inverseList =
-          muelulist_.sublist(inverse).sublist("MueLu Parameters");
+      const Teuchos::ParameterList& inverseList = muelulist_.sublist(inverse);
       const int number_of_equations = inverseList.get<int>("PDE equations");
 
       std::vector<size_t> striding;
@@ -148,11 +149,18 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
               crsA->getRowMap()->getGlobalNumElements(), crsA->getRowMap()->getLocalElementList(),
               crsA->getRowMap()->getIndexBase(), striding, crsA->getRowMap()->getComm(), -1);
 
+      std::cout << "Block: " << inverse << ", number of equations: " << number_of_equations << '\n';
+      std::cout << "Submatrix: " << A->matrix(block, block).num_global_rows() << " x "
+                << A->matrix(block, block).num_global_cols() << '\n';
+      std::cout << "Map: " << map->getGlobalNumElements() << "\n";
+
       maps.emplace_back(map);
     }
 
     Teuchos::RCP<const Xpetra::Map<LO, GO, NO>> fullrangemap =
         Xpetra::MapUtils<LO, GO, NO>::concatenateMaps(maps);
+
+    std::cout << "\nFull range map: " << fullrangemap->getGlobalNumElements() << "\n\n";
 
     Teuchos::RCP<const Xpetra::MapExtractor<SC, LO, GO, NO>> map_extractor =
         Xpetra::MapExtractorFactory<SC, LO, GO, NO>::Build(fullrangemap, maps);
@@ -170,11 +178,34 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
             Xpetra::MatrixFactory<SC, LO, GO, NO>::BuildCopy(
                 Teuchos::make_rcp<Xpetra::CrsMatrixWrap<SC, LO, GO, NO>>(crsA));
         bOp->setMatrix(row, col, mat);
+
+        std::cout << "Block: " << row << ", column: " << col
+                  << ", mat, rows: " << mat->getGlobalNumRows()
+                  << ", mat, cols: " << mat->getGlobalNumCols() << '\n';
       }
     }
 
     bOp->fillComplete();
-    pmatrix_ = Xpetra::ThyraUtils<SC>::toThyra(bOp);
+    // pmatrix_ = Xpetra::ThyraUtils<SC>::toThyra(bOp);
+    std::cout << "\nbOp num block range maps: " << bOp->getBlockedRangeMap()->getNumMaps()
+              << ", bOp num block domain maps:" << bOp->getBlockedDomainMap()->getNumMaps();
+
+    std::cout << "\n\nbOp range maps:\n";
+    for (std::size_t i = 0; i < bOp->getBlockedRangeMap()->getNumMaps(); ++i)
+    {
+      std::cout << "Map: " << i << ", elements: " << *bOp->getBlockedRangeMap()->getMap(i);
+    }
+
+    std::cout << "\n\nbOp domain maps:\n";
+    for (std::size_t i = 0; i < bOp->getBlockedDomainMap()->getNumMaps(); ++i)
+    {
+      std::cout << "Map: " << i << ", elements: " << *bOp->getBlockedDomainMap()->getMap(i);
+    }
+
+    std::cout << "bOp range map extractors in thyra mode: "
+              << bOp->getRangeMapExtractor()->getThyraMode() << "\n";
+    std::cout << "bOp domain map extractors in thyra mode: "
+              << bOp->getDomainMapExtractor()->getThyraMode() << "\n\n";
 
     MueLu::ParameterListInterpreter<SC, LO, GO, NO> mueLuFactory(
         xmlFileName, *bOp->getRowMap()->getComm());
@@ -184,14 +215,17 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
     for (int block = 0; block < A->rows(); block++)
     {
       const std::string inverse = "Inverse" + std::to_string(block + 1);
-      const Teuchos::ParameterList& inverse_list =
-          muelulist_.sublist(inverse).sublist("MueLu Parameters");
+      const Teuchos::ParameterList& inverse_list = muelulist_.sublist(inverse);
 
       Teuchos::RCP<Xpetra::MultiVector<SC, LO, GO, NO>> nullspace =
           Core::LinearSolver::Parameters::extract_nullspace_from_parameterlist(
               *maps.at(block), inverse_list);
+      FOUR_C_ASSERT(nullspace != Teuchos::null, "Nullspace data is not available.");
 
       H_->GetLevel(0)->Set("Nullspace" + std::to_string(block + 1), nullspace);
+
+      std::cout << "Block: " << inverse << ", nullspace length: " << nullspace->getGlobalLength()
+                << '\n';
     }
 
     if (muelulist_.sublist("Belos Parameters").isParameter("contact sourceDofMap"))

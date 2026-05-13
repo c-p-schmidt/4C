@@ -676,10 +676,6 @@ namespace ScaTra
     //! set up the (block) maps of the scatra system matrix
     void setup_matrix_block_maps();
 
-    //! some of the set up of the (block) maps of the scatra system matrix has to be done after
-    //! setup_meshtying() has been called
-    void post_setup_matrix_block_maps() const;
-
     /*!
      * @brief build maps associated with blocks of global system matrix
      *
@@ -695,7 +691,8 @@ namespace ScaTra
 
     //! Build null spaces associated with blocks of global system matrix. Hand in solver to access
     //! the parameter list and initial number of the block (e.g. for coupled problems)
-    void build_block_null_spaces(const Core::LinAlg::Solver& solver, int init_block_number) const;
+    void build_block_null_spaces(const Core::LinAlg::Solver& solver,
+        Core::LinAlg::MatrixType matrix_type, int init_block_number) const;
 
     /*--- calculate and update -----------------------------------------------*/
 
@@ -1156,7 +1153,13 @@ namespace ScaTra
 
     /*--- set, prepare, and predict ------------------------------------------*/
     //! compute null space information associated with global system matrix if applicable
-    void compute_null_space_if_necessary() const;
+    // void compute_null_space_if_necessary() const;
+
+    //! compute null space information associated with global system matrix
+    void compute_null_space() const;
+
+    //! compute null space information associated for global system matrix with block structure
+    void compute_null_space_block_system() const;
 
     //! create scalar handler
     virtual void create_scalar_handler();
@@ -1227,6 +1230,10 @@ namespace ScaTra
 
     //! solver
     std::shared_ptr<Core::LinAlg::Solver> solver_;
+
+    //! solver for the global system of equations during calculation of the initial potential field
+    //! or initial time derivative
+    std::shared_ptr<Core::LinAlg::Solver> init_calc_solver_;
 
     //! parameter list
     const std::shared_ptr<Teuchos::ParameterList> params_;

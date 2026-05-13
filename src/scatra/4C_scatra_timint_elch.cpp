@@ -2081,7 +2081,7 @@ void ScaTra::ScaTraTimIntElch::calc_initial_potential_field()
     solver_params.projector = projector_;
 
     // solve final system of equations incrementally
-    strategy_->solve(solver_, sysmat_, increment_, residual_, phinp_, 1, solver_params);
+    strategy_->solve(init_calc_solver_, sysmat_, increment_, residual_, phinp_, 1, solver_params);
 
     // determine time needed for solving global system of equations
     dtsolve_ = Teuchos::Time::wallTime() - time;

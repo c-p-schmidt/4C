@@ -68,14 +68,14 @@ SSI::SsiMono::SsiMono(MPI_Comm comm, const Teuchos::ParameterList& globaltimepar
               SSI::Utils::problem_from_instance()->io_params(), "VERBOSITY"))),
       timer_(std::make_shared<Teuchos::Time>("SSI_Mono", true))
 {
-  const auto init_pot_calc_linear_solver =
-      globaltimeparams.sublist("ELCH").get<std::optional<int>>("INIT_POT_CALC_LINEAR_SOLVER");
+  const auto init_calc_linear_solver =
+      globaltimeparams.sublist("ELCH").get<std::optional<int>>("INIT_CALC_LINEAR_SOLVER");
 
-  if (init_pot_calc_linear_solver.has_value())
+  if (init_calc_linear_solver.has_value())
   {
-    init_pot_calc_solver_ = std::make_shared<Core::LinAlg::Solver>(
-        SSI::Utils::problem_from_instance()->solver_params(init_pot_calc_linear_solver.value()),
-        comm, SSI::Utils::problem_from_instance()->solver_params_callback(),
+    init_calc_solver_ = std::make_shared<Core::LinAlg::Solver>(
+        SSI::Utils::problem_from_instance()->solver_params(init_calc_linear_solver.value()), comm,
+        SSI::Utils::problem_from_instance()->solver_params_callback(),
         Teuchos::getIntegralValue<Core::IO::Verbositylevel>(
             SSI::Utils::problem_from_instance()->io_params(), "VERBOSITY"));
   }
@@ -83,7 +83,7 @@ SSI::SsiMono::SsiMono(MPI_Comm comm, const Teuchos::ParameterList& globaltimepar
   {
     // use the linear solver of the main algorithm if no dedicated solver for the initial potential
     // calculation has been set
-    init_pot_calc_solver_ = solver_;
+    init_calc_solver_ = solver_;
   }
 }
 
@@ -394,18 +394,40 @@ void SSI::SsiMono::evaluate_off_diag_contributions() const
  *-------------------------------------------------------------------------------*/
 void SSI::SsiMono::build_null_spaces(Core::LinAlg::Solver& solver) const
 {
-  switch (scatra_field()->matrix_type())
+  // store number of matrix block associated with structural field as string
+  std::stringstream iblockstr;
+  iblockstr << ssi_maps_->get_block_positions(Subproblem::structure).at(0) + 1;
+
+  Teuchos::ParameterList& blocksmootherparams =
+      solver.params().sublist("Inverse" + iblockstr.str());
+
+  /*if (solver.params().isSublist("AMGnxn Parameters"))
+  {
+    blocksmootherparams.sublist("Belos Parameters");
+    blocksmootherparams.sublist("MueLu Parameters");
+
+    Core::FE::compute_null_space_if_necessary(
+        *structure_field()->discretization(), blocksmootherparams);
+  }
+  else*/
+  {
+    Core::LinearSolver::Parameters::compute_solver_parameters(
+        *structure_field()->discretization(), blocksmootherparams);
+  }
+
+  // all scalar transport-related blocks
+  switch (const auto matrix_type = scatra_field()->matrix_type())
   {
     case Core::LinAlg::MatrixType::block_condition:
     case Core::LinAlg::MatrixType::block_condition_dof:
     {
       // equip smoother for scatra matrix blocks with null space
       scatra_field()->build_block_null_spaces(
-          solver, ssi_maps_->get_block_positions(Subproblem::scalar_transport).at(0));
+          solver, matrix_type, ssi_maps_->get_block_positions(Subproblem::scalar_transport).at(0));
       if (is_scatra_manifold())
       {
         scatra_manifold()->build_block_null_spaces(
-            solver, ssi_maps_->get_block_positions(Subproblem::manifold).at(0));
+            solver, matrix_type, ssi_maps_->get_block_positions(Subproblem::manifold).at(0));
       }
       break;
     }
@@ -438,27 +460,6 @@ void SSI::SsiMono::build_null_spaces(Core::LinAlg::Solver& solver) const
     {
       FOUR_C_THROW("Invalid matrix type associated with scalar transport field!");
     }
-  }
-
-  // store number of matrix block associated with structural field as string
-  std::stringstream iblockstr;
-  iblockstr << ssi_maps_->get_block_positions(Subproblem::structure).at(0) + 1;
-
-  Teuchos::ParameterList& blocksmootherparams =
-      solver.params().sublist("Inverse" + iblockstr.str());
-
-  if (solver.params().isSublist("AMGnxn Parameters"))
-  {
-    blocksmootherparams.sublist("Belos Parameters");
-    blocksmootherparams.sublist("MueLu Parameters");
-
-    Core::FE::compute_null_space_if_necessary(
-        *structure_field()->discretization(), blocksmootherparams);
-  }
-  else
-  {
-    Core::LinearSolver::Parameters::compute_solver_parameters(
-        *structure_field()->discretization(), blocksmootherparams);
   }
 }
 
@@ -740,7 +741,9 @@ void SSI::SsiMono::setup_system()
       // feed block preconditioner with null space information for each block of global block system
       // matrix
       build_null_spaces(*solver_);
-      if (init_pot_calc_solver_ != nullptr) build_null_spaces(*init_pot_calc_solver_);
+      // in case no initial calculation solver is set the other one is just reused, and we do not
+      // need to additionally call build_null_spaces
+      if (init_calc_solver_ != solver_) build_null_spaces(*init_calc_solver_);
 
       break;
     }
@@ -1267,7 +1270,7 @@ void SSI::SsiMono::calc_initial_potential_field()
     // store time before solving global system of equations
     const double time_before_solving = timer_->wallTime();
 
-    solve_linear_system(*init_pot_calc_solver_);
+    solve_linear_system(*init_calc_solver_);
 
     // time needed for solving global system of equations
     double my_solve_time = timer_->wallTime() - time_before_solving;

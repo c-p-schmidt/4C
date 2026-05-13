@@ -39,6 +39,11 @@ void Core::LinearSolver::Parameters::compute_solver_parameters(
   int dimns = -1;
 
   // set parameter information for solver
+  if (solverlist.isParameter("PDE equations"))
+  {
+    dimns = solverlist.get<int>("PDE equations");
+  }
+  else
   {
     int numdf = -1;
 
@@ -134,7 +139,11 @@ void Core::LinearSolver::Parameters::fix_null_space(std::string field,
   const int nullspaceLength = nullspace->local_length();
   const int newmapLength = newmap.num_my_elements();
 
-  if (nullspaceLength == newmapLength) return;
+  if (nullspaceLength == newmapLength)
+  {
+    std::cout << "Nullspace map length matches new map length, no fix necessary\n";
+    return;
+  }
   if (nullspaceLength != oldmap.num_my_elements())
     FOUR_C_THROW("Nullspace map of length {} does not match old map length of {}", nullspaceLength,
         oldmap.num_my_elements());
@@ -169,8 +178,10 @@ Core::LinearSolver::Parameters::extract_nullspace_from_parameterlist(
     const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node>& row_map,
     const Teuchos::ParameterList& list)
 {
-  auto nullspace_data = list.get<std::shared_ptr<Core::LinAlg::MultiVector<double>>>("nullspace");
-  if (!nullspace_data) FOUR_C_THROW("Nullspace data is null.");
+  const auto nullspace_data =
+      list.get<std::shared_ptr<Core::LinAlg::MultiVector<double>>>("nullspace");
+  FOUR_C_ASSERT_ALWAYS(
+      nullspace_data != nullptr, "Nullspace data is not available in parameter list.");
 
   Teuchos::RCP<Xpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>> nullspace =
       Teuchos::make_rcp<Xpetra::EpetraMultiVectorT<GlobalOrdinal, Node>>(

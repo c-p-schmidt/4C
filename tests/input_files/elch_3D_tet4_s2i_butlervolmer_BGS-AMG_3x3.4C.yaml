@@ -40,6 +40,8 @@ SOLVER 1:
   SOLVER_XML_FILE: "xml/linear_solver/iterative_gmres_template.xml"
   AZPREC: Teko
   PRECONDITIONER_XML_FILE: "xml/block_preconditioner/electrochemistry_BGS-AMG_3x3.xml"
+SOLVER 2:
+  SOLVER: MUMPS
 MATERIALS:
   - MAT: 1
     MAT_electrode:
