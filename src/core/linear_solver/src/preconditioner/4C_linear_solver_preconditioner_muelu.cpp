@@ -149,10 +149,10 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
               crsA->getRowMap()->getGlobalNumElements(), crsA->getRowMap()->getLocalElementList(),
               crsA->getRowMap()->getIndexBase(), striding, crsA->getRowMap()->getComm(), -1);
 
-      std::cout << "Block: " << inverse << ", number of equations: " << number_of_equations << '\n';
-      std::cout << "Submatrix: " << A->matrix(block, block).num_global_rows() << " x "
+      /*std::cout << "Block: " << inverse << ", number of equations: " << number_of_equations <<
+      '\n'; std::cout << "Submatrix: " << A->matrix(block, block).num_global_rows() << " x "
                 << A->matrix(block, block).num_global_cols() << '\n';
-      std::cout << "Map: " << map->getGlobalNumElements() << "\n";
+      std::cout << "Map: " << map->getGlobalNumElements() << "\n";*/
 
       maps.emplace_back(map);
     }
@@ -160,7 +160,7 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
     Teuchos::RCP<const Xpetra::Map<LO, GO, NO>> fullrangemap =
         Xpetra::MapUtils<LO, GO, NO>::concatenateMaps(maps);
 
-    std::cout << "\nFull range map: " << fullrangemap->getGlobalNumElements() << "\n\n";
+    // std::cout << "\nFull range map: " << fullrangemap->getGlobalNumElements() << "\n\n";
 
     Teuchos::RCP<const Xpetra::MapExtractor<SC, LO, GO, NO>> map_extractor =
         Xpetra::MapExtractorFactory<SC, LO, GO, NO>::Build(fullrangemap, maps);
@@ -179,15 +179,15 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
                 Teuchos::make_rcp<Xpetra::CrsMatrixWrap<SC, LO, GO, NO>>(crsA));
         bOp->setMatrix(row, col, mat);
 
-        std::cout << "Block: " << row << ", column: " << col
+        /*std::cout << "Block: " << row << ", column: " << col
                   << ", mat, rows: " << mat->getGlobalNumRows()
-                  << ", mat, cols: " << mat->getGlobalNumCols() << '\n';
+                  << ", mat, cols: " << mat->getGlobalNumCols() << '\n';*/
       }
     }
 
     bOp->fillComplete();
     // pmatrix_ = Xpetra::ThyraUtils<SC>::toThyra(bOp);
-    std::cout << "\nbOp num block range maps: " << bOp->getBlockedRangeMap()->getNumMaps()
+    /*std::cout << "\nbOp num block range maps: " << bOp->getBlockedRangeMap()->getNumMaps()
               << ", bOp num block domain maps:" << bOp->getBlockedDomainMap()->getNumMaps();
 
     std::cout << "\n\nbOp range maps:\n";
@@ -205,7 +205,7 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
     std::cout << "bOp range map extractors in thyra mode: "
               << bOp->getRangeMapExtractor()->getThyraMode() << "\n";
     std::cout << "bOp domain map extractors in thyra mode: "
-              << bOp->getDomainMapExtractor()->getThyraMode() << "\n\n";
+              << bOp->getDomainMapExtractor()->getThyraMode() << "\n\n";*/
 
     MueLu::ParameterListInterpreter<SC, LO, GO, NO> mueLuFactory(
         xmlFileName, *bOp->getRowMap()->getComm());
@@ -224,8 +224,8 @@ void Core::LinearSolver::MueLuPreconditioner::setup(
 
       H_->GetLevel(0)->Set("Nullspace" + std::to_string(block + 1), nullspace);
 
-      std::cout << "Block: " << inverse << ", nullspace length: " << nullspace->getGlobalLength()
-                << '\n';
+      /*std::cout << "Block: " << inverse << ", nullspace length: " << nullspace->getGlobalLength()
+                << '\n';*/
     }
 
     if (muelulist_.sublist("Belos Parameters").isParameter("contact sourceDofMap"))

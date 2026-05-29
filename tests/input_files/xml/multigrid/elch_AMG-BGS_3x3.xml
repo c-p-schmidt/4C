@@ -266,7 +266,7 @@
   <ParameterList name="Hierarchy">
     <Parameter name="max levels" type="int" value="3"/>
     <Parameter name="coarse: max size" type="int" value="1000"/>
-    <Parameter name="verbosity" type="string" value="None"/>
+    <Parameter name="verbosity" type="string" value="High"/>
     <ParameterList name="AllLevel">
       <Parameter name="startLevel" type="int" value="0"/>
       <Parameter name="Smoother" type="string" value="myBlockSmoother"/>

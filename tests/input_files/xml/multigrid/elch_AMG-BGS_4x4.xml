@@ -213,7 +213,7 @@
     <ParameterList name="myFourthGroup">
       <Parameter name="group" type="string" value="FactoryManager"/>
       <Parameter name="A" type="string" value="mySubBlockAFactory4"/>
-      <Parameter name="P" type="string" value="mySAPFact3"/>
+      <Parameter name="P" type="string" value="mySAPFact4"/>
       <Parameter name="Aggregates" type="string" value="myAggFact4"/>
       <Parameter name="Nullspace" type="string" value="myNspFact4"/>
       <Parameter name="CoarseMap" type="string" value="myCoarseMap4"/>
