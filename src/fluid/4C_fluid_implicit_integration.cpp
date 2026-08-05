@@ -3348,6 +3348,52 @@ void FLD::FluidImplicitTimeInt::write_runtime_output()
     }
   }
 
+  if (xwall_ != nullptr)
+  {
+    const std::vector<std::optional<std::string>> context(3, "xwall_enrvelnp");
+    runtime_output_writer_->append_result_data_vector_with_context(
+        *xwall_->get_output_vector(*velnp_), Core::IO::OutputEntity::dof, context);
+
+    runtime_output_writer_->append_result_data_vector_with_context(
+        *xwall_->get_tauw_vector(), Core::IO::OutputEntity::node, {"xwall_tauw"});
+  }
+
+  // only perform wall shear stress calculation when output is needed
+  if (write_wall_shear_stresses_ && xwall_ == nullptr)
+  {
+    const std::vector<std::optional<std::string>> context(3, "wss");
+    runtime_output_writer_->append_result_data_vector_with_context(
+        *stressmanager_->get_pre_calc_wall_shear_stresses(*trueresidual_),
+        Core::IO::OutputEntity::dof, context);
+  }
+
+  // only perform stress calculation when output is needed
+  if (writestresses_)
+  {
+    const std::vector<std::optional<std::string>> context(3, "traction");
+    runtime_output_writer_->append_result_data_vector_with_context(
+        *stressmanager_->get_pre_calc_stresses(*trueresidual_), Core::IO::OutputEntity::dof,
+        context);
+  }
+
+  if (physicaltype_ == FLUID::varying_density or physicaltype_ == FLUID::boussinesq or
+      physicaltype_ == FLUID::tempdepwater)
+  {
+    // We only want to output the last dof, which can be achieved by only adding actual content in
+    // the last entry of the context vector as all other components of the vector are ignored
+    // automatically.
+    // Thus we first need to find out how many dofs are there and then assign std::nullopt to the
+    // first num_dofs -1 entries in the context object and just add a proper name to the part of the
+    // vector that we actually want
+    const auto num_dofs = discret_->dof_row_map()->num_global_elements() /
+                          discret_->node_row_map()->num_global_elements();
+    std::vector<std::optional<std::string>> context(num_dofs - 1, std::nullopt);
+    context.emplace_back("scalar_field");
+
+    runtime_output_writer_->append_result_data_vector_with_context(
+        *scaaf_, Core::IO::OutputEntity::dof, context);
+  }
+
   if (runtime_output_params_.output_element_owner())
     runtime_output_writer_->append_element_owner("element_owner");
 
@@ -3359,6 +3405,7 @@ void FLD::FluidImplicitTimeInt::write_runtime_output()
   // finalize everything and write all required files to filesystem
   runtime_output_writer_->write_to_disk(time_, step_);
 }
+
 /*----------------------------------------------------------------------*
  *----------------------------------------------------------------------*/
 void FLD::FluidImplicitTimeInt::output()
@@ -3388,70 +3435,10 @@ void FLD::FluidImplicitTimeInt::write_output()
   {
     write_runtime_output();
   }
-  // step number and time
-  output_->new_step(step_, time_);
-
-  const bool will_be_written_in_restart = uprestart_ > 0 && step_ % uprestart_ == 0;
-
-  // time step, especially necessary for adaptive dt
-  output_->write_double("timestep", dta_);
-
-  // velocity/pressure vector
-  if (not will_be_written_in_restart)
-  {
-    output_->write_vector("velnp", velnp_);
-  }
-
-  // (hydrodynamic) pressure
-  const auto pressure = velpressplitter_->extract_cond_vector(*velnp_);
-  output_->write_vector("pressure", pressure);
-
-
-  if (xwall_ != nullptr)
-  {
-    output_->write_vector("xwall_enrvelnp", xwall_->get_output_vector(*velnp_));
-    if (not will_be_written_in_restart)
-      output_->write_vector("xwall_tauw", xwall_->get_tauw_vector());
-  }
 
   if (params_->get<bool>("GMSH_OUTPUT")) output_to_gmsh(step_, time_, false);
 
-  if (alefluid_)
-  {
-    if (not will_be_written_in_restart) output_->write_vector("dispnp", dispnp_);
-  }
-
-  if (physicaltype_ == FLUID::varying_density or physicaltype_ == FLUID::boussinesq or
-      physicaltype_ == FLUID::tempdepwater)
-  {
-    const std::shared_ptr<Core::LinAlg::Vector<double>> scalar_field =
-        velpressplitter_->extract_cond_vector(*scaaf_);
-    output_->write_vector("scalar_field", scalar_field);
-  }
-
-  // only perform stress calculation when output is needed
-  if (writestresses_)
-  {
-    output_->write_vector("traction", stressmanager_->get_pre_calc_stresses(*trueresidual_));
-  }
-  // only perform wall shear stress calculation when output is needed
-  if (write_wall_shear_stresses_ && xwall_ == nullptr)
-  {
-    output_->write_vector("wss", stressmanager_->get_pre_calc_wall_shear_stresses(*trueresidual_));
-  }
-
-  // biofilm growth
-  if (fldgrdisp_ != nullptr)
-  {
-    output_->write_vector("fld_growth_displ", fldgrdisp_);
-  }
-
   if (params_->get<bool>("COMPUTE_EKIN")) write_output_kinetic_energy();
-
-  // write domain decomposition for visualization (only once!)
-  output_->write_element_data(true);
-
-  if (step_ <= 1 and write_nodedata_first_step_) output_->write_node_data(true);
 }
 
 /*----------------------------------------------------------------------------*
