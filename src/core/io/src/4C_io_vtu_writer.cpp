@@ -66,34 +66,88 @@ std::string VtuWriter::output_file_name_master() const
 
 /*----------------------------------------------------------------------*
  *----------------------------------------------------------------------*/
+std::string VtuWriter::output_file_name_shared() const
+{
+  return working_directory_full_path_ + "/" + filename_base_ + writer_suffix();
+}
+
+/*----------------------------------------------------------------------*
+ *----------------------------------------------------------------------*/
 void VtuWriter::append_master_file_and_time_to_collection_file_mid_section_content()
+{
+  append_master_file_and_time_to_collection_file_mid_section_content(
+      filename_base_ + writer_p_suffix());
+}
+
+/*----------------------------------------------------------------------*
+ *----------------------------------------------------------------------*/
+void VtuWriter::append_master_file_and_time_to_collection_file_mid_section_content(
+    const std::string& master_file_name)
 {
   if (myrank_ != 0) return;
 
   // append this new master file to the stream of all written files and times
   // for later use as vtk collection file ('.pvd')
   VtkWriterBase::append_master_file_and_time_to_collection_file_mid_section_content(
-      filename_base_ + writer_p_suffix(),
-      determine_vtk_subdirectory_name_from_full_vtk_working_path(), time_);
+      master_file_name, determine_vtk_subdirectory_name_from_full_vtk_working_path(), time_);
 }
 
 /*----------------------------------------------------------------------*
  *----------------------------------------------------------------------*/
 void VtuWriter::write_vtk_headers(std::ostream& filestream, std::ostream& masterfilestream)
 {
+  // start master file on processor 0
+  if (myrank_ == 0) write_vtk_parallel_file_header(masterfilestream);
+
+  // start file on each individual processor
+  write_vtk_file_header(filestream);
+}
+
+/*----------------------------------------------------------------------*
+ *----------------------------------------------------------------------*/
+void VtuWriter::write_vtk_file_header(std::ostream& filestream)
+{
   // Todo: might need BigEndian on some systems
   const std::string byteorder = "LittleEndian";
 
   // Todo: specify xml version, vtk DataFile Version, ... if needed
 
+  throw_error_if_invalid_file_stream(filestream);
 
-  // start master file on processor 0
-  if (myrank_ == 0) write_vtk_header_master_file(masterfilestream, byteorder);
-
-  // start file on each individual processor
-  write_vtk_header_this_processor(filestream, byteorder);
+  filestream << "<?xml version=\"1.0\" ?> \n";
+  filestream << "<!-- \n";
+  filestream << "# vtk DataFile Version 3.0\n";
+  filestream << "-->\n";
+  filestream << "<VTKFile type=\"" << this->writer_string() << "\" version=\"0.1\"";
+  filestream << " compressor=\"vtkZLibDataCompressor\"";
+  filestream << " byte_order=\"" << byteorder << "\"";
+  filestream << ">\n";
+  filestream << "  " << this->writer_opening_tag() << "\n";
 
   currentPhase_ = INIT;
+}
+
+/*----------------------------------------------------------------------*
+ *----------------------------------------------------------------------*/
+void VtuWriter::write_vtk_parallel_file_header(std::ostream& masterfilestream)
+{
+  if (myrank_ != 0) return;
+
+  // Todo: might need BigEndian on some systems
+  const std::string byteorder = "LittleEndian";
+
+  // Todo: specify xml version, vtk DataFile Version, ... if needed
+
+  throw_error_if_invalid_file_stream(masterfilestream);
+
+  masterfilestream << "<?xml version=\"1.0\" ?> \n";
+  masterfilestream << "<!-- \n";
+  masterfilestream << "# vtk DataFile Version 3.0\n";
+  masterfilestream << "-->\n";
+  masterfilestream << "<VTKFile type=\"P" << this->writer_string() << "\" version=\"0.1\"";
+  masterfilestream << " byte_order=\"" << byteorder << "\"";
+  masterfilestream << ">\n";
+  masterfilestream << "  " << this->writer_p_opening_tag() << "\n";
 }
 
 /*----------------------------------------------------------------------*
@@ -142,41 +196,6 @@ void VtuWriter::write_vtk_time_and_or_cycle(std::ostream& filestream)
   std::map<std::string, Core::IO::visualization_vector_type_variant> empty_map;
   empty_map.clear();
   write_vtk_field_data_and_or_time_and_or_cycle(filestream, empty_map);
-}
-
-/*----------------------------------------------------------------------*
- *----------------------------------------------------------------------*/
-void VtuWriter::write_vtk_header_master_file(
-    std::ostream& masterfilestream, const std::string& byteorder)
-{
-  throw_error_if_invalid_file_stream(masterfilestream);
-
-  masterfilestream << "<?xml version=\"1.0\" ?> \n";
-  masterfilestream << "<!-- \n";
-  masterfilestream << "# vtk DataFile Version 3.0\n";
-  masterfilestream << "-->\n";
-  masterfilestream << "<VTKFile type=\"P" << this->writer_string() << "\" version=\"0.1\"";
-  masterfilestream << " byte_order=\"" << byteorder << "\"";
-  masterfilestream << ">\n";
-  masterfilestream << "  " << this->writer_p_opening_tag() << "\n";
-}
-
-/*----------------------------------------------------------------------*
- *----------------------------------------------------------------------*/
-void VtuWriter::write_vtk_header_this_processor(
-    std::ostream& filestream, const std::string& byteorder)
-{
-  throw_error_if_invalid_file_stream(filestream);
-
-  filestream << "<?xml version=\"1.0\" ?> \n";
-  filestream << "<!-- \n";
-  filestream << "# vtk DataFile Version 3.0\n";
-  filestream << "-->\n";
-  filestream << "<VTKFile type=\"" << this->writer_string() << "\" version=\"0.1\"";
-  filestream << " compressor=\"vtkZLibDataCompressor\"";
-  filestream << " byte_order=\"" << byteorder << "\"";
-  filestream << ">\n";
-  filestream << "  " << this->writer_opening_tag() << "\n";
 }
 
 /*----------------------------------------------------------------------*
@@ -297,8 +316,22 @@ void VtuWriter::write_data_array_this_processor(std::ostream& filestream,
  *----------------------------------------------------------------------*/
 void VtuWriter::write_vtk_footers(std::ostream& filestream, std::ostream& masterfilestream)
 {
+  // end the scalar fields and close the current piece
+  write_vtk_piece_footer(filestream, masterfilestream);
+
+  // close the master file on processor 0
+  if (myrank_ == 0) write_vtk_parallel_file_footer(masterfilestream);
+
+  // close the file on each individual processor
+  write_vtk_file_footer(filestream);
+}
+
+/*----------------------------------------------------------------------*
+ *----------------------------------------------------------------------*/
+void VtuWriter::write_vtk_piece_footer(std::ostream& filestream, std::ostream& masterfilestream)
+{
   throw_error_if_invalid_file_stream(filestream);
-  throw_error_if_invalid_file_stream(masterfilestream);
+  if (myrank_ == 0) throw_error_if_invalid_file_stream(masterfilestream);
 
   // end the scalar fields
   switch (currentPhase_)
@@ -333,18 +366,28 @@ void VtuWriter::write_vtk_footers(std::ostream& filestream, std::ostream& master
     }
   }
 
-
-  if (myrank_ == 0) write_vtk_footer_master_file(masterfilestream);
-
-  write_vtk_footer_this_processor(filestream);
+  filestream << "    </Piece>\n";
 }
 
 /*----------------------------------------------------------------------*
  *----------------------------------------------------------------------*/
-void VtuWriter::write_vtk_footer_master_file(std::ostream& masterfilestream)
+void VtuWriter::write_vtk_file_footer(std::ostream& filestream)
 {
-  throw_error_if_invalid_file_stream(masterfilestream);
+  throw_error_if_invalid_file_stream(filestream);
 
+  filestream << "  </" << this->writer_string() << ">\n";
+  filestream << "</VTKFile>\n";
+
+  filestream << std::flush;
+}
+
+/*----------------------------------------------------------------------*
+ *----------------------------------------------------------------------*/
+void VtuWriter::write_vtk_parallel_file_footer(std::ostream& masterfilestream)
+{
+  if (myrank_ != 0) return;
+
+  throw_error_if_invalid_file_stream(masterfilestream);
 
   // generate information about 'pieces' (piece = part that is written by individual processor)
   using pptags_type = std::vector<std::string>;
@@ -364,21 +407,6 @@ void VtuWriter::write_vtk_footer_master_file(std::ostream& masterfilestream)
     Core::IO::cout(Core::IO::verbose)
         << "\nVtk Files '" << filename_base_ << "' written. Time: " << std::scientific
         << std::setprecision(std::numeric_limits<double>::digits10 - 1) << time_ << Core::IO::endl;
-}
-
-/*----------------------------------------------------------------------*
- *----------------------------------------------------------------------*/
-void VtuWriter::write_vtk_footer_this_processor(std::ostream& filestream)
-{
-  throw_error_if_invalid_file_stream(filestream);
-
-
-  filestream << "    </Piece>\n";
-
-  filestream << "  </" << this->writer_string() << ">\n";
-  filestream << "</VTKFile>\n";
-
-  filestream << std::flush;
 }
 
 /*----------------------------------------------------------------------*

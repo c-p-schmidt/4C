@@ -1,6 +1,7 @@
 TITLE:
-  - "This is a simple test that tests the extrapolation of stressees from Gauss points to nodes for a"
-  - "hex8 discretization"
+  - "Simple testcase to exercise the collective VTU output writer."
+  - "All ranks write their geometry and displacement into a single shared"
+  - "VTU file per time step via MPI-IO (OUTPUT_WRITER vtu_collective)."
 PROBLEM TYPE:
   PROBLEMTYPE: "Structure"
 IO:
@@ -11,7 +12,7 @@ IO:
 IO/RUNTIME VTK OUTPUT:
   INTERVAL_STEPS: 1
   OUTPUT_DATA_FORMAT: ascii
-  OUTPUT_WRITER: vtu_per_rank
+  OUTPUT_WRITER: vtu_collective
 IO/RUNTIME VTK OUTPUT/STRUCTURE:
   OUTPUT_STRUCTURE: true
   DISPLACEMENT: true
