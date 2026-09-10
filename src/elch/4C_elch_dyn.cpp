@@ -57,8 +57,8 @@ void elch_dyn(int restart)
   // choose algorithm depending on velocity field type
   switch (veltype)
   {
-    case ScaTra::velocity_zero:      // zero  (see case 1)
-    case ScaTra::velocity_function:  // spatial function
+    case ScaTra::VelocityField::zero:
+    case ScaTra::VelocityField::function:
     {
       // we directly use the elements from the scalar transport elements section
       if (scatradis->num_global_nodes() == 0)
@@ -119,7 +119,7 @@ void elch_dyn(int restart)
 
       break;
     }
-    case ScaTra::velocity_Navier_Stokes:  // Navier_Stokes
+    case ScaTra::VelocityField::from_other_field:
     {
       // we use the fluid discretization as layout for the scalar transport discretization
       if (fluiddis->num_global_nodes() == 0) FOUR_C_THROW("Fluid discretization is empty!");
@@ -142,15 +142,14 @@ void elch_dyn(int restart)
         for (int i = 0; i < scatradis->num_my_col_elements(); ++i)
         {
           auto* element = dynamic_cast<Discret::Elements::Transport*>(scatradis->l_col_element(i));
-          if (element == nullptr)
-            FOUR_C_THROW("Invalid element type!");
-          else
-            element->set_impl_type(impltype);
+          FOUR_C_ASSERT_ALWAYS(element != nullptr, "Invalid element type!");
+          element->set_impl_type(impltype);
         }
       }
-
       else
+      {
         FOUR_C_THROW("Fluid AND ScaTra discretization present. This is not supported.");
+      }
 
       // support for turbulent flow statistics
       const auto& fdyn = (problem->fluid_dynamic_params());

@@ -629,8 +629,8 @@ void FS3I::PartFPS3I::set_velocity_fields()
   const auto cdvel = Teuchos::getIntegralValue<ScaTra::VelocityField>(scatradyn, "VELOCITYFIELD");
   switch (cdvel)
   {
-    case ScaTra::velocity_zero:
-    case ScaTra::velocity_function:
+    case ScaTra::VelocityField::zero:
+    case ScaTra::VelocityField::function:
     {
       for (auto scatra : scatravec_)
       {
@@ -638,7 +638,7 @@ void FS3I::PartFPS3I::set_velocity_fields()
       }
       break;
     }
-    case ScaTra::velocity_Navier_Stokes:
+    case ScaTra::VelocityField::from_other_field:
     {
       std::vector<std::shared_ptr<const Core::LinAlg::Vector<double>>> convel;
       std::vector<std::shared_ptr<const Core::LinAlg::Vector<double>>> vel;

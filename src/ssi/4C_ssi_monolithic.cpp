@@ -504,18 +504,15 @@ void SSI::SsiMono::init(MPI_Comm comm, const Teuchos::ParameterList& globaltimep
     const std::string& struct_disname, const std::string& scatra_disname, bool isAle)
 {
   // check input parameters for scalar transport field
-  if (Teuchos::getIntegralValue<ScaTra::VelocityField>(scatraparams, "VELOCITYFIELD") !=
-      ScaTra::velocity_Navier_Stokes)
-    FOUR_C_THROW("Invalid type of velocity field for scalar-structure interaction!");
+  FOUR_C_ASSERT_ALWAYS(Teuchos::getIntegralValue<ScaTra::VelocityField>(scatraparams,
+                           "VELOCITYFIELD") == ScaTra::VelocityField::from_other_field,
+      "Invalid type of velocity field for scalar-structure interaction, use 'from_other_field'!");
 
-  if (Teuchos::getIntegralValue<Solid::DynamicType>(structparams, "DYNAMICTYPE") ==
-      Solid::DynamicType::Statics)
-  {
-    FOUR_C_THROW(
-        "Mass conservation is not fulfilled if 'Statics' time integration is chosen since the "
-        "deformation velocities are incorrectly calculated.\n"
-        "Use 'NEGLECTINERTIA Yes' in combination with another time integration scheme instead!");
-  }
+  FOUR_C_ASSERT_ALWAYS(Teuchos::getIntegralValue<Solid::DynamicType>(structparams, "DYNAMICTYPE") !=
+                           Solid::DynamicType::Statics,
+      "Mass conservation is not fulfilled if 'Statics' time integration is chosen since the "
+      "deformation velocities are incorrectly calculated.\n"
+      "Use 'NEGLECTINERTIA Yes' in combination with another time integration scheme instead!");
 
   // initialize strategy for Newton-Raphson convergence check
   switch (Teuchos::getIntegralValue<SSI::ScaTraTimIntType>(globaltimeparams, "SCATRATIMINTTYPE"))

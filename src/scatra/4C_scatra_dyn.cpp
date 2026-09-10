@@ -73,27 +73,23 @@ void scatra_dyn(int restart)
 
   if (scatradis->num_global_nodes() == 0)
   {
-    if (fieldcoupling != ScaTra::coupling_match and veltype != ScaTra::velocity_Navier_Stokes)
-    {
-      FOUR_C_THROW(
-          "If you want matching fluid and scatra meshes, do clone you fluid mesh and use "
-          "FIELDCOUPLING match!");
-    }
+    FOUR_C_ASSERT_ALWAYS(fieldcoupling == ScaTra::coupling_match or
+                             veltype == ScaTra::VelocityField::from_other_field,
+        "If you want matching fluid and scatra meshes, do clone you fluid mesh and use "
+        "FIELDCOUPLING match!");
   }
   else
   {
-    if (fieldcoupling != ScaTra::coupling_volmortar and veltype == ScaTra::velocity_Navier_Stokes)
-    {
-      FOUR_C_THROW(
-          "If you want non-matching fluid and scatra meshes, "
-          "you need to use FIELDCOUPLING volmortar!");
-    }
+    FOUR_C_ASSERT_ALWAYS(fieldcoupling == ScaTra::coupling_volmortar or
+                             veltype != ScaTra::VelocityField::from_other_field,
+        "If you want non-matching fluid and scatra meshes, you need to use FIELDCOUPLING "
+        "volmortar!");
   }
 
   switch (veltype)
   {
-    case ScaTra::velocity_zero:      // zero  (see case 1)
-    case ScaTra::velocity_function:  // function
+    case ScaTra::VelocityField::zero:
+    case ScaTra::VelocityField::function:
     {
       // we directly use the elements from the scalar transport elements section
       if (scatradis->num_global_nodes() == 0)
@@ -189,7 +185,7 @@ void scatra_dyn(int restart)
       scatraonly.scatra_field()->test_results();
       break;
     }
-    case ScaTra::velocity_Navier_Stokes:  // Navier_Stokes
+    case ScaTra::VelocityField::from_other_field:
     {
       // we use the fluid discretization as layout for the scalar transport discretization
       if (fluiddis->num_global_nodes() == 0) FOUR_C_THROW("Fluid discretization is empty!");

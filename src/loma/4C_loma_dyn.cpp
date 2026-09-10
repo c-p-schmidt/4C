@@ -64,8 +64,8 @@ void loma_dyn(int restart)
   // choose algorithm depending on type of velocity field
   switch (veltype)
   {
-    case ScaTra::velocity_zero:      // zero velocity field (see case 1)
-    case ScaTra::velocity_function:  // velocity field prescribed by function
+    case ScaTra::VelocityField::zero:
+    case ScaTra::VelocityField::function:
     {
       // directly use elements from input section 'transport elements'
       if (scatradis->num_global_nodes() == 0)
@@ -117,7 +117,7 @@ void loma_dyn(int restart)
 
       break;
     }
-    case ScaTra::velocity_Navier_Stokes:  // Navier_Stokes
+    case ScaTra::VelocityField::from_other_field:
     {
       // use fluid discretization as layout for scatra discretization
       if (fluiddis->num_global_nodes() == 0) FOUR_C_THROW("Fluid discretization is empty!");

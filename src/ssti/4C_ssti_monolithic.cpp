@@ -13,7 +13,6 @@
 #include "4C_global_data.hpp"
 #include "4C_io_control.hpp"
 #include "4C_linalg_equilibrate.hpp"
-#include "4C_linalg_utils_sparse_algebra_create.hpp"
 #include "4C_linear_solver_method_linalg.hpp"
 #include "4C_linear_solver_method_parameters.hpp"
 #include "4C_scatra_timint_implicit.hpp"
@@ -49,13 +48,13 @@ SSTI::SSTIMono::SSTIMono(MPI_Comm comm, const Teuchos::ParameterList& globaltime
       dtnewton_(0.0),
       dtsolve_(0.0),
       timer_(std::make_shared<Teuchos::Time>("SSTI_Monolithic", true)),
-      equilibration_method_{Teuchos::getIntegralValue<Core::LinAlg::EquilibrationMethod>(
+      equilibration_method_{.global = Teuchos::getIntegralValue<Core::LinAlg::EquilibrationMethod>(
                                 globaltimeparams.sublist("MONOLITHIC"), "EQUILIBRATION"),
-          Teuchos::getIntegralValue<Core::LinAlg::EquilibrationMethod>(
+          .scatra = Teuchos::getIntegralValue<Core::LinAlg::EquilibrationMethod>(
               globaltimeparams.sublist("MONOLITHIC"), "EQUILIBRATION_SCATRA"),
-          Teuchos::getIntegralValue<Core::LinAlg::EquilibrationMethod>(
+          .structure = Teuchos::getIntegralValue<Core::LinAlg::EquilibrationMethod>(
               globaltimeparams.sublist("MONOLITHIC"), "EQUILIBRATION_STRUCTURE"),
-          Teuchos::getIntegralValue<Core::LinAlg::EquilibrationMethod>(
+          .thermo = Teuchos::getIntegralValue<Core::LinAlg::EquilibrationMethod>(
               globaltimeparams.sublist("MONOLITHIC"), "EQUILIBRATION_THERMO")},
       matrixtype_(Teuchos::getIntegralValue<Core::LinAlg::MatrixType>(
           globaltimeparams.sublist("MONOLITHIC"), "MATRIXTYPE")),
@@ -188,9 +187,10 @@ void SSTI::SSTIMono::init(MPI_Comm comm, const Teuchos::ParameterList& sstitimep
     const Teuchos::ParameterList& structparams)
 {
   // check input parameters for scalar transport field
-  if (Teuchos::getIntegralValue<ScaTra::VelocityField>(scatraparams, "VELOCITYFIELD") !=
-      ScaTra::velocity_Navier_Stokes)
-    FOUR_C_THROW("Invalid type of velocity field for scalar-structure interaction!");
+  FOUR_C_ASSERT_ALWAYS(Teuchos::getIntegralValue<ScaTra::VelocityField>(scatraparams,
+                           "VELOCITYFIELD") == ScaTra::VelocityField::from_other_field,
+      "Invalid type of velocity field for scalar-structure-thermo interaction, use "
+      "'from_other_field'!");
 
   // call base class routine
   SSTIAlgorithm::init(comm, sstitimeparams, scatraparams, thermoparams, structparams);
@@ -206,16 +206,13 @@ void SSTI::SSTIMono::output()
   {
     std::cout << "+------------+-------------------+--------------+--------------+--------------+--"
                  "------------+--------------+--------------+--------------+--------------+--------"
-                 "------+"
-              << std::endl;
+                 "------+\n";
     std::cout << "| Computation time for this timestep: " << std::setw(10) << time_statistics()[2]
               << "                                                                                 "
-                 "                                       |"
-              << std::endl;
+                 "                                       |\n";
     std::cout << "+--------------------------------------------------------------------------------"
                  "---------------------------------------------------------------------------------"
-                 "------+"
-              << std::endl;
+                 "------+\n";
   }
 
   scatra_field()->check_and_write_output_and_restart();
