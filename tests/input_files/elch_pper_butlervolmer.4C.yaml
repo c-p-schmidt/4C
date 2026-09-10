@@ -33,7 +33,7 @@ SCALAR TRANSPORT DYNAMIC:
   THETA: 0.66
   RESTARTEVERY: 10
   MATID: 5
-  VELOCITYFIELD: "Navier_Stokes"
+  VELOCITYFIELD: from_other_field
   INITIALFIELD: "field_by_function"
   INITFUNCNO: 3
   CALCFLUX_DOMAIN: "total"

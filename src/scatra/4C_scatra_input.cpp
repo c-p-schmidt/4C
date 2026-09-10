@@ -14,7 +14,6 @@
 #include "4C_io_input_spec_builders.hpp"
 #include "4C_linalg_equilibrate.hpp"
 #include "4C_linalg_sparseoperator.hpp"
-#include "4C_utils_enum.hpp"
 #include "4C_utils_exceptions.hpp"
 
 #include <utility>
@@ -77,16 +76,13 @@ std::vector<Core::IO::InputSpec> ScaTra::valid_parameters()
               "RESTARTEVERY", {.description = "Increment for writing restart", .default_value = 1}),
           parameter<int>("MATID",
               {.description = "Material ID for automatic mesh generation", .default_value = -1}),
-
-          deprecated_selection<ScaTra::VelocityField>("VELOCITYFIELD",
-              {
-                  {"zero", velocity_zero},
-                  {"function", velocity_function},
-                  {"Navier_Stokes", velocity_Navier_Stokes},
-              },
-              {.description = "type of velocity field used for scalar transport problems",
-                  .default_value = velocity_zero}),
-
+          parameter<ScaTra::VelocityField>("VELOCITYFIELD",
+              {.description =
+                      "The type of velocity field used for scalar transport problems. Available "
+                      "options are 'zero' velocity field, velocity field defined by a 'function', "
+                      "and velocity field defined 'from_other_field', where the velocity field is "
+                      "taken from another field (e.g. fluid, solid).",
+                  .default_value = ScaTra::VelocityField::zero}),
           parameter<int>(
               "VELFUNCNO", {.description = "function number for scalar transport velocity field",
                                .default_value = -1}),

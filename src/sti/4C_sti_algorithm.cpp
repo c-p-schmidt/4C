@@ -40,7 +40,7 @@ STI::Algorithm::Algorithm(MPI_Comm comm, const Teuchos::ParameterList& stidyn,
 {
   // check input parameters for scatra and thermo fields
   if (Teuchos::getIntegralValue<ScaTra::VelocityField>(*fieldparameters_, "VELOCITYFIELD") !=
-      ScaTra::velocity_zero)
+      ScaTra::VelocityField::zero)
     FOUR_C_THROW("Scatra-thermo interaction with convection not yet implemented!");
 
   // initialize scatra time integrator

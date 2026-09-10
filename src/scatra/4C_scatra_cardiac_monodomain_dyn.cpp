@@ -77,8 +77,8 @@ void scatra_cardiac_monodomain_dyn(int restart)
   const auto veltype = Teuchos::getIntegralValue<ScaTra::VelocityField>(scatradyn, "VELOCITYFIELD");
   switch (veltype)
   {
-    case ScaTra::velocity_zero:      // zero  (see case 1)
-    case ScaTra::velocity_function:  // function
+    case ScaTra::VelocityField::zero:
+    case ScaTra::VelocityField::function:
     {
       // we directly use the elements from the scalar transport elements section
       if (scatradis->num_global_nodes() == 0)
@@ -185,11 +185,12 @@ void scatra_cardiac_monodomain_dyn(int restart)
 
       break;
     }
-    case ScaTra::velocity_Navier_Stokes:  // Navier_Stokes
+    case ScaTra::VelocityField::from_other_field:
     {
       FOUR_C_THROW(
-          "Navier Stokes case not implemented for cardiac monodomain scalar transport problem");
-    }  // case 2
+          "Applying the velocity field from another field is not implemented for cardiac "
+          "monodomain scalar transport problem");
+    }
     default:
     {
       FOUR_C_THROW("unknown velocity field type for transport of passive scalar");

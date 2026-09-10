@@ -1131,7 +1131,7 @@ void ScaTra::ScaTraTimIntImpl::prepare_time_step()
   // -------------------------------------------------------------------
   //     update velocity field if given by function (it might depend on time)
   // -------------------------------------------------------------------
-  if (velocity_field_type_ == ScaTra::velocity_function) set_velocity_field_from_function();
+  if (velocity_field_type_ == ScaTra::VelocityField::function) set_velocity_field_from_function();
 
   // -------------------------------------------------------------------
   //     update external force given by function (it might depend on time)
@@ -1223,13 +1223,13 @@ void ScaTra::ScaTraTimIntImpl::set_velocity_field_from_function()
 
   switch (velocity_field_type_)
   {
-    case ScaTra::velocity_zero:
+    case ScaTra::VelocityField::zero:
     {
       // no action needed in case for zero velocity field
       break;
     }
 
-    case ScaTra::velocity_function:
+    case ScaTra::VelocityField::function:
     {
       const int velfuncno = params_->get<int>("VELFUNCNO");
 
@@ -1452,7 +1452,7 @@ void ScaTra::ScaTraTimIntImpl::set_convective_velocity(
   TEUCHOS_FUNC_TIME_MONITOR("SCATRA: set convective velocity field");
 
   // checks
-  FOUR_C_ASSERT(velocity_field_type_ == ScaTra::velocity_Navier_Stokes,
+  FOUR_C_ASSERT(velocity_field_type_ == ScaTra::VelocityField::from_other_field,
       "Wrong set_velocity_field() called for velocity field type {}!", velocity_field_type_);
   FOUR_C_ASSERT(nds_vel() < discret_->num_dof_sets(), "Too few dof sets on scatra discretization!");
 
@@ -1469,7 +1469,7 @@ void ScaTra::ScaTraTimIntImpl::set_fine_scale_velocity(
   TEUCHOS_FUNC_TIME_MONITOR("SCATRA: set fine scale velocity field");
 
   // checks
-  FOUR_C_ASSERT(velocity_field_type_ == ScaTra::velocity_Navier_Stokes,
+  FOUR_C_ASSERT(velocity_field_type_ == ScaTra::VelocityField::from_other_field,
       "Wrong set_velocity_field() called for velocity field type {}!", velocity_field_type_);
   FOUR_C_ASSERT(nds_vel() < discret_->num_dof_sets(), "Too few dof sets on scatra discretization!");
 
@@ -1503,7 +1503,7 @@ void ScaTra::ScaTraTimIntImpl::set_velocity_field(const Core::LinAlg::Vector<dou
   TEUCHOS_FUNC_TIME_MONITOR("SCATRA: set velocity field");
 
   // checks
-  FOUR_C_ASSERT(velocity_field_type_ == ScaTra::velocity_Navier_Stokes,
+  FOUR_C_ASSERT(velocity_field_type_ == ScaTra::VelocityField::from_other_field,
       "Wrong set_velocity_field() called for velocity field type {}!", velocity_field_type_);
   FOUR_C_ASSERT(nds_vel() < discret_->num_dof_sets(), "Too few dof sets on scatra discretization!");
 
@@ -1737,8 +1737,8 @@ void ScaTra::ScaTraTimIntImpl::collect_runtime_output_data()
       *phinp_, Core::IO::OutputEntity::dof, phi_components_);
 
   // convective velocity (written in case of coupled simulations since volmortar is now possible)
-  if (velocity_field_type_ == ScaTra::velocity_function or
-      velocity_field_type_ == ScaTra::velocity_Navier_Stokes)
+  if (velocity_field_type_ == ScaTra::VelocityField::function or
+      velocity_field_type_ == ScaTra::VelocityField::from_other_field)
   {
     auto convel = discret_->get_state(nds_vel(), "convective velocity field");
     if (convel == nullptr) FOUR_C_THROW("Cannot get state vector convective velocity");

@@ -47,11 +47,11 @@ namespace ScaTra
   };
 
   /// type of convective velocity field
-  enum VelocityField
+  enum class VelocityField : std::uint8_t
   {
-    velocity_zero,
-    velocity_function,
-    velocity_Navier_Stokes
+    zero,             ///< zero velocity field
+    function,         ///< velocity field defined by a function
+    from_other_field  ///< velocity field defined by another field, e.g. fluid, or solid field
   };
 
   /// initial field for scalar transport problem
