@@ -1870,14 +1870,14 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
 {
   switch (init)
   {
-    case ScaTra::initfield_zero_field:
+    case ScaTra::InitialField::zero_field:
     {
       phin_->put_scalar(0.0);
       phinp_->put_scalar(0.0);
       break;
     }
-    case ScaTra::initfield_field_by_function:
-    case ScaTra::initfield_disturbed_field_by_function:
+    case ScaTra::InitialField::field_by_function:
+    case ScaTra::InitialField::disturbed_field_by_function:
     {
       const Core::LinAlg::Map* dofrowmap = discret_->dof_row_map();
 
@@ -1925,7 +1925,7 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
       phinp_->update(1.0, *phin_, 0.0);
 
       // add random perturbation for initial field of turbulent flows
-      if (init == ScaTra::initfield_disturbed_field_by_function)
+      if (init == ScaTra::InitialField::disturbed_field_by_function)
       {
         // random noise is relative to difference of max-min values of initial profile
         double perc =
@@ -1957,7 +1957,7 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
       }
       break;
     }
-    case ScaTra::initfield_field_by_condition:
+    case ScaTra::InitialField::field_by_condition:
     {
       // set initial field for ALL existing scatra fields in condition
       const std::string field = "ScaTra";
@@ -2002,7 +2002,7 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
       break;
     }
     // discontinuous 0-1 field for progress variable in 1-D
-    case ScaTra::initfield_discontprogvar_1D:
+    case ScaTra::InitialField::discontprogvar_1D:
     {
       const Core::LinAlg::Map* dofrowmap = discret_->dof_row_map();
 
@@ -2034,7 +2034,7 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
     // reconstructed initial profile for progress variable in x2-direction from
     // Lessani and Papalexandris (2006), also used in Moureau et al. (2007, 2009),
     // for two-dimensional flame-vortex interaction problem (x2=0-200)
-    case ScaTra::initfield_flame_vortex_interaction:
+    case ScaTra::InitialField::flame_vortex_interaction:
     {
       // locations separating region 1 from region 2 and region 2 from region 3
       const double loc12 = 98.5;
@@ -2090,7 +2090,7 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
       break;
     }
     // initial mixture-fraction profile for Rayleigh-Taylor instability
-    case ScaTra::initfield_raytaymixfrac:
+    case ScaTra::InitialField::raytaymixfrac:
     {
       // define interface thickness, sinusoidal disturbance wave amplitude and pi
       const double delta = 0.002;
@@ -2144,7 +2144,7 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
       break;
     }
     // initial field for skew convection of L-shaped domain
-    case ScaTra::initfield_Lshapeddomain:
+    case ScaTra::InitialField::Lshapeddomain:
     {
       const Core::LinAlg::Map* dofrowmap = discret_->dof_row_map();
 
@@ -2176,7 +2176,7 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
       }
       break;
     }
-    case ScaTra::initfield_facing_flame_fronts:
+    case ScaTra::InitialField::facing_flame_fronts:
     {
       const Core::LinAlg::Map* dofrowmap = discret_->dof_row_map();
 
@@ -2209,7 +2209,7 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
       }
       break;
     }
-    case ScaTra::initfield_oracles_flame:
+    case ScaTra::InitialField::oracles_flame:
     {
       const Core::LinAlg::Map* dofrowmap = discret_->dof_row_map();
 
@@ -2245,8 +2245,8 @@ void ScaTra::ScaTraTimIntImpl::set_initial_field(
       }
       break;
     }
-    case ScaTra::initialfield_forced_hit_high_Sc:
-    case ScaTra::initialfield_forced_hit_low_Sc:
+    case ScaTra::InitialField::forced_hit_high_Sc:
+    case ScaTra::InitialField::forced_hit_low_Sc:
     {
       // initialize calculation of initial field based on fast Fourier transformation
       HomoIsoTurbInitialScalarField HitInitialScalarField(*this, init);
