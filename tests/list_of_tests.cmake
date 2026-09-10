@@ -2073,6 +2073,8 @@ __four_c_test_vtk(BASED_ON ${current} PVD_RESULT xxx-structure.pvd PVD_REFERENCE
 four_c_test(TEST_FILE solid_runtime_material_element_id.4C.yaml RETURN_AS current)
 __four_c_test_restart(BASED_ON ${current} SAME_FILE RESTART_STEP 1)
 __four_c_test_vtk(BASED_ON ${current} PVD_RESULT xxx-structure.pvd PVD_REFERENCE ref/solid_runtime_material_element_id-vtk/structure.pvd TOLERANCE 1e-08)
+four_c_test(TEST_FILE solid_runtime_vtu_collective_output.4C.yaml)
+four_c_test(TEST_FILE solid_runtime_vtu_collective_output.4C.yaml NP 2)
 four_c_test(TEST_FILE solid_runtime_nurbs.4C.yaml NP 3 RETURN_AS current)
 __four_c_test_vtk(BASED_ON ${current} PVD_RESULT xxx-structure.pvd PVD_REFERENCE ref/solid_runtime_nurbs-vtk/structure.pvd TOLERANCE 1e-08 TIME_STEPS 3.0)
 four_c_test(TEST_FILE solid_runtime_pyramid5.4C.yaml RETURN_AS current)
