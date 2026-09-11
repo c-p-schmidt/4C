@@ -50,7 +50,7 @@ void levelset_dyn(int restart)
 
   // check velocity field
   const auto veltype = Teuchos::getIntegralValue<ScaTra::VelocityField>(scatradyn, "VELOCITYFIELD");
-  if (veltype != ScaTra::velocity_function)
+  if (veltype != ScaTra::VelocityField::function)
     FOUR_C_THROW(
         "Other velocity fields than a field given by a function not yet supported for level-set "
         "problems");

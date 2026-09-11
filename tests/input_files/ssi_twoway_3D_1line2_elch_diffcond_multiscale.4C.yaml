@@ -12,7 +12,7 @@ PROBLEM TYPE:
   PROBLEMTYPE: "Structure_Scalar_Interaction"
 SCALAR TRANSPORT DYNAMIC:
   SOLVERTYPE: "nonlinear"
-  VELOCITYFIELD: "Navier_Stokes"
+  VELOCITYFIELD: from_other_field
   INITIALFIELD: "field_by_condition"
   CONVFORM: "conservative"
   LINEAR_SOLVER: 1

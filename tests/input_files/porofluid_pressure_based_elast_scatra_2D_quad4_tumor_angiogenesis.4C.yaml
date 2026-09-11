@@ -53,7 +53,7 @@ porofluid_elasticity_dynamic:
 SCALAR TRANSPORT DYNAMIC:
   SOLVERTYPE: "nonlinear"
   THETA: 1
-  VELOCITYFIELD: "Navier_Stokes"
+  VELOCITYFIELD: from_other_field
   INITIALFIELD: "field_by_condition"
   SKIPINITDER: true
   LINEAR_SOLVER: 1

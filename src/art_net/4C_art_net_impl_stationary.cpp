@@ -137,7 +137,7 @@ void Arteries::ArtNetImplStationary::init(const Teuchos::ParameterList& globalti
     const Teuchos::ParameterList& myscatraparams =
         Global::Problem::instance()->scalar_transport_dynamic_params();
     if (Teuchos::getIntegralValue<ScaTra::VelocityField>(myscatraparams, "VELOCITYFIELD") !=
-        ScaTra::velocity_zero)
+        ScaTra::VelocityField::zero)
       FOUR_C_THROW("set your velocity field to zero!");
     // construct the scatra problem
     scatra_ = std::make_shared<Adapter::ScaTraBaseAlgorithm>(*Global::Problem::instance(),

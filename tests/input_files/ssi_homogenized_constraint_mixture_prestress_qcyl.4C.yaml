@@ -56,7 +56,7 @@ SCALAR TRANSPORT DYNAMIC:
   RESULTSEVERY: 1
   MATID: 101
   INITIALFIELD: "field_by_function"
-  VELOCITYFIELD: "Navier_Stokes"
+  VELOCITYFIELD: from_other_field
   INITFUNCNO: 1
   CONVFORM: "convective"
   IS_INTENSIVE_SCALAR: true

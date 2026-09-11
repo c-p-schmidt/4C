@@ -44,16 +44,15 @@ PoroElastScaTra::PoroScatraBase::PoroScatraBase(
   {
     auto timealgo =
         Teuchos::getIntegralValue<ScaTra::TimeIntegrationScheme>(scatradyn, "TIMEINTEGR");
-    if (timealgo != ScaTra::timeint_one_step_theta and timealgo != ScaTra::timeint_stationary)
-      FOUR_C_THROW(
-          "scalar transport in porous media is limited in functionality (only one-step-theta "
-          "scheme or stationary case possible)");
+    FOUR_C_ASSERT_ALWAYS(
+        timealgo == ScaTra::timeint_one_step_theta or timealgo == ScaTra::timeint_stationary,
+        "scalar transport in porous media is limited in functionality (only one-step-theta "
+        "scheme or stationary case possible)");
 
     auto velfield = scatradyn.get<ScaTra::VelocityField>("VELOCITYFIELD");
-    if (velfield != ScaTra::velocity_Navier_Stokes)
-      FOUR_C_THROW(
-          "scalar transport is coupled with the porous medium. Set 'VELOCITYFIELD' to "
-          "'Navier_Stokes' in the SCALAR TRANSPORT DYNAMIC section! ");
+    FOUR_C_ASSERT_ALWAYS(velfield == ScaTra::VelocityField::from_other_field,
+        "scalar transport is coupled with the porous medium. Set 'VELOCITYFIELD' to "
+        "'from_other_field' in the SCALAR TRANSPORT DYNAMIC section! ");
   }
 
   // the problem is two-way coupled, thus each discretization must know the other discretization

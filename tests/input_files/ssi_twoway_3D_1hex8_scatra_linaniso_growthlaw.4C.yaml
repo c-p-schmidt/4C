@@ -21,7 +21,7 @@ STRUCT NOX/Status Test:
   XML File: "ssi_part_struct_solver.xml"
 SCALAR TRANSPORT DYNAMIC:
   SOLVERTYPE: "nonlinear"
-  VELOCITYFIELD: "Navier_Stokes"
+  VELOCITYFIELD: from_other_field
   INITIALFIELD: "field_by_function"
   INITFUNCNO: 1
   CONVFORM: "conservative"
