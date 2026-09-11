@@ -5,33 +5,44 @@
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef FOUR_C_IO_VISUALIZATION_WRITER_VTU_PER_RANK_HPP
-#define FOUR_C_IO_VISUALIZATION_WRITER_VTU_PER_RANK_HPP
+#ifndef FOUR_C_IO_VISUALIZATION_WRITER_VTU_COLLECTIVE_HPP
+#define FOUR_C_IO_VISUALIZATION_WRITER_VTU_COLLECTIVE_HPP
 
 #include "4C_config.hpp"
 
 #include "4C_io_visualization_writer_base.hpp"
 #include "4C_io_vtu_writer.hpp"
 
-#include <fstream>
+#include <mpi.h>
+
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
 
 FOUR_C_NAMESPACE_OPEN
 
 namespace Core::IO
 {
-  class VisualizationWriterVtuPerRank : public VisualizationWriterBase
+  /**
+   * @brief Writer that writes one shared VTU file per time step for all ranks via MPI-IO
+   *
+   * Each rank serializes its own <Piece> into a buffer; the pieces are concatenated into a single
+   * VTU file by means of collective MPI file I/O (MPI_File_write_at_all).
+   */
+  class VisualizationWriterVtuCollective : public VisualizationWriterBase
   {
    public:
     /**
-     * @brief Default constructor
+     * @brief Default constructor (derived)
      */
-    VisualizationWriterVtuPerRank(const Core::IO::VisualizationParameters& parameters,
+    VisualizationWriterVtuCollective(const Core::IO::VisualizationParameters& parameters,
         MPI_Comm comm, std::string visualization_data_name);
 
     /**
-     * @brief Default destructor
+     * @brief Default destructor (derived)
      */
-    ~VisualizationWriterVtuPerRank() override = default;
+    ~VisualizationWriterVtuCollective() override = default;
 
     /**
      * @brief Initialize the current time step (derived)
@@ -73,15 +84,21 @@ namespace Core::IO
      */
     void finalize_time_step() override;
 
-    //! VtuWriter used for the VTU/PVTU format serialization
+   private:
+    //! VtuWriter used for the VTU format serialization
     VtuWriter vtu_writer_;
 
-   private:
-    //! Output stream for the file of this processor (one .vtu per rank)
-    std::ofstream rank_file_;
+    //! buffer for the <Piece> content of this processor
+    std::ostringstream piece_buffer_;
 
-    //! Output stream for the parallel (master) file (only proc 0, .pvtu)
-    std::ofstream master_file_;
+    //! buffer for the VTU file header + field data (only proc 0)
+    std::ostringstream header_buffer_;
+
+    //! dummy stream that swallows the parallel master file content (not needed for a single file)
+    std::ostringstream dummy_master_;
+
+    //! flag indicating whether this processor opened a non-empty <Piece>
+    bool piece_opened_ = false;
   };
 }  // namespace Core::IO
 
