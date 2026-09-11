@@ -160,21 +160,34 @@ void Core::IO::VisualizationWriterVtuCollective::finalize_time_step()
   MPI_File file_handle = MPI_FILE_NULL;
   const int ierr = MPI_File_open(comm_, vtu_writer_.output_file_name_shared().c_str(),
       MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file_handle);
-  if (ierr != MPI_SUCCESS) FOUR_C_THROW("MPI_File_open failed for the shared VTU file.");
+
+  // Check every MPI-IO result and coordinate the error across all ranks before throwing so that no
+  // rank leaves a collective call while its peers are still waiting inside it.
+  const auto throw_if_mpi_io_failed = [this](const int ierr, const std::string& message)
+  {
+    int max_ierr = ierr;
+    MPI_Allreduce(MPI_IN_PLACE, &max_ierr, 1, MPI_INT, MPI_MAX, comm_);
+    if (max_ierr != MPI_SUCCESS) FOUR_C_THROW("{}", message);
+  };
+
+  throw_if_mpi_io_failed(ierr, "MPI_File_open failed for the shared VTU file.");
 
   // truncate a possibly existing file from a previous run
-  MPI_File_set_size(file_handle, 0);
-  MPI_Barrier(comm_);
+  throw_if_mpi_io_failed(
+      MPI_File_set_size(file_handle, 0), "Truncating the shared VTU file failed.");
+  throw_if_mpi_io_failed(MPI_Barrier(comm_), "Synchronizing the ranks before writing failed.");
 
   if (header_size > std::numeric_limits<int>::max())
     FOUR_C_THROW("VTU header exceeds the maximum supported size.");
 
   // proc 0 writes the header (with the field data) at the beginning of the file
+  int write_err = MPI_SUCCESS;
   if (myrank == 0)
   {
-    MPI_File_write_at(file_handle, 0, header_buffer_.str().data(), static_cast<int>(header_size),
-        MPI_BYTE, MPI_STATUS_IGNORE);
+    write_err = MPI_File_write_at(file_handle, 0, header_buffer_.str().data(),
+        static_cast<int>(header_size), MPI_BYTE, MPI_STATUS_IGNORE);
   }
+  throw_if_mpi_io_failed(write_err, "Writing the VTU file header failed.");
 
   // determine the maximum piece size across all ranks so every rank takes the same branch
   uint64_t max_piece_size = 0;
@@ -185,22 +198,25 @@ void Core::IO::VisualizationWriterVtuCollective::finalize_time_step()
 
   // all processors write their piece content at the correct offset
   const MPI_Offset write_offset = header_size + piece_offset;
-  MPI_File_write_at_all(file_handle, write_offset, piece.data(), static_cast<int>(piece_size),
-      MPI_BYTE, MPI_STATUS_IGNORE);
+  throw_if_mpi_io_failed(MPI_File_write_at_all(file_handle, write_offset, piece.data(),
+                             static_cast<int>(piece_size), MPI_BYTE, MPI_STATUS_IGNORE),
+      "Writing the collective VTU piece to the shared file failed.");
 
   if (file_footer.size() > std::numeric_limits<int>::max())
     FOUR_C_THROW("VTU footer exceeds the maximum supported size.");
 
   // the last processor appends the file footer
+  write_err = MPI_SUCCESS;
   if (myrank == numproc - 1)
   {
     const MPI_Offset footer_offset = header_size + total_piece_size;
-    MPI_File_write_at(file_handle, footer_offset, file_footer.data(),
+    write_err = MPI_File_write_at(file_handle, footer_offset, file_footer.data(),
         static_cast<int>(file_footer.size()), MPI_BYTE, MPI_STATUS_IGNORE);
   }
+  throw_if_mpi_io_failed(write_err, "Writing the VTU file footer failed.");
 
-  MPI_File_sync(file_handle);
-  MPI_File_close(&file_handle);
+  throw_if_mpi_io_failed(MPI_File_sync(file_handle), "Synchronizing the shared VTU file failed.");
+  throw_if_mpi_io_failed(MPI_File_close(&file_handle), "Closing the shared VTU file failed.");
 
   // Write a collection file summarizing all previously written files
   vtu_writer_.write_vtk_collection_file_for_all_written_master_files(
