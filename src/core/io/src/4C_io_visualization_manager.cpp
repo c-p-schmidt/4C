@@ -11,6 +11,8 @@
 #include "4C_io_visualization_parameters.hpp"
 #include "4C_io_visualization_writer_factory.hpp"
 
+#include <Teuchos_TimeMonitor.hpp>
+
 #include <utility>
 
 FOUR_C_NAMESPACE_OPEN
@@ -100,6 +102,8 @@ void Core::IO::VisualizationManager::clear_data()
 void Core::IO::VisualizationManager::write_to_disk(
     const double visualziation_time, const int visualization_step)
 {
+  TEUCHOS_FUNC_TIME_MONITOR("VTK: write output to disk");
+
   for (auto& [key, visualization_pair] : visualization_map_)
   {
     visualization_pair.first.consistency_check_and_complete_data();
