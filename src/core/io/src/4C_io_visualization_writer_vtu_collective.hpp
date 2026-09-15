@@ -156,6 +156,39 @@ namespace Core::IO
 
     //! flag indicating whether this processor opened a non-empty <Piece>
     bool piece_opened_ = false;
+
+    /**
+     * @brief Verify that all ranks access the same physical output directory
+     *
+     * The collective MPI-IO writer writes into a single file shared by all ranks and hence
+     * requires that the underlying path resolves to the same physical filesystem location on every
+     * compute node (e.g., an output directory on a node-shared filesystem). If it does not (e.g.,
+     * a node-local scratch directory), the collective MPI-IO layer may deadlock.
+     *
+     * Comparing stat() device and inode numbers across hosts is not sufficient: st_dev and st_ino
+     * identify a file only within a single filesystem's namespace. Separate node-local files can
+     * report identical pairs, and valid shared mounts can expose client-local device IDs. This
+     * check therefore performs a cross-rank visibility challenge instead: rank 0 writes (and
+     * fsyncs) a unique probe token into a transient probe file via POSIX I/O and, after a barrier,
+     * every rank re-opens that file and verifies that it reads the token. If any rank cannot
+     * observe the token, a coordinated FOUR_C_THROW is raised instead of the run hanging inside
+     * MPI-IO. The probe file is removed again once the check has completed.
+     *
+     * The probe file name is generated on rank 0 at runtime (PID + timestamp) and broadcast to all
+     * ranks, and it is created with O_EXCL | O_NOFOLLOW. A pre-existing entry at that path -- e.g.,
+     * a symlink planted by another user into a shared output directory -- is therefore rejected
+     * instead of being followed, truncated or unlinked; only a probe file actually created by this
+     * invocation is removed again.
+     *
+     * Serial, non-MPI-IO collectives only are used here, so the check itself cannot deadlock on
+     * unshared output directories. It is invoked once from the constructor, which requires that
+     * all ranks of this writer's communicator construct the writer simultaneously (as is the case
+     * for all current call sites).
+     *
+     * @param output_directory (in) Shared output directory in which the transient probe file is
+     *     created, probed and removed by this function
+     */
+    void check_all_ranks_have_access_to_same_file(const std::string& output_directory) const;
   };
 }  // namespace Core::IO
 

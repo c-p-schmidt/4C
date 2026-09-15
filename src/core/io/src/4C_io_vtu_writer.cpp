@@ -336,6 +336,16 @@ void VtuWriter::write_vtk_piece_footer(std::ostream& filestream, std::ostream& m
   // end the scalar fields
   switch (currentPhase_)
   {
+    case INIT:
+    {
+      // the piece was opened (geometry was written) but neither point nor cell data arrays were
+      // written; there is nothing to close except the piece itself. Closing it here avoids
+      // cornering this rank (or its peers) in an inconsistent state.
+      currentPhase_ = FINAL;
+
+      break;
+    }
+
     case POINTS:
     {
       filestream << "      </PointData>\n\n";
