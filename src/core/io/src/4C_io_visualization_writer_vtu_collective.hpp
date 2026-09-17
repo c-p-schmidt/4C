@@ -136,8 +136,22 @@ namespace Core::IO
     void finalize_time_step() override;
 
    private:
+    //! metadata of a single data array that is written to the shared VTU file
+    struct VtuArrayMetadata
+    {
+      std::string name;        //!< name of the data array
+      std::string type;        //!< VTK data type name (e.g. Float64, Int32)
+      int num_components = 1;  //!< number of components per tuple
+    };
+
     //! VtuWriter used for the VTU format serialization
     VtuWriter vtu_writer_;
+
+    //! point data arrays written by this processor in the current time step
+    std::vector<VtuArrayMetadata> written_point_data_arrays_;
+
+    //! cell data arrays written by this processor in the current time step
+    std::vector<VtuArrayMetadata> written_cell_data_arrays_;
 
     //! moveable string backing for the <Piece> content of this processor
     MovableStringBuf piece_buffer_buf_;
@@ -189,6 +203,22 @@ namespace Core::IO
      *     created, probed and removed by this function
      */
     void check_all_ranks_have_access_to_same_file(const std::string& output_directory) const;
+
+    //! remember a data array that is written to this rank's <Piece> in the current time step
+    void track_written_array(std::vector<VtuArrayMetadata>& written_arrays, const std::string& name,
+        const std::string& type, int num_components);
+
+    //! gather the union of the per-rank array lists of all ranks
+    std::vector<VtuArrayMetadata> gather_written_arrays(
+        const std::vector<VtuArrayMetadata>& local_arrays) const;
+
+    //! VTK type name for the given data variant
+    static std::string vtk_type_string(const visualization_vector_type_variant& data);
+
+    //! write a well-formed but empty <Piece> that still declares the full array layout
+    void write_empty_piece(std::ostream& piece_buffer,
+        const std::vector<VtuArrayMetadata>& point_data_arrays,
+        const std::vector<VtuArrayMetadata>& cell_data_arrays) const;
   };
 }  // namespace Core::IO
 
