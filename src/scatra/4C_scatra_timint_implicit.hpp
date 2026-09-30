@@ -45,7 +45,7 @@ namespace Core::IO
   class DiscretizationReader;
   class DiscretizationWriter;
   class InputControl;
-  class RuntimeCsvWriter;
+  class RuntimeCsvWriterWithTimeAndStep;
 }  // namespace Core::IO
 
 namespace Core::LinAlg
@@ -1834,7 +1834,7 @@ namespace ScaTra
     bool output_micro_dis_;
 
     //! writes evaluated data to output
-    std::optional<Core::IO::RuntimeCsvWriter> runtime_csvwriter_;
+    std::optional<Core::IO::RuntimeCsvWriterWithTimeAndStep> runtime_csvwriter_;
 
     //! total values of transported scalars
     std::map<const int, std::vector<double>> totalscalars_;
