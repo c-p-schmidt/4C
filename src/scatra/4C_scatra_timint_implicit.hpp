@@ -45,6 +45,7 @@ namespace Core::IO
   class DiscretizationReader;
   class DiscretizationWriter;
   class InputControl;
+  class RuntimeCsvWriter;
   class RuntimeCsvWriterWithTimeAndStep;
 }  // namespace Core::IO
 
@@ -599,20 +600,26 @@ namespace ScaTra
     //! return relative errors of scalar fields in L2 and H1 norms
     [[nodiscard]] std::shared_ptr<std::vector<double>> rel_errors() const { return relerrors_; }
 
-    //! output performance statistics associated with linear solver into *.csv file
-    static void output_lin_solver_stats(const Core::LinAlg::Solver& solver,  //!< linear solver
+    /*!
+     * \brief Output performance statistics associated with the linear solver into a *.csv file
+     *
+     * The first call creates the file and its columns, every further call appends a row.
+     */
+    void output_lin_solver_stats(const Core::LinAlg::Solver& solver,  //!< linear solver
         const double& time,    //!< solver time maximized over all processors
         const int& step,       //!< time step
         const int& iteration,  //!< Newton-Raphson iteration number
         const int& size        //!< size of the linear system
     );
 
-    //! output performance statistics associated with nonlinear solver into *.csv file
-    static void output_nonlin_solver_stats(
-        const int& iterations,  //!< iteration count of nonlinear solver
-        const double& time,     //!< solver time maximized over all processors
-        const int& step,        //!< time step
-        MPI_Comm comm           //!< communicator
+    /*!
+     * \brief Output performance statistics associated with the nonlinear solver into a *.csv file
+     *
+     * The first call creates the file and its columns, every further call appends a row.
+     */
+    void output_nonlin_solver_stats(const int& iterations,  //!< iteration count of nonlinear solver
+        const double& time,  //!< solver time maximized over all processors
+        const int& step      //!< time step
     );
 
     /*========================================================================*/
@@ -1663,6 +1670,22 @@ namespace ScaTra
 
     //! flag indicating if class is initialized
     bool isinit_;
+
+    /*!
+     * \brief Writes one row per linear solve holding the statistics of that solve
+     *
+     * Created by the first call to output_lin_solver_stats(), since the file shall not show up at
+     * all if the statistics are never written.
+     */
+    std::optional<Core::IO::RuntimeCsvWriter> lin_solver_stats_writer_;
+
+    /*!
+     * \brief Writes one row per nonlinear solve holding the statistics of that solve
+     *
+     * Created by the first call to output_nonlin_solver_stats(), since the file shall not show up
+     * at all if the statistics are never written.
+     */
+    std::optional<Core::IO::RuntimeCsvWriter> nonlin_solver_stats_writer_;
 
     /*========================================================================*/
     //! @name general framework
