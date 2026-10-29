@@ -25,6 +25,9 @@ VERSION="f4d642715185dca1b94c91f434a2cf6db9f82014"
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 CMAKE_COMMAND=cmake
 
+# Enable Trilinos debug assertions (can be overridden by environment)
+TRILINOS_ENABLE_DEBUG=${TRILINOS_ENABLE_DEBUG:-ON}
+
 git clone https://github.com/trilinos/Trilinos.git
 cd Trilinos
 git checkout $VERSION
@@ -45,7 +48,7 @@ $CMAKE_COMMAND \
   -D CMAKE_INSTALL_PREFIX:STRING=$INSTALL_DIR \
   -D BUILD_SHARED_LIBS:BOOL=ON \
   \
-  -D Trilinos_ENABLE_DEBUG:BOOL=ON \
+  -D Trilinos_ENABLE_DEBUG:BOOL=${TRILINOS_ENABLE_DEBUG} \
   -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
   -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
   -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \

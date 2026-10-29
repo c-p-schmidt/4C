@@ -82,8 +82,12 @@ RUN /dependencies/current/cmake/install.sh /usr/local
 # Install superLU_dist 7.2.0
 RUN /dependencies/current/superlu_dist/install.sh ${INSTALL_DIR}
 
-# Install Trilinos 2026.2
-RUN /dependencies/current/trilinos/install.sh ${INSTALL_DIR}
+# Install Trilinos 2026.2. Debug assertions are disabled by default (for performance and user
+# images) but can be enabled via the TRILINOS_ENABLE_DEBUG build arg (for checking that we properly
+# use Trilinos within CI/CD testing).
+ARG TRILINOS_ENABLE_DEBUG=OFF
+RUN TRILINOS_ENABLE_DEBUG=${TRILINOS_ENABLE_DEBUG} \
+    /dependencies/current/trilinos/install.sh ${INSTALL_DIR}
 
 # Install deal.II (needs to happen after Trilinos)
 RUN /dependencies/current/dealii/install.sh ${INSTALL_DIR}
