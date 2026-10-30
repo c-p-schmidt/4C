@@ -7,11 +7,11 @@ on:
       - main
     paths:
       - '.github/workflows/docker.yml'
+      - 'dependencies/common/**'
       - 'dependencies/current/**'
       - 'dependencies/oldest_supported/**'
       - 'dependencies/testing/**'
       - 'docker/dependencies/**'
-      - 'docker/oldest_supported/**'
 
 env:
   REGISTRY: ghcr.io
@@ -118,7 +118,7 @@ jobs:
       - name: Build and push image
         uses: ./.github/actions/build_dependencies
         with:
-          docker-file: docker/oldest_supported/Dockerfile
+          docker-file: docker/dependencies/Dockerfile
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -126,6 +126,7 @@ jobs:
           dependencies-hash: ${{ needs.check-if-build-dependencies-is-required.outputs.dependencies_hash
             }}
           base-image: "ubuntu:24.04"
+          trilinos-variant: "oldest_supported"
 
   tag-images-as-main:
     runs-on: ubuntu-latest
