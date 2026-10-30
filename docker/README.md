@@ -1,14 +1,19 @@
 # Docker
 
-This folder contains Dockerfiles for different configurations. The `Dockerfile` in the folder `dependencies` is the
-Dockerfile to build the project with the current dependencies. Other configurations reside in different subfolders. The
-other configurations are:
+This folder contains Dockerfiles for different configurations. The `Dockerfile` in the folder `dependencies` builds the
+project with the current dependencies and is also used, via build arguments, for the oldest-supported and
+Trilinos-develop dependency images. The other configurations are:
 
-- oldest supported: dependencies image with the oldest supported dependencies (currently only Trilinos).
+- oldest supported: dependencies image with the oldest supported dependencies (currently only Trilinos), built with
+  `TRILINOS_VARIANT=oldest_supported`.
 - prebuilt 4C: docker image with ready-to-use 4C executable
 - minimal prebuilt 4C: prebuilt 4C docker image with everything removed not need to execute 4C
-- trilinos develop: dependencies image with Trilinos develop installation. Currently not working due to Epetra removal.
+- trilinos develop: dependencies image with Trilinos develop installation, built with
+  `TRILINOS_VARIANT=trilinos_develop`. Currently not working due to Epetra removal.
 - kokkos parallel: dependencies image with Trilinos installation with Kokkos OpenMP and Cuda.
+
+The Trilinos build is customized with the build args `TRILINOS_VARIANT` (which install script to use),
+`TRILINOS_VERSION` (optional commit ref override) and `TRILINOS_ENABLE_DEBUG` (empty uses the variant default).
 
 There are two variants of the Ubuntu 24.04 dependencies image, both built from `docker/dependencies/Dockerfile`: the
 release variant (Trilinos without debug assertions, used for performance tests and prebuilt images) and the assertions
@@ -24,6 +29,18 @@ standard Dockerfile:
 ```bash
 cd <project_root>
 docker build --tag 4c-dependencies --file docker/dependencies/Dockerfile .
+```
+
+For the other variants, pass the corresponding build args:
+
+```bash
+docker build --tag 4c-dependencies-assertions \
+  --build-arg TRILINOS_ENABLE_DEBUG=ON --file docker/dependencies/Dockerfile .
+docker build --tag 4c-dependencies-oldest-supported \
+  --build-arg TRILINOS_VARIANT=oldest_supported --file docker/dependencies/Dockerfile .
+docker build --tag 4c-dependencies-trilinos-develop \
+  --build-arg TRILINOS_VARIANT=trilinos_develop \
+  --build-arg TRILINOS_VERSION=develop --file docker/dependencies/Dockerfile .
 ```
 
 ## How to update the docker images for the Github Actions

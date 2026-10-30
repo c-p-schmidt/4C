@@ -16,4 +16,4 @@ set -e
 # - Use the first 8 characters of the SHA1 as hash. There is only a low collision probability with 8 characters as the hash is rarely updated.
 # Note: Both the release and the assertions dependencies image are built from the same files (the latter enables Trilinos
 # assertions via a build arg). Since the image names differ, they can share the same dependencies hash.
-find dependencies/current dependencies/oldest_supported dependencies/testing docker/dependencies docker/oldest_supported -type f -not -name '.*' -exec sha1sum {} \; | sort | sha1sum | cut -c -8
+find dependencies/common dependencies/current dependencies/oldest_supported dependencies/testing docker/dependencies -type f -not -name '.*' -exec sha1sum {} \; | sort | sha1sum | cut -c -8
